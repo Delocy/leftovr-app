@@ -41,14 +41,10 @@ class Task:
 
 # Modern collaborative state
 class ModernCollaborativeState(MessagesState):
-    """collaborative state extending MessagesState"""
-    # Conversation/control fields used by nodes
-    user_preferences: Dict[str, Any]  # expects keys: diet, allergies, restrictions, cuisines, skill
+    user_preferences: Dict[str, Any]
     waiter_satisfied: bool
     handoff_packet: Dict[str, Any]
-    # Query routing hint for pantry/recipe branch
     query_type: Optional[Literal["ingredient", "recipe"]]
-    # Chat integration fields
     latest_user_message: Optional[str]
     waiter_prompt_sent: bool
 
@@ -93,7 +89,6 @@ class ModernCollaborativeSystem:
                     "cuisines": merge_list("cuisines"),
                 }
                 current_prefs = merged_prefs
-                log.append("Waiter: merged extracted preferences from latest_user_message")
 
             # If still no preferences, greet and ask, then return control to user
             if not current_prefs:
@@ -133,7 +128,7 @@ class ModernCollaborativeSystem:
             else:
                 missing = [k for k in required if not prefs.get(k)]
                 log.append(f"Waiter: missing fields -> {', '.join(missing)}")
-                print("Missing fields")
+                print(f"Waiter: missing fields -> {', '.join(missing)}")
                 # Ask user to provide the missing fields; return control to user
                 return Command(
                     update={
@@ -207,93 +202,15 @@ class ModernCollaborativeSystem:
             interrupt_before=[],
             interrupt_after=[],
         )
-
-        
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--chat-waiter", action="store_true", help="Interactive CLI chat with the waiter agent")
-    parser.add_argument("--run-once", action="store_true", help="Invoke the graph once and print resulting state")
-    parser.add_argument("--prefs-json", type=str, default="", help="Seed state.user_preferences as JSON")
-    parser.add_argument("--latest-message", type=str, default="", help="Seed state.latest_user_message text")
-    parser.add_argument("--draw-graph", action="store_true", help="Print mermaid diagram of the workflow")
-    args = parser.parse_args()
-
-    if args.draw_graph:
-        system = ModernCollaborativeSystem()
-        g = system.graph.get_graph(xray=True)
-        print(g.draw_mermaid())
-    elif args.chat_waiter:
-        waiter = WaiterAgent(name="Maison d'Être")
-        prefs = {"diet": None, "allergies": [], "restrictions": [], "cuisines": [], "skill": None}
-
-        def merge_list(existing, incoming):
-            return (existing or []) + [x for x in (incoming or []) if x not in (existing or [])]
-
-        def satisfied(p):
-            return all([
-                bool(p.get("diet")),
-                bool(p.get("allergies")),
-                bool(p.get("restrictions")),
-                bool(p.get("cuisines")),
-                bool(p.get("skill")),
-            ])
-
-        print("You are now chatting with the waiter. Type 'exit' to quit.\n")
-        print(f"Waiter: {waiter.run(llm)}")
-        while True:
-            try:
-                user_text = input("You: ")
-            except EOFError:
-                break
-            if not user_text or user_text.strip().lower() in {"exit", "quit"}:
-                break
-
-            reply = waiter.respond(llm, user_text)
-            print(f"Waiter: {reply}")
-
-            extracted = waiter.extract_preferences(llm, user_text)
-            prefs = {
-                "diet": prefs.get("diet") or extracted.get("diet"),
-                "skill": prefs.get("skill") or extracted.get("skill"),
-                "allergies": merge_list(prefs.get("allergies"), extracted.get("allergies")),
-                "restrictions": merge_list(prefs.get("restrictions"), extracted.get("restrictions")),
-                "cuisines": merge_list(prefs.get("cuisines"), extracted.get("cuisines")),
-            }
-
-            print("\n[Summary so far]")
-            print(f"- diet: {prefs['diet']}")
-            print(f"- allergies: {prefs['allergies']}")
-            print(f"- restrictions: {prefs['restrictions']}")
-            print(f"- cuisines: {prefs['cuisines']}")
-            print(f"- skill: {prefs['skill']}\n")
-
-            if satisfied(prefs):
-                handoff_packet = {
-                    "user_preferences": prefs,
-                    "timestamp": datetime.now(timezone.utc).isoformat(),
-                    "notes": "Collected by waiter; ready for executive chef."
-                }
-                print("Waiter: Thanks! I have everything I need. Handing off to the executive chef.")
-                print("\n[Handoff Packet]")
-                print(handoff_packet)
-                break
-    elif args.run_once:
-        system = ModernCollaborativeSystem()
-        try:
-            prefs = json.loads(args.prefs_json) if args.prefs_json else {}
-        except json.JSONDecodeError:
-            print("Invalid --prefs-json; using empty preferences.")
-            prefs = {}
-
-        initial_state = {
-            "user_preferences": prefs,
+    
+    async def run_hybrid(self, initial_user_message: Optional[str] = None):
+        state = {
+            "user_preferences": {},
             "waiter_satisfied": False,
             "handoff_packet": {},
             "query_type": None,
-            "latest_user_message": args.latest_message or None,
+            "latest_user_message": initial_user_message,
             "waiter_prompt_sent": False,
-            # required scaffolding keys
             "tasks": [],
             "completed_tasks": [],
             "failed_tasks": [],
@@ -302,20 +219,41 @@ if __name__ == "__main__":
             "messages": [],
             "coordination_log": [],
         }
+        
+        awaiting_user_input = False
 
-        final_state = system.graph.invoke(initial_state)
-        print("\n=== Final State Snapshot ===")
-        for k in [
-            "user_preferences",
-            "waiter_satisfied",
-            "handoff_packet",
-            "latest_user_message",
-            "waiter_prompt_sent",
-        ]:
-            if k in final_state:
-                print(f"{k}: {final_state[k]}")
-        print("\n--- coordination_log ---")
-        for line in final_state.get("coordination_log", []):
-            print(f"- {line}")
-    else:
-        ModernCollaborativeSystem()
+        while True:
+            # Invoke the graph
+            state = await self.graph.ainvoke(state)
+
+            # If the graph has reached a node that requires user input, pause
+            if not state["waiter_satisfied"]:
+                awaiting_user_input = True
+
+            # Only prompt user when awaiting input
+            print(f"Waiter: {self.waiter.run(llm)}")
+            if awaiting_user_input:
+                user_text = input("You: ")
+                if user_text.strip().lower() in {"exit", "quit"}:
+                    print("Exiting...")
+                    break
+                
+                reply = self.waiter.respond(llm, user_text)
+                print(f"Waiter: {reply}")
+            
+                # Update state and reset flag so graph continues
+                state["latest_user_message"] = user_text
+                awaiting_user_input = False
+
+            # Stop only if graph reached its finish point
+            if state.get("_current_node") == END:
+                print("Workflow complete.")
+                break
+
+
+        print("\n=== Final State ===")
+        print(json.dumps(state, indent=2, default=str))
+        
+if __name__ == "__main__":
+    system = ModernCollaborativeSystem()
+    asyncio.run(system.run_hybrid())    
