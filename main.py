@@ -199,7 +199,7 @@ class ModernCollaborativeSystem:
         # Modern compilation with advanced features
         return workflow.compile(
             cache=InMemoryCache(),
-            interrupt_before=[],
+            interrupt_before=["return_to_user"],
             interrupt_after=[],
         )
     
@@ -220,36 +220,23 @@ class ModernCollaborativeSystem:
             "coordination_log": [],
         }
         
-        awaiting_user_input = False
+        state = await self.graph.ainvoke(state)
 
         while True:
-            # Invoke the graph
-            state = await self.graph.ainvoke(state)
-
-            # If the graph has reached a node that requires user input, pause
-            if not state["waiter_satisfied"]:
-                awaiting_user_input = True
-
-            # Only prompt user when awaiting input
-            print(f"Waiter: {self.waiter.run(llm)}")
-            if awaiting_user_input:
+            # If the graph stopped for user input (interrupt_before="return_to_user")
+            if state.get("_interrupt") == "return_to_user" or not state["waiter_satisfied"]:
                 user_text = input("You: ")
                 if user_text.strip().lower() in {"exit", "quit"}:
-                    print("Exiting...")
+                    print("👋 Exiting the conversation...")
                     break
-                
-                reply = self.waiter.respond(llm, user_text)
-                print(f"Waiter: {reply}")
-            
-                # Update state and reset flag so graph continues
+
+                # Inject user input and resume from where we paused
                 state["latest_user_message"] = user_text
-                awaiting_user_input = False
-
-            # Stop only if graph reached its finish point
-            if state.get("_current_node") == END:
-                print("Workflow complete.")
+                state = await self.graph.ainvoke(state, config={"resume": True})
+            else:
+                # Workflow has reached finish point
+                print("\n✅ Workflow complete!")
                 break
-
 
         print("\n=== Final State ===")
         print(json.dumps(state, indent=2, default=str))
