@@ -29,15 +29,6 @@ llm = ChatOpenAI(
 
 from agents.waiter_agent import WaiterAgent
 
-@dataclass
-class Task:
-    id: str
-    description: str
-    priority: str  # "high", "medium", "low"
-    estimated_time: int  # in minutes
-    status: str = "pending"  # "pending", "in_progress", "completed", "failed"
-    result: Optional[str] = None
-    assigned_to: Optional[str] = None
 
 # Modern collaborative state
 class ModernCollaborativeState(MessagesState):
@@ -46,7 +37,6 @@ class ModernCollaborativeState(MessagesState):
     handoff_packet: Dict[str, Any]
     query_type: Optional[Literal["ingredient", "recipe"]]
     latest_user_message: Optional[str]
-    waiter_prompt_sent: bool
 
 
 
@@ -93,12 +83,12 @@ class ModernCollaborativeSystem:
             # If still no preferences, greet and ask, then return control to user
             if not current_prefs:
                 intro = self.waiter.run(llm)
-                log.append(f"Waiter intro: {intro}")
+                # log.append(f"Waiter intro: {intro}")
+                print(f"Waiter: {intro}") 
                 return Command(
                     update={
                         "coordination_log": log,
                         "waiter_satisfied": False,
-                        "waiter_prompt_sent": True,
                         "latest_user_message": None
                     },
                     goto="return_to_user"
@@ -127,7 +117,7 @@ class ModernCollaborativeSystem:
                 )
             else:
                 missing = [k for k in required if not prefs.get(k)]
-                log.append(f"Waiter: missing fields -> {', '.join(missing)}")
+                # log.append(f"Waiter: missing fields -> {', '.join(missing)}")
                 print(f"Waiter: missing fields -> {', '.join(missing)}")
                 # Ask user to provide the missing fields; return control to user
                 return Command(
@@ -135,7 +125,6 @@ class ModernCollaborativeSystem:
                         "waiter_satisfied": False,
                         "coordination_log": log,
                         "user_preferences": prefs,
-                        "waiter_prompt_sent": True,
                         "latest_user_message": None
                     },
                     goto="return_to_user"
@@ -210,11 +199,6 @@ class ModernCollaborativeSystem:
             "handoff_packet": {},
             "query_type": None,
             "latest_user_message": initial_user_message,
-            "waiter_prompt_sent": False,
-            "tasks": [],
-            "completed_tasks": [],
-            "failed_tasks": [],
-            "in_progress_tasks": [],
             "agent_assignments": {},
             "messages": [],
             "coordination_log": [],
@@ -236,7 +220,7 @@ class ModernCollaborativeSystem:
             else:
                 # Workflow has reached finish point
                 print("\n✅ Workflow complete!")
-                break
+                break       
 
         print("\n=== Final State ===")
         print(json.dumps(state, indent=2, default=str))
