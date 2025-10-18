@@ -1,15 +1,11 @@
 import os
 from dotenv import load_dotenv
 from typing import Dict, List, Any, Optional, Literal
-from dataclasses import dataclass
 import json
 from langchain_openai import ChatOpenAI
 from langgraph.graph import StateGraph, MessagesState, START, END
 from langgraph.types import Command
-from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
-from langchain_core.prompts import ChatPromptTemplate
-from typing_extensions import TypedDict, Annotated
-from langgraph.graph.message import add_messages
+
 from langgraph.cache.memory import InMemoryCache
 import asyncio
 from datetime import datetime, timezone
@@ -28,6 +24,7 @@ llm = ChatOpenAI(
 )
 
 from agents.waiter_agent import WaiterAgent
+from agents.executive_chef_agent import ExecutiveChefAgent
 
 
 # Modern collaborative state
@@ -37,21 +34,23 @@ class ModernCollaborativeState(MessagesState):
     handoff_packet: Dict[str, Any]
     query_type: Optional[Literal["ingredient", "recipe"]]
     latest_user_message: Optional[str]
+    final_recommendation: Optional[str]
+    quality_passed: bool
+    quality_issues: List[str]
+    coordination_log: List[str]
 
-
-
-    
 class ModernCollaborativeSystem:
     """collaborative system with enhanced orchestration"""
 
     def __init__(self):
         self.graph = self._create_modern_collaborative_graph()
         self.waiter = WaiterAgent(name="Maison d'Être")
+        self.exec_chef = ExecutiveChefAgent(name="Executive Chef")
 
     def _create_modern_collaborative_graph(self) -> StateGraph:
         """Create collaborative workflow with Command API"""
         workflow = StateGraph(ModernCollaborativeState)
-        
+
             # --- STUB FUNCTIONS ---
         def waiter_agent_collect(state) -> Command[Literal["waiter_collect_info", "executive_chef_review", "return_to_user"]]:
             # Ensure log exists
@@ -84,7 +83,7 @@ class ModernCollaborativeSystem:
             if not current_prefs:
                 intro = self.waiter.run(llm)
                 # log.append(f"Waiter intro: {intro}")
-                print(f"Waiter: {intro}") 
+                print(f"Waiter: {intro}")
                 return Command(
                     update={
                         "coordination_log": log,
@@ -110,7 +109,7 @@ class ModernCollaborativeSystem:
                             "notes": "Collected by waiter; ready for executive chef."
                         },
                         "coordination_log": log,
-                        "user_preferences": prefs, 
+                        "user_preferences": prefs,
                         "latest_user_message": None
                     },
                     goto="executive_chef_review"
@@ -130,16 +129,36 @@ class ModernCollaborativeSystem:
                     goto="return_to_user"
                 )
 
-        def exec_chef_review(state) -> Command[Literal["pantry_query"]]:
+        def exec_chef_review(state) -> Command[Literal["executive_chef_quality_check"]]:
             log = state.get("coordination_log", [])
-            if state.get("handoff_packet"):
-                log.append("Executive Chef: handoff packet received; proceeding to pantry query")
+            handoff = state.get("handoff_packet", {})
+            user_prefs = handoff.get("user_preferences", {})
+
+            if handoff:
+                log.append("Executive Chef: handoff packet received; analyzing request")
+                print(f"Executive Chef: Received preferences - {user_prefs}")
+
+                # Analyze complexity and determine query type
+                query_type = self.exec_chef.decide_query_type(user_prefs)
+                log.append(f"Executive Chef: Query type determined as '{query_type}'")
+                print(f"Executive Chef: Query type → {query_type}")
+
+                return Command(
+                    update={
+                        "coordination_log": log,
+                        "query_type": query_type
+                    },
+                    goto="executive_chef_quality_check"
+                )
             else:
                 log.append("Executive Chef: no handoff packet found; proceeding cautiously")
-            return Command(update={"coordination_log": log}, goto="pantry_query")
-
-        def pantry_agent_query(state):
-            return Command(update={})
+                return Command(
+                    update={
+                        "coordination_log": log,
+                        "query_type": "ingredient"  # default
+                    },
+                    goto="executive_chef_quality_check"
+                )
 
         def sous_chef_handle(state):
             return Command(update={})
@@ -148,32 +167,85 @@ class ModernCollaborativeSystem:
             return Command(update={})
 
         def exec_chef_check(state):
-            return Command(update={})
+            log = state.get("coordination_log", [])
+
+            log.append("Executive Chef: Performing final quality check")
+            print("Executive Chef: Quality control in progress...")
+
+            # Get all the data collected so far
+            user_prefs = state.get("user_preferences", {})
+
+            # Use Executive Chef to orchestrate and synthesize
+            print("Executive Chef: Synthesizing final recommendation...")
+
+            # Prepare agent responses for synthesis
+            agent_responses = {
+                "user_preferences": user_prefs
+            }
+
+            # Generate recommendation
+            recommendation = self.exec_chef.synthesize_recommendations(
+                llm,
+                agent_responses,
+                user_prefs
+            )
+
+            # Perform quality check
+            passed, issues = self.exec_chef.perform_quality_check(
+                llm,
+                recommendation,
+                user_prefs
+            )
+
+            if passed:
+                log.append("Executive Chef: ✅ Quality check passed - recommendation approved")
+                print("Executive Chef: ✅ All quality checks passed")
+            else:
+                log.append(f"Executive Chef: ⚠️ Quality issues detected: {', '.join(issues)}")
+                print(f"Executive Chef: ⚠️ Issues found: {', '.join(issues)}")
+
+            return Command(
+                update={
+                    "coordination_log": log,
+                    "final_recommendation": recommendation,
+                    "quality_passed": passed,
+                    "quality_issues": issues
+                }
+            )
 
         def waiter_return(state):
-            return Command(update={})
+            log = state.get("coordination_log", [])
+            recommendation = state.get("final_recommendation", "")
+            quality_passed = state.get("quality_passed", False)
+
+            log.append("Waiter: Preparing to present recommendation to user")
+            print("\n" + "="*80)
+            print("🍽️  MAISON D'ÊTRE - Your Culinary Recommendation")
+            print("="*80)
+
+            if recommendation:
+                print(recommendation)
+            else:
+                print("I apologize, but I wasn't able to generate a recommendation at this time.")
+
+            if not quality_passed:
+                print("\n⚠️  Note: Some quality issues were detected. Please review carefully.")
+
+            print("="*80 + "\n")
+
+            return Command(update={"coordination_log": log})
 
         workflow.add_node("waiter_collect_info", waiter_agent_collect)
         workflow.add_node("executive_chef_review", exec_chef_review)
-        workflow.add_node("pantry_query", pantry_agent_query)
         workflow.add_node("sous_chef_prepare_recipe", sous_chef_handle)
         workflow.add_node("recipe_knowledge_retrieve", recipe_knowledge_agent)
         workflow.add_node("executive_chef_quality_check", exec_chef_check)
         workflow.add_node("return_to_user", waiter_return)
 
-                
+
         # 2. Define edges
         # Routing from waiter_collect_info is controlled at runtime via Command.goto
-        workflow.add_edge("executive_chef_review", "pantry_query")
-
-        workflow.add_conditional_edges(
-            "pantry_query",
-            lambda state: "ingredient" if state["query_type"] == "ingredient" else "recipe",
-            {
-                "ingredient": "executive_chef_quality_check",
-                "recipe": "sous_chef_prepare_recipe"
-            }
-        )
+        workflow.add_edge("executive_chef_review", "executive_chef_quality_check")
 
         workflow.add_edge("sous_chef_prepare_recipe", "recipe_knowledge_retrieve")
         # workflow.add_edge("recipe_knowledge_retrieve", "sous_chef_prepare_recipe")
@@ -184,14 +256,14 @@ class ModernCollaborativeSystem:
         # 3. Set entry and end nodes
         workflow.set_entry_point("waiter_collect_info")
         workflow.set_finish_point("return_to_user")
-        
+
         # Modern compilation with advanced features
         return workflow.compile(
             cache=InMemoryCache(),
             interrupt_before=["return_to_user"],
             interrupt_after=[],
         )
-    
+
     async def run_hybrid(self, initial_user_message: Optional[str] = None):
         state = {
             "user_preferences": {},
@@ -199,11 +271,14 @@ class ModernCollaborativeSystem:
             "handoff_packet": {},
             "query_type": None,
             "latest_user_message": initial_user_message,
+            "final_recommendation": None,
+            "quality_passed": False,
+            "quality_issues": [],
             "agent_assignments": {},
             "messages": [],
             "coordination_log": [],
         }
-        
+
         state = await self.graph.ainvoke(state)
 
         while True:
@@ -220,11 +295,11 @@ class ModernCollaborativeSystem:
             else:
                 # Workflow has reached finish point
                 print("\n✅ Workflow complete!")
-                break       
+                break
 
         print("\n=== Final State ===")
         print(json.dumps(state, indent=2, default=str))
-        
+
 if __name__ == "__main__":
     system = ModernCollaborativeSystem()
-    asyncio.run(system.run_hybrid())    
+    asyncio.run(system.run_hybrid())
