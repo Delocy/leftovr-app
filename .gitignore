@@ -4,6 +4,6 @@ __pycache__/
 *.pyo
 *.pyd
 .Python
-env/
 build/
 .DS_Store
+.env
