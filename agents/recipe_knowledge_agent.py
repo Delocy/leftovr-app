@@ -336,6 +336,14 @@ class RecipeKnowledgeAgent:
         Returns:
             List of (recipe_metadata, combined_score, num_pantry_used, missing_ingredients)
             
+            recipe_metadata includes:
+            - 'id': Recipe ID
+            - 'title': Recipe name
+            - 'ner': List of ingredients
+            - 'directions': List of cooking steps 
+            - 'link': Source URL
+            - 'source': Recipe source
+            
         Philosophy:
             1. Prioritize using MORE leftovers (3 items > 1 item)
             2. Prefer recipes you can make NOW (zero shopping)
