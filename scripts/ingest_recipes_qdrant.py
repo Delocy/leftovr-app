@@ -140,6 +140,13 @@ def build_indices(
 
             ner_norm = [normalize_token(x) for x in ner_list if x]
             
+            # Parse directions
+            directions_raw = row.get('directions') or ''
+            try:
+                directions_list = json.loads(directions_raw) if directions_raw.strip().startswith('[') else [directions_raw]
+            except Exception:
+                directions_list = [directions_raw] if directions_raw else []
+            
             # Build metadata
             meta = {
                 'id': rid,
@@ -147,6 +154,7 @@ def build_indices(
                 'link': row.get('link') or '',
                 'source': row.get('source') or '',
                 'ner': ner_norm,
+                'directions': directions_list,  # Add directions!
             }
             meta_fh.write(json.dumps(meta) + '\n')
 
