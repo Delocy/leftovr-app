@@ -16,7 +16,7 @@ from __future__ import annotations
 import json
 import os
 import re
-from typing import List, Dict, Tuple, Optional, Iterable
+from typing import List, Dict, Tuple, Optional, Iterable, Set
 from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, VectorParams, PointStruct, Filter, FieldCondition, MatchAny
 
@@ -191,6 +191,11 @@ class RecipeKnowledgeAgent:
         
         Philosophy: Using MORE leftovers = BETTER (not just coverage %)
         
+        COMPLEMENTARY SIGNALS:
+        • Exact match: "This recipe uses exactly these ingredients"
+        • Semantic: "This recipe is similar to what you want"
+        • Hybrid: "This recipe does BOTH!" (gets bonus points)
+        
         Args:
             pantry_items: Your available ingredients/leftovers
             allow_missing: 0 = only recipes you can make now, 1-2 = willing to shop
@@ -203,14 +208,14 @@ class RecipeKnowledgeAgent:
         if not pantry:
             return []
 
-        cand_scores: Dict[int, int] = {}
+        # Find recipes that contain any pantry ingredients
+        candidate_recipes: Set[int] = set()
         for ing in pantry:
             ids = self.ingredient_index.get(ing) or []
-            for rid in ids:
-                cand_scores[rid] = cand_scores.get(rid, 0) + 1
+            candidate_recipes.update(ids)
 
         results = []
-        for rid, num_pantry_used in cand_scores.items():
+        for rid in candidate_recipes:
             meta = self.metadata.get(rid)
             if not meta:
                 continue
@@ -219,13 +224,16 @@ class RecipeKnowledgeAgent:
             if not recipe_ingredients:
                 continue
             
+            # Calculate how many UNIQUE pantry items this recipe uses
+            num_pantry_used = len(pantry & recipe_ingredients)
+            
             # Calculate missing ingredients
             missing = recipe_ingredients - pantry
             num_missing = len(missing)
             
             # Filter: only include if missing ingredients <= allowed
             if num_missing <= allow_missing:
-                # LEFTOVR SCORING: Number of pantry items used (more = better)
+                # LEFTOVR SCORING: Number of UNIQUE pantry items used (more = better)
                 # Bonus for recipes you can make now (0 missing)
                 score = num_pantry_used * 100 + (1000 if num_missing == 0 else 0) - len(recipe_ingredients)
                 results.append((rid, float(score), num_pantry_used, list(missing)))
