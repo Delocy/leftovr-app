@@ -185,11 +185,19 @@ class RecipeKnowledgeAgent:
         """Normalize ingredient names"""
         return [t for t in (_normalize_token(x) for x in items) if t]
 
-    def pantry_candidates(self, pantry_items: Iterable[str], min_overlap: int = 1, top_k: int = 200) -> List[Tuple[int, float]]:
+    def pantry_candidates(self, pantry_items: Iterable[str], allow_missing: int = 0, top_k: int = 200) -> List[Tuple[int, float, int, List[str]]]:
         """
-        Find recipes using ingredient index (exact matching)
+        LEFTOVR MODE: Find recipes that use the MOST of your pantry items
         
-        Returns list of (recipe_id, overlap_score) sorted by score
+        Philosophy: Using MORE leftovers = BETTER (not just coverage %)
+        
+        Args:
+            pantry_items: Your available ingredients/leftovers
+            allow_missing: 0 = only recipes you can make now, 1-2 = willing to shop
+            top_k: Maximum results
+            
+        Returns:
+            List of (recipe_id, score, num_pantry_used, missing_ingredients)
         """
         pantry = set(self.normalize_ingredients(pantry_items))
         if not pantry:
@@ -201,19 +209,30 @@ class RecipeKnowledgeAgent:
             for rid in ids:
                 cand_scores[rid] = cand_scores.get(rid, 0) + 1
 
-        scored = []
-        for rid, overlap in cand_scores.items():
+        results = []
+        for rid, num_pantry_used in cand_scores.items():
             meta = self.metadata.get(rid)
             if not meta:
                 continue
-            ner = meta.get('ner', [])
-            denom = max(1, len(ner))
-            score = float(overlap) / denom
-            if overlap >= min_overlap:
-                scored.append((rid, score))
-
-        scored.sort(key=lambda x: x[1], reverse=True)
-        return scored[:top_k]
+            
+            recipe_ingredients = set(meta.get('ner', []))
+            if not recipe_ingredients:
+                continue
+            
+            # Calculate missing ingredients
+            missing = recipe_ingredients - pantry
+            num_missing = len(missing)
+            
+            # Filter: only include if missing ingredients <= allowed
+            if num_missing <= allow_missing:
+                # LEFTOVR SCORING: Number of pantry items used (more = better)
+                # Bonus for recipes you can make now (0 missing)
+                score = num_pantry_used * 100 + (1000 if num_missing == 0 else 0) - len(recipe_ingredients)
+                results.append((rid, float(score), num_pantry_used, list(missing)))
+        
+        # Sort by score (descending)
+        results.sort(key=lambda x: x[1], reverse=True)
+        return results[:top_k]
 
     def semantic_search(self, query: str, k: int = 10, filter_ingredients: Optional[List[str]] = None) -> List[Tuple[int, float]]:
         """
@@ -254,27 +273,68 @@ class RecipeKnowledgeAgent:
         
         return [(hit.id, hit.score) for hit in results]
 
-    def hybrid_query(self, pantry_items: Iterable[str], query_text: str, top_k: int = 20) -> List[Tuple[dict, float]]:
+    def hybrid_query(
+        self, 
+        pantry_items: Iterable[str], 
+        query_text: str, 
+        top_k: int = 20,
+        allow_missing: int = 0,
+        use_semantic: bool = True
+    ) -> List[Tuple[dict, float, int, List[str]]]:
         """
-        Hybrid search combining ingredient matching and semantic similarity
+        LEFTOVR HYBRID: Find recipes that use up leftovers + match your preferences
         
-        Returns list of (recipe_metadata, combined_score)
+        Args:
+            pantry_items: Your available ingredients (leftovers)
+            query_text: What you feel like eating (e.g., "quick dinner", "Italian")
+            top_k: Number of results to return
+            allow_missing: How many ingredients you're willing to buy (0=none, 1-2=flexible)
+            use_semantic: Whether to boost with semantic similarity
+        
+        Returns:
+            List of (recipe_metadata, combined_score, num_pantry_used, missing_ingredients)
+            
+        Philosophy:
+            1. Prioritize using MORE leftovers (3 items > 1 item)
+            2. Prefer recipes you can make NOW (zero shopping)
+            3. Boost recipes that match your taste/preference
         """
-        pantry_cands = self.pantry_candidates(pantry_items, min_overlap=1, top_k=500)
-        sem_cands = self.semantic_search(query_text, k=500)
-
-        score_map: Dict[int, float] = {}
+        # Get leftover-optimized candidates
+        pantry_cands = self.pantry_candidates(
+            pantry_items, 
+            allow_missing=allow_missing,
+            top_k=500
+        )
         
-        # Semantic scores
-        for rid, s in sem_cands:
-            score_map[rid] = score_map.get(rid, 0.0) + 0.6 * float(s)
-        
-        # Pantry overlap scores
-        for rid, frac in pantry_cands:
-            score_map[rid] = score_map.get(rid, 0.0) + 0.6 * float(frac) + 0.4
+        # Get semantic matches if enabled
+        sem_cands = []
+        if use_semantic and self.qdrant_client and self.embed_model:
+            sem_cands = self.semantic_search(query_text, k=500)
 
-        ranked = sorted(score_map.items(), key=lambda x: x[1], reverse=True)[:top_k]
-        return [(self.metadata.get(rid, {}), float(score)) for rid, score in ranked]
+        # Build combined scores
+        score_map: Dict[int, Tuple[float, int, List[str]]] = {}  # rid -> (score, num_used, missing)
+        
+        # Start with leftover scores (already optimized)
+        for rid, leftover_score, num_used, missing in pantry_cands:
+            score_map[rid] = (leftover_score, num_used, missing)
+        
+        # Boost with semantic similarity if available
+        if sem_cands:
+            for rid, sem_score in sem_cands:
+                if rid in score_map:
+                    current_score, num_used, missing = score_map[rid]
+                    # Add semantic bonus (scaled to be meaningful but not dominant)
+                    # Max semantic boost: ~50 points (less than using 1 extra ingredient = 100 points)
+                    boosted_score = current_score + (sem_score * 50)
+                    score_map[rid] = (boosted_score, num_used, missing)
+                    score_map[rid] = (boosted_score, num_used, missing)
+        
+        # Sort and return
+        ranked = sorted(score_map.items(), key=lambda x: x[1][0], reverse=True)[:top_k]
+        return [
+            (self.metadata.get(rid, {}), float(score), num_used, missing) 
+            for rid, (score, num_used, missing) in ranked
+        ]
 
 
 if __name__ == '__main__':

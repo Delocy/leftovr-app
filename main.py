@@ -56,11 +56,11 @@ class ModernCollaborativeSystem:
         try:
             self.recipe_agent.load_metadata()
             self.recipe_agent.load_ingredient_index()
-            self.recipe_agent.try_load_faiss()  # Optional: loads embeddings if available
+            self.recipe_agent.setup_qdrant()  # Optional: for semantic search
             print("✅ Recipe Knowledge Agent initialized successfully")
         except FileNotFoundError as e:
             print(f"⚠️  Warning: {e}")
-            print("   Run the ingestion script first: python scripts/ingest_recipes.py --input assets/full_dataset.csv --outdir data")
+            print("   Run the ingestion script first: python scripts/ingest_recipes_qdrant.py")
             self.recipe_agent = None
 
     def _create_modern_collaborative_graph(self) -> StateGraph:
@@ -200,33 +200,41 @@ class ModernCollaborativeSystem:
             print(f"   Ingredients: {', '.join(user_ingredients)}")
             print(f"   Preferences: {query_text}")
             
-            # Perform hybrid search
+            # Perform LEFTOVR hybrid search
             try:
                 results = self.recipe_agent.hybrid_query(
                     pantry_items=user_ingredients,
                     query_text=query_text,
-                    top_k=10
+                    allow_missing=2,  # Willing to buy up to 2 items
+                    top_k=10,
+                    use_semantic=True
                 )
                 
-                # Format results
+                # Format results - NEW FORMAT: (metadata, score, num_used, missing)
                 recipe_results = []
-                for metadata, score in results:
+                for metadata, score, num_used, missing in results:
                     recipe_results.append({
                         "id": metadata.get("id"),
                         "title": metadata.get("title"),
                         "ingredients": metadata.get("ner", []),
                         "link": metadata.get("link"),
                         "source": metadata.get("source"),
-                        "score": float(score)
+                        "score": float(score),
+                        "pantry_items_used": num_used,
+                        "missing_ingredients": missing
                     })
                 
                 log.append(f"Recipe Knowledge Agent: Found {len(recipe_results)} recipes")
-                print(f" Found {len(recipe_results)} matching recipes")
+                print(f"✅ Found {len(recipe_results)} matching recipes")
                 
                 # Display top 3 recipes
                 for i, recipe in enumerate(recipe_results[:3], 1):
-                    print(f"\n{i}. {recipe['title']} (score: {recipe['score']:.2f})")
-                    print(f"   Ingredients: {', '.join(recipe['ingredients'][:5])}{'...' if len(recipe['ingredients']) > 5 else ''}")
+                    print(f"\n{i}. {recipe['title']} (score: {recipe['score']:.0f})")
+                    print(f"   Uses {recipe['pantry_items_used']}/{len(user_ingredients)} of your leftovers")
+                    if recipe['missing_ingredients']:
+                        print(f"   Need to buy: {', '.join(recipe['missing_ingredients'])}")
+                    else:
+                        print(f"   ✅ Can make NOW!")
                     print(f"   Source: {recipe['source']}")
                 
                 return Command(update={
@@ -237,6 +245,8 @@ class ModernCollaborativeSystem:
             except Exception as e:
                 log.append(f"Recipe Knowledge Agent: Error during search - {str(e)}")
                 print(f"❌ Error: {e}")
+                import traceback
+                traceback.print_exc()
                 return Command(update={
                     "coordination_log": log,
                     "recipe_results": []

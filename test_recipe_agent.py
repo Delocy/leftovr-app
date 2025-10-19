@@ -10,23 +10,26 @@ from agents.recipe_knowledge_agent import RecipeKnowledgeAgent
 
 
 def test_ingredient_search(agent):
-    """Test ingredient-based search"""
+    """Test LEFTOVR ingredient-based search"""
     print("\n" + "="*60)
-    print("TEST 1: Ingredient Search")
+    print("TEST 1: LEFTOVR Ingredient Search")
     print("="*60)
     
     pantry = ['chicken', 'tomatoes', 'garlic', 'onion']
     print(f"Pantry items: {pantry}")
+    print("Strategy: Use MORE of your leftovers\n")
     
-    results = agent.pantry_candidates(pantry, min_overlap=2, top_k=5)
+    results = agent.pantry_candidates(pantry, allow_missing=0, top_k=5)
     
     if results:
-        print(f"\n✅ Found {len(results)} recipes!")
-        for i, (recipe_id, score) in enumerate(results[:5], 1):
+        print(f"✅ Found {len(results)} recipes you can make NOW!")
+        for i, (recipe_id, score, num_used, missing) in enumerate(results[:3], 1):
             meta = agent.metadata.get(recipe_id)
             if meta:
-                print(f"\n{i}. {meta['title']} (overlap score: {score:.2f})")
-                print(f"   Ingredients: {', '.join(meta['ner'][:5])}...")
+                print(f"\n{i}. {meta['title']} (score: {score:.0f})")
+                print(f"   Uses {num_used}/{len(pantry)} of your leftovers")
+                print(f"   Source: {meta.get('source', 'N/A')}")
+                print(f"   Ingredients ({len(meta['ner'])} total): {', '.join(meta['ner'])}")
     else:
         print("❌ No results found")
 
@@ -58,38 +61,63 @@ def test_semantic_search(agent):
     
     if results:
         print(f"\n✅ Found {len(results)} recipes!")
-        for i, (recipe_id, score) in enumerate(results, 1):
+        for i, (recipe_id, score) in enumerate(results[:3], 1):
             meta = agent.metadata.get(recipe_id)
             if meta:
                 print(f"\n{i}. {meta['title']} (similarity: {score:.3f})")
-                print(f"   Ingredients: {', '.join(meta['ner'][:5])}...")
+                print(f"   Source: {meta.get('source', 'N/A')}")
+                print(f"   Link: {meta.get('link', 'N/A')}")
+                print(f"   Ingredients ({len(meta['ner'])} total): {', '.join(meta['ner'])}")
     else:
         print("❌ No results found")
 
 
 def test_hybrid_search(agent):
-    """Test hybrid search combining ingredients + semantic"""
+    """Test LEFTOVR hybrid search optimized for using up leftovers"""
     print("\n" + "="*60)
-    print("TEST 3: Hybrid Search")
+    print("TEST 3: LEFTOVR Hybrid Search")
     print("="*60)
     
     if agent.qdrant_client is None:
         print("⚠️  Qdrant not initialized - skipping hybrid search test")
         return
     
-    pantry = ['chicken', 'rice', 'vegetables']
-    query = "quick healthy dinner"
-    print(f"Pantry: {pantry}")
-    print(f"Query: '{query}'")
+    pantry = ['chicken', 'rice', 'onion', 'garlic', 'tomato']
+    query = "quick dinner"
+    print(f"Your Leftovers: {pantry}")
+    print(f"What you want: '{query}'")
+    print(f"Strategy: Use UP the most leftovers, prefer recipes you can make NOW\n")
     
-    results = agent.hybrid_query(pantry, query, top_k=5)
+    # Test 1: Strict mode (no shopping)
+    print("MODE: Strict (allow_missing=0) - Only recipes you can make now")
+    results_strict = agent.hybrid_query(pantry, query, top_k=3, allow_missing=0)
     
-    if results:
-        print(f"\n✅ Found {len(results)} recipes!")
-        for i, (meta, score) in enumerate(results, 1):
+    if results_strict:
+        for i, (meta, score, num_used, missing) in enumerate(results_strict, 1):
             if meta:
-                print(f"\n{i}. {meta['title']} (combined score: {score:.2f})")
-                print(f"   Ingredients: {', '.join(meta.get('ner', [])[:5])}...")
+                pantry_used = [ing for ing in meta.get('ner', []) if ing in [agent.normalize_ingredients([p])[0] for p in pantry]]
+                print(f"\n{i}. {meta['title']} (score: {score:.0f})")
+                print(f"   ✅ Uses {num_used}/{len(pantry)} of your leftovers")
+                print(f"   ✅ Can make NOW (no shopping needed!)")
+                print(f"   Recipe needs ({len(meta.get('ner', []))} total): {', '.join(meta.get('ner', []))}")
+    else:
+        print("   No recipes found with only your leftovers")
+    
+    # Test 2: Flexible mode (1-2 missing okay)
+    print(f"\n\nMODE: Flexible (allow_missing=2) - Willing to buy 1-2 items")
+    results_flex = agent.hybrid_query(pantry, query, top_k=3, allow_missing=2)
+    
+    if results_flex:
+        for i, (meta, score, num_used, missing) in enumerate(results_flex, 1):
+            if meta:
+                total_ings = len(meta.get('ner', []))
+                print(f"\n{i}. {meta['title']} (score: {score:.0f})")
+                print(f"   Uses {num_used}/{len(pantry)} leftovers")
+                if missing:
+                    print(f"   ⚠️  Need to buy ({len(missing)}): {', '.join(missing)}")
+                else:
+                    print(f"   ✅ Can make NOW!")
+                print(f"   Recipe needs ({total_ings} total): {', '.join(meta.get('ner', []))}")
     else:
         print("❌ No results found")
 
