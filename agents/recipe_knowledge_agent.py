@@ -234,22 +234,52 @@ class RecipeKnowledgeAgent:
         results.sort(key=lambda x: x[1], reverse=True)
         return results[:top_k]
 
-    def semantic_search(self, query: str, k: int = 10, filter_ingredients: Optional[List[str]] = None) -> List[Tuple[int, float]]:
+    def semantic_search(
+        self, 
+        query: Optional[str] = None,
+        pantry_items: Optional[List[str]] = None,
+        k: int = 10, 
+        filter_ingredients: Optional[List[str]] = None
+    ) -> List[Tuple[int, float]]:
         """
-        Semantic search using Qdrant
+        Semantic search using Qdrant with all-MiniLM-L6-v2 embeddings
+        
+        Model: all-MiniLM-L6-v2 (384 dimensions)
+        - Understands semantic meaning of text
+        - Can match ingredient combinations that work well together
         
         Args:
-            query: Text query
+            query: Text description (e.g., "easy Italian pasta dinner")
+            pantry_items: Your ingredient list (e.g., ['chicken', 'garlic', 'lemon'])
             k: Number of results
             filter_ingredients: Optional list of required ingredients
             
-        Returns list of (recipe_id, score)
+        Note: You can provide query, pantry_items, or both!
+              - query only: Find recipes matching description
+              - pantry_items only: Find recipes with similar ingredients
+              - both: Find recipes matching description AND similar ingredients
+            
+        Returns list of (recipe_id, similarity_score)
         """
         if self.qdrant_client is None or self.embed_model is None:
             return []
         
-        # Encode query
-        query_vector = self.embed_model.encode(query, normalize_embeddings=True).tolist()
+        # Build query text from provided inputs
+        query_parts = []
+        if query:
+            query_parts.append(query)
+        if pantry_items:
+            # Format like recipe embeddings: "Ingredients: chicken, garlic, lemon"
+            query_parts.append(f"Ingredients: {', '.join(pantry_items)}")
+        
+        if not query_parts:
+            print("⚠️  No query or pantry_items provided for semantic search")
+            return []
+        
+        query_text = ". ".join(query_parts)
+        
+        # Encode query using the same model (all-MiniLM-L6-v2)
+        query_vector = self.embed_model.encode(query_text, normalize_embeddings=True).tolist()
         
         # Build filter if ingredients specified
         search_filter = None
@@ -272,21 +302,25 @@ class RecipeKnowledgeAgent:
         )
         
         return [(hit.id, hit.score) for hit in results]
-
     def hybrid_query(
         self, 
         pantry_items: Iterable[str], 
-        query_text: str, 
+        query_text: Optional[str] = None,
         top_k: int = 20,
         allow_missing: int = 0,
         use_semantic: bool = True
     ) -> List[Tuple[dict, float, int, List[str]]]:
         """
-        LEFTOVR HYBRID: Find recipes that use up leftovers + match your preferences
+        LEFTOVR HYBRID: Find recipes using semantic search + LEFTOVR scoring
+        
+        Uses all-MiniLM-L6-v2 to find recipes semantically similar to:
+        - Your ingredients (pantry_items)
+        - Your preferences (query_text) - optional!
         
         Args:
             pantry_items: Your available ingredients (leftovers)
             query_text: What you feel like eating (e.g., "quick dinner", "Italian")
+                       Optional - can search with just ingredients!
             top_k: Number of results to return
             allow_missing: How many ingredients you're willing to buy (0=none, 1-2=flexible)
             use_semantic: Whether to boost with semantic similarity
@@ -297,11 +331,13 @@ class RecipeKnowledgeAgent:
         Philosophy:
             1. Prioritize using MORE leftovers (3 items > 1 item)
             2. Prefer recipes you can make NOW (zero shopping)
-            3. Boost recipes that match your taste/preference
+            3. Boost recipes semantically similar to your ingredients + preferences
         """
+        pantry_list = list(pantry_items)
+        
         # Get leftover-optimized candidates
         pantry_cands = self.pantry_candidates(
-            pantry_items, 
+            pantry_list, 
             allow_missing=allow_missing,
             top_k=500
         )
@@ -309,7 +345,13 @@ class RecipeKnowledgeAgent:
         # Get semantic matches if enabled
         sem_cands = []
         if use_semantic and self.qdrant_client and self.embed_model:
-            sem_cands = self.semantic_search(query_text, k=500)
+            # Pass BOTH query text AND pantry items to semantic search!
+            # The model finds recipes similar to your ingredients + preferences
+            sem_cands = self.semantic_search(
+                query=query_text,
+                pantry_items=pantry_list,
+                k=500
+            )
 
         # Build combined scores
         score_map: Dict[int, Tuple[float, int, List[str]]] = {}  # rid -> (score, num_used, missing)
@@ -326,7 +368,6 @@ class RecipeKnowledgeAgent:
                     # Add semantic bonus (scaled to be meaningful but not dominant)
                     # Max semantic boost: ~50 points (less than using 1 extra ingredient = 100 points)
                     boosted_score = current_score + (sem_score * 50)
-                    score_map[rid] = (boosted_score, num_used, missing)
                     score_map[rid] = (boosted_score, num_used, missing)
         
         # Sort and return
