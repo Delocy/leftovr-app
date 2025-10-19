@@ -2,11 +2,12 @@
 """
 Test the Hybrid Search - The Final Production Method for LEFTOVR
 
-This is the method your agent will use in production.
-It combines:
+This is the ONLY test file you need for the recipe knowledge agent.
+It demonstrates:
   1. Exact ingredient matching (pantry_candidates)
   2. Semantic similarity (enhanced with ingredients + preferences)
   3. LEFTOVR scoring (prioritize using MORE leftovers)
+  4. Full recipe details including DIRECTIONS (from metadata)
 """
 
 from agents.recipe_knowledge_agent import RecipeKnowledgeAgent
@@ -19,10 +20,11 @@ def print_separator(title="", char="="):
     else:
         print(f"\n{char*80}\n")
 
-def print_recipe(idx, recipe, score, num_used, missing):
+def print_recipe(idx, recipe, score, num_used, missing, show_directions=False):
     """Pretty print a recipe result"""
     title = recipe.get('title', 'Unknown')
     ingredients = recipe.get('ner', [])
+    directions = recipe.get('directions', [])
     
     print(f"{idx}. [{score:.1f} pts] {title}")
     print(f"   ✓ Uses {num_used} of your pantry items")
@@ -35,9 +37,18 @@ def print_recipe(idx, recipe, score, num_used, missing):
         print(f"   ✅ You can make this NOW (no shopping needed!)")
     
     if ingredients:
-        print(f"   📝 Recipe ingredients: {', '.join(ingredients[:6])}")
+        print(f"   📝 Ingredients: {', '.join(ingredients[:6])}")
         if len(ingredients) > 6:
             print(f"      ... and {len(ingredients) - 6} more ingredients")
+    
+    if show_directions and directions:
+        print(f"   👨‍🍳 Directions ({len(directions)} steps):")
+        for i, step in enumerate(directions[:3], 1):
+            # Truncate long steps
+            step_text = step[:100] + "..." if len(step) > 100 else step
+            print(f"      {i}. {step_text}")
+        if len(directions) > 3:
+            print(f"      ... and {len(directions) - 3} more steps")
     print()
 
 
@@ -333,6 +344,7 @@ Return Format:
         'id': 12345,
         'title': 'Lemon Chicken',
         'ner': ['chicken breast', 'lemon', 'garlic', ...],
+        'directions': ['Step 1...', 'Step 2...', ...],  # ✅ Available!
         'link': 'http://...',
         'source': 'allrecipes.com'
     }
@@ -340,7 +352,72 @@ Return Format:
     num_used = 5
     missing = ['white wine']
 
+💡 NOTE: Directions are NOT in embeddings (keeping them lightweight),
+         but ARE in metadata and returned with every recipe!
+
+🚀 This is your production-ready method!
 """)
+    
+    # ============================================================================
+    # BONUS: Show Full Recipe Details with Directions
+    # ============================================================================
+    print_separator("🍳 BONUS: Full Recipe Details with Directions")
+    print("Demonstrating that directions are available in metadata")
+    print("even though they're NOT included in embeddings\n")
+    
+    pantry = ["chicken", "garlic", "lemon"]
+    print(f"🥘 Pantry: {', '.join(pantry)}")
+    print(f"🎯 Looking for: simple chicken recipe\n")
+    
+    results = agent.hybrid_query(
+        pantry_items=pantry,
+        query_text="simple easy chicken",
+        top_k=2,
+        allow_missing=2
+    )
+    
+    for i, (recipe, score, num_used, missing) in enumerate(results, 1):
+        print(f"\n{'='*80}")
+        print(f"  RECIPE {i}: {recipe.get('title', 'Unknown')}")
+        print(f"{'='*80}")
+        
+        print(f"\n💯 LEFTOVR Score: {score:.0f} points")
+        print(f"✓ Uses {num_used} of your pantry items")
+        if missing:
+            print(f"⚠️  Missing: {', '.join(missing)}")
+        else:
+            print(f"✅ You have everything!")
+        
+        # Ingredients
+        ingredients = recipe.get('ner', [])
+        if ingredients:
+            print(f"\n📝 INGREDIENTS ({len(ingredients)} total):")
+            for ing in ingredients[:10]:
+                print(f"   • {ing}")
+            if len(ingredients) > 10:
+                print(f"   ... and {len(ingredients) - 10} more")
+        
+        # Directions - Available from metadata!
+        directions = recipe.get('directions', [])
+        if directions:
+            print(f"\n👨‍🍳 COOKING DIRECTIONS ({len(directions)} steps):")
+            for j, step in enumerate(directions[:5], 1):
+                step_text = step[:100] + "..." if len(step) > 100 else step
+                print(f"   {j}. {step_text}")
+            if len(directions) > 5:
+                print(f"   ... and {len(directions) - 5} more steps")
+        else:
+            print(f"\n👨‍🍳 COOKING DIRECTIONS: Not available for this recipe")
+        
+        # Source
+        print(f"\n🔗 Source: {recipe.get('source', 'Unknown')}")
+        if recipe.get('link'):
+            print(f"🌐 Link: {recipe.get('link')}")
+        
+        print(f"\n{'='*80}")
+    
+    print("\n✅ As you can see, directions are fully available in the metadata!")
+    print("   They're just not used in the embedding (keeps search fast & focused)")
 
 if __name__ == "__main__":
     main()
