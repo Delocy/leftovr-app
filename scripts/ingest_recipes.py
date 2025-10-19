@@ -5,8 +5,8 @@ Usage:
 
 Produces:
   - data/recipe_metadata.jsonl
-  - data/ingredient_index.json
-  - optionally data/recipe_index.faiss (if sentence-transformers and faiss installed)
+  - data/ingredient_index.json (ingredient to recipe ID mapping) -> pure hashtable lookup
+  - optionally data/recipe_index.faiss (if sentence-transformers and faiss installed) -> for semantic similarity search
 """
 from __future__ import annotations
 
@@ -96,12 +96,13 @@ def build_indices(input_path: str, outdir: str, build_faiss: bool = False, embed
             for t in ner_norm:
                 ingredient_index[t].append(rid)
 
+            # embeds everything: title + ingredients + directions
             if build_emb:
                 txt = (row.get('title') or '') + '. Ingredients: ' + (row.get('ingredients') or '') + '. Directions: ' + (row.get('directions') or '')
                 texts.append(txt)
                 ids.append(rid)
 
-    print(f"\nFinished processing {count:,} recipes")
+    print(f"\nFinished processing {count:,} rec ipes")
     
     # write ingredient index
     print("Writing ingredient index...")

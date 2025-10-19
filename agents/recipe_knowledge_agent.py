@@ -110,10 +110,12 @@ class RecipeKnowledgeAgent:
             ner = meta.get('ner', [])
             denom = max(1, len(ner))
             score = float(overlap) / denom
+            # at least two ingredients must match
             if overlap >= min_overlap:
                 scored.append((rid, score))
 
         scored.sort(key=lambda x: x[1], reverse=True)
+        # returns recipes with the highest overlap fraction
         return scored[:top_k]
 
     def semantic_search(self, query: str, k: int = 10) -> List[Tuple[int, float]]:
@@ -132,6 +134,7 @@ class RecipeKnowledgeAgent:
             results.append((int(idx), float(dist)))
         return results
 
+    # gives recipes that both match my pantry and are semantically relevant to my query
     def hybrid_query(self, pantry_items: Iterable[str], query_text: str, top_k: int = 20) -> List[Tuple[dict, float]]:
         """Combine pantry overlap candidates with semantic search to produce final ranked list of metadata objects.
 
