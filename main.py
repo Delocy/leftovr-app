@@ -3,13 +3,12 @@ from dotenv import load_dotenv
 from typing import Dict, List, Any, Optional, Literal
 import json
 from langchain_openai import ChatOpenAI
-from langgraph.graph import StateGraph, MessagesState, START, END
+from langgraph.graph import StateGraph, MessagesState
 from langgraph.types import Command
 
 from langgraph.cache.memory import InMemoryCache
 import asyncio
 from datetime import datetime, timezone
-import argparse
 
 # Load environment variables
 load_dotenv()
@@ -25,6 +24,7 @@ llm = ChatOpenAI(
 
 from agents.waiter_agent import WaiterAgent
 from agents.executive_chef_agent import ExecutiveChefAgent
+from agents.pantry_agent import PantryAgent
 
 
 # Modern collaborative state
@@ -39,6 +39,12 @@ class ModernCollaborativeState(MessagesState):
     quality_issues: List[str]
     coordination_log: List[str]
 
+    # Pantry-related fields
+    pantry_inventory: List[Dict[str, Any]]
+    expiring_items: List[Dict[str, Any]]
+    pantry_summary: Dict[str, Any]
+    recipe_feasibility: Optional[Dict[str, Any]]
+
 class ModernCollaborativeSystem:
     """collaborative system with enhanced orchestration"""
 
@@ -46,13 +52,13 @@ class ModernCollaborativeSystem:
         self.graph = self._create_modern_collaborative_graph()
         self.waiter = WaiterAgent(name="Maison d'Être")
         self.exec_chef = ExecutiveChefAgent(name="Executive Chef")
+        self.pantry = PantryAgent(name="Pantry Manager")
 
     def _create_modern_collaborative_graph(self) -> StateGraph:
         """Create collaborative workflow with Command API"""
         workflow = StateGraph(ModernCollaborativeState)
 
-            # --- STUB FUNCTIONS ---
-        def waiter_agent_collect(state) -> Command[Literal["waiter_collect_info", "executive_chef_review", "return_to_user"]]:
+        def waiter_agent_collect(state) -> Command[Literal["waiter_collect_info", "pantry_check", "return_to_user"]]:
             # Ensure log exists
             log = state.get("coordination_log", [])
 
@@ -98,21 +104,21 @@ class ModernCollaborativeSystem:
             required = ["diet", "allergies", "restrictions", "cuisines", "skill"]
             satisfied = all(bool(prefs.get(k)) for k in required)
             if satisfied:
-                log.append("Waiter: preferences complete, handing off to executive chef")
-                print("Waiter: preferences complete, handing off to executive chef")
+                log.append("Waiter: preferences complete, checking pantry inventory")
+                print("Waiter: preferences complete, checking pantry inventory")
                 return Command(
                     update={
                         "waiter_satisfied": True,
                         "handoff_packet": {
                             "user_preferences": prefs,
                             "timestamp": datetime.now(timezone.utc).isoformat(),
-                            "notes": "Collected by waiter; ready for executive chef."
+                            "notes": "Collected by waiter; ready for pantry check."
                         },
                         "coordination_log": log,
                         "user_preferences": prefs,
                         "latest_user_message": None
                     },
-                    goto="executive_chef_review"
+                    goto="pantry_check"
                 )
             else:
                 missing = [k for k in required if not prefs.get(k)]
@@ -129,19 +135,99 @@ class ModernCollaborativeSystem:
                     goto="return_to_user"
                 )
 
+        def pantry_check(state) -> Command[Literal["executive_chef_review"]]:
+            """Pantry Agent checks inventory and communicates with Executive Chef."""
+            log = state.get("coordination_log", [])
+
+            log.append("Pantry Agent: Checking inventory status")
+            print("\n🗄️  Pantry Agent: Checking inventory...")
+
+            # Get pantry data
+            summary = self.pantry.get_pantry_summary()
+            expiring = self.pantry.get_expiring_soon(days_threshold=3)
+            inventory = self.pantry.get_inventory()
+
+            print(f"   📊 {summary['total_ingredients']} ingredients in stock")
+            print(f"   ⚠️  {len(expiring)} items expiring soon")
+
+            # Alert about critical items
+            if expiring:
+                critical = [x for x in expiring if x.get('priority') == 'CRITICAL']
+                high = [x for x in expiring if x.get('priority') == 'HIGH']
+
+                if critical:
+                    print(f"   🚨 {len(critical)} CRITICAL items (use immediately):")
+                    for item in critical[:3]:
+                        print(f"      • {item['ingredient_name']}: {item['quantity']} {item['unit']} "
+                              f"(expires in {item['days_until_expiry']} day(s))")
+
+                if high:
+                    print(f"   ⚠️  {len(high)} HIGH priority items (use soon):")
+                    for item in high[:3]:
+                        print(f"      • {item['ingredient_name']}: {item['quantity']} {item['unit']} "
+                              f"(expires in {item['days_until_expiry']} day(s))")
+
+            # Generate proactive alerts for Executive Chef
+            alerts = self.pantry.generate_expiration_alerts()
+            if alerts:
+                log.append(f"Pantry Agent: Generated {len(alerts)} expiration alerts for Executive Chef")
+                print(f"   📢 Sent {len(alerts)} alert(s) to Executive Chef")
+
+            log.append(f"Pantry Agent: Inventory check complete - {summary['total_ingredients']} items, {len(expiring)} expiring")
+
+            return Command(
+                update={
+                    "coordination_log": log,
+                    "pantry_inventory": inventory,
+                    "expiring_items": expiring,
+                    "pantry_summary": summary
+                },
+                goto="executive_chef_review"
+            )
+
         def exec_chef_review(state) -> Command[Literal["executive_chef_quality_check"]]:
+            """Executive Chef reviews preferences and pantry data, coordinates with Pantry Agent."""
             log = state.get("coordination_log", [])
             handoff = state.get("handoff_packet", {})
             user_prefs = handoff.get("user_preferences", {})
 
+            # Get pantry data
+            expiring = state.get("expiring_items", [])
+            pantry_summary = state.get("pantry_summary", {})
+
             if handoff:
-                log.append("Executive Chef: handoff packet received; analyzing request")
-                print(f"Executive Chef: Received preferences - {user_prefs}")
+                log.append("Executive Chef: Analyzing request with pantry data")
+                print(f"\n👨‍🍳 Executive Chef: Orchestrating recipe plan...")
+                print(f"   User preferences received: {user_prefs.get('diet', 'omnivore')}, "
+                      f"{len(user_prefs.get('allergies', []))} allergies")
+
+                # Acknowledge pantry status
+                if pantry_summary:
+                    print(f"   Pantry status: {pantry_summary.get('total_ingredients', 0)} ingredients available")
+
+                # Prioritize expiring ingredients
+                if expiring:
+                    priority_items = [x['ingredient_name'] for x in expiring[:5]]
+                    log.append(f"Executive Chef: Prioritizing expiring items: {', '.join(priority_items)}")
+                    print(f"   🎯 Prioritizing: {', '.join(priority_items[:3])}")
 
                 # Analyze complexity and determine query type
                 query_type = self.exec_chef.decide_query_type(user_prefs)
                 log.append(f"Executive Chef: Query type determined as '{query_type}'")
-                print(f"Executive Chef: Query type → {query_type}")
+                print(f"   Strategy: {query_type}")
+
+                # Message to Pantry Agent about strategy (communication)
+                pantry_request = self.pantry.create_message_to_agent(
+                    target_agent='executive_chef',
+                    action='strategy_acknowledgment',
+                    data={
+                        'query_type': query_type,
+                        'prioritize_expiring': len(expiring) > 0,
+                        'expiring_count': len(expiring)
+                    },
+                    priority='medium'
+                )
+                log.append(f"Executive Chef: Communicated strategy to Pantry Agent")
 
                 return Command(
                     update={
@@ -174,13 +260,19 @@ class ModernCollaborativeSystem:
 
             # Get all the data collected so far
             user_prefs = state.get("user_preferences", {})
+            pantry_inventory = state.get("pantry_inventory", [])
+            expiring_items = state.get("expiring_items", [])
+            pantry_summary = state.get("pantry_summary", {})
 
             # Use Executive Chef to orchestrate and synthesize
             print("Executive Chef: Synthesizing final recommendation...")
 
-            # Prepare agent responses for synthesis
+            # Prepare agent responses for synthesis (including pantry data)
             agent_responses = {
-                "user_preferences": user_prefs
+                "user_preferences": user_prefs,
+                "pantry_inventory": pantry_inventory,
+                "expiring_items": expiring_items,
+                "pantry_summary": pantry_summary
             }
 
             # Generate recommendation
@@ -236,6 +328,7 @@ class ModernCollaborativeSystem:
             return Command(update={"coordination_log": log})
 
         workflow.add_node("waiter_collect_info", waiter_agent_collect)
+        workflow.add_node("pantry_check", pantry_check)
         workflow.add_node("executive_chef_review", exec_chef_review)
         workflow.add_node("sous_chef_prepare_recipe", sous_chef_handle)
         workflow.add_node("recipe_knowledge_retrieve", recipe_knowledge_agent)
@@ -245,6 +338,7 @@ class ModernCollaborativeSystem:
 
         # 2. Define edges
         # Routing from waiter_collect_info is controlled at runtime via Command.goto
+        workflow.add_edge("pantry_check", "executive_chef_review")
         workflow.add_edge("executive_chef_review", "executive_chef_quality_check")
 
         workflow.add_edge("sous_chef_prepare_recipe", "recipe_knowledge_retrieve")
@@ -277,6 +371,12 @@ class ModernCollaborativeSystem:
             "agent_assignments": {},
             "messages": [],
             "coordination_log": [],
+
+            # Pantry-related state
+            "pantry_inventory": [],
+            "expiring_items": [],
+            "pantry_summary": {},
+            "recipe_feasibility": None,
         }
 
         state = await self.graph.ainvoke(state)
