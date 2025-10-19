@@ -678,7 +678,7 @@ class ExecutiveChefAgent:
             {'summary': pantry_summary, 'expiring': expiring_items}
         )
 
-        # Step 4: Collect agent responses (stub - will be filled by actual agents)
+        # Step 4: Collect agent responses
         agent_responses = {
             'pantry': {
                 'summary': pantry_summary,
