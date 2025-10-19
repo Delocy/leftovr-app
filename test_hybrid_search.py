@@ -415,9 +415,6 @@ Return Format:
             print(f"🌐 Link: {recipe.get('link')}")
         
         print(f"\n{'='*80}")
-    
-    print("\n✅ As you can see, directions are fully available in the metadata!")
-    print("   They're just not used in the embedding (keeps search fast & focused)")
 
 if __name__ == "__main__":
     main()
