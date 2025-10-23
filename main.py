@@ -159,8 +159,6 @@ class ModernCollaborativeSystem:
             # 2) Recipe queries
             if query_type == "recipe":
                 extracted = self.waiter.extract_preferences(llm, messages)
-                print(f"extracted: {extracted}")
-
                 # Merge extracted preferences
                 def merge_list(key):
                     existing = list(current_prefs.get(key, []) or [])

@@ -228,7 +228,6 @@ class WaiterAgent:
         try:
             data = json.loads(raw_content)
             qtype = data.get("query_type", "general")
-            print(f"query classification:{qtype}")
         except Exception as e:
             print(f"⚠️ classify_query parse failed: {e}\nRaw content:\n{raw_content}")
             qtype = "general"
