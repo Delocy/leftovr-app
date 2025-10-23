@@ -196,7 +196,9 @@ class ModernCollaborativeSystem:
                 required = ["allergies", "restrictions"]
                 missing = [k for k in required if not current_prefs.get(k)]
                 if missing:
-                    print(f"Waiter: missing fields for recipe query -> {', '.join(missing)}")
+                    insufficient_prompt = f"Waiter: missing fields for recipe query -> {', '.join(missing)}"
+                    print(f"\nWaiter: {missing_prompt}")
+                    messages.append({"role": "assistant", "content": insufficient_prompt})
                     return Command(
                         update={
                             "coordination_log": log,
