@@ -17,6 +17,7 @@ class WaiterAgent:
                 "Answer the user's question naturally. "
                 "If it’s not about food, just provide the info politely. "
                 "Do not ask about diet, allergies, or cuisines unless the user brings it up."
+                "DO NOT PROVIDE RECIPES."
             )
         if context == "pantry":
             return (
@@ -85,11 +86,8 @@ class WaiterAgent:
                 ###INSTRUCTIONS###
                 1. **WELCOME THE USER** with a warm and engaging introduction. Establish a friendly tone and express enthusiasm about helping them explore delicious food options.
                 2. **ASK ESSENTIAL QUESTIONS** about:
-                - DIETARY PREFERENCES (e.g., vegetarian, vegan, pescatarian, omnivore)
                 - ALLERGIES (e.g., nuts, shellfish, gluten)
-                - DIETARY RESTRICTIONS (e.g., halal, kosher, lactose intolerance)
-                - FAVORITE CUISINES or FLAVORS (e.g., spicy, Mediterranean, comfort food)
-                - COOKING SKILL LEVEL (e.g., beginner, home cook, expert)
+                - DIETARY RESTRICTIONS (e.g., vegetarian, vegan, pescatarian, omnivore, halal, kosher, lactose intolerance)
                 3. **CONFIRM UNDERSTANDING** by restating key preferences to ensure accuracy.
                 4. **PREPARE HANDOFF**: Once all essential information is gathered, SUMMARIZE the details clearly and POLITELY INFORM the user that their preferences will be shared with the next agent for tailored recipe recommendations.
                 5. **MAINTAIN A CONSISTENT PERSONA**: You are polite, conversational, knowledgeable about food culture, and naturally curious about people’s tastes.
@@ -101,7 +99,7 @@ class WaiterAgent:
                 2. **BASICS** — determine what essential dietary information is missing to create a complete food profile.
                 3. **BREAK DOWN** the conversation into small, friendly questions that make the user feel comfortable.
                 4. **ANALYZE** their responses to infer personality cues (e.g., adventurous eater vs. comfort food lover).
-                5. **BUILD** a concise summary of their preferences (diet, allergies, cuisine types).
+                5. **BUILD** a concise summary of their preferences (dietary restrictions, allergies).
                 6. **EDGE CASES** — handle users who refuse to share certain information by politely offering general options instead.
                 7. **FINAL ANSWER** — deliver a warm closing message, confirming that their information will be passed to the next culinary agent.
 
@@ -157,11 +155,8 @@ class WaiterAgent:
         schema_instruction = (
             "Return ONLY valid JSON matching this schema (no extra text):\n"
             "{\n"
-            "  \"diet\": string | null,\n"
             "  \"allergies\": string[] | [],\n"
             "  \"restrictions\": string[] | [],\n"
-            "  \"cuisines\": string[] | [],\n"
-            "  \"skill\": string | null\n"
             "}"
         )
         sys = (
@@ -174,7 +169,7 @@ class WaiterAgent:
         try:
             data = json.loads(resp.content)
         except Exception:
-            return {"diet": None, "allergies": [], "restrictions": [], "cuisines": [], "skill": None}
+            return {"allergies": [], "restrictions": []}
 
         # Normalize types
         def to_list(v):
@@ -185,15 +180,15 @@ class WaiterAgent:
             return [str(v).strip()] if str(v).strip() else []
 
         return {
-            "diet": (data.get("diet") or None),
             "allergies": to_list(data.get("allergies")),
             "restrictions": to_list(data.get("restrictions")),
-            "cuisines": to_list(data.get("cuisines")),
-            "skill": (data.get("skill") or None)
         }
-
-    def classify_query(self, llm, user_text: str) -> dict:
-        """Classify query into 'pantry', 'recipe', or 'general'."""
+        
+    def classify_query(self, llm, messages: list) -> dict:
+        """
+        Classify query into 'pantry', 'recipe', or 'general'.
+        messages: list of dicts OR LangChain Message objects
+        """
         schema_instruction = (
             "Return ONLY valid JSON matching this schema (no extra text):\n"
             "{\n"
@@ -202,40 +197,46 @@ class WaiterAgent:
         )
         sys = (
             "You classify the user's query strictly as one of three types: "
-            "'pantry', 'recipe', or 'general'. If unsure, choose 'general'. "
+            "'pantry', 'recipe', or 'general'. "
+            "Focus primarily on the most recent messages, but consider earlier messages "
+            "to maintain ongoing context (e.g., if a recipe request was started previously). "
             "Return only the JSON object and nothing else."
         )
 
+        # Normalize messages to dicts
+        normalized_msgs = []
+        for m in messages:
+            if isinstance(m, dict):
+                normalized_msgs.append(m)
+            elif hasattr(m, "content") and hasattr(m, "type"):  # LangChain messages
+                role = m.type if hasattr(m, "type") else "assistant"
+                normalized_msgs.append({"role": role, "content": m.content})
+            else:
+                # fallback
+                normalized_msgs.append({"role": "unknown", "content": str(m)})
+
+        # Flatten for LLM input
+        chat_text = "\n".join(f"{m['role'].capitalize()}: {m['content']}" for m in normalized_msgs)
+
         resp = llm.invoke([
             SystemMessage(content=sys),
-            HumanMessage(content=f"{schema_instruction}\n\nUser text:\n{user_text}")
+            HumanMessage(content=f"{schema_instruction}\n\nChat history:\n{chat_text}")
         ])
-        
 
-        # --- Normalize content ---
-        raw_content = None
-        if isinstance(resp.content, str):
-            raw_content = resp.content
-        elif isinstance(resp.content, list):
-            # Sometimes resp.content is a list of dicts with type/text
-            raw_content = "".join(
-                part.get("text", "") if isinstance(part, dict) else str(part)
-                for part in resp.content
-            )
-        else:
-            raw_content = str(resp)
-
-        # --- Try parsing JSON ---
+        # normalize and parse JSON
+        raw_content = resp.content if isinstance(resp.content, str) else str(resp.content)
         try:
             data = json.loads(raw_content)
-            print(data)
             qtype = data.get("query_type", "general")
+            print(f"query classification:{qtype}")
         except Exception as e:
             print(f"⚠️ classify_query parse failed: {e}\nRaw content:\n{raw_content}")
             qtype = "general"
 
         return {"query_type": qtype}
-    
+
+
+        
     def pantry_info_sufficient(self, llm, user_text: str) -> dict:
         """
         Determine if pantry-related input has sufficient information for CRUD operations.
