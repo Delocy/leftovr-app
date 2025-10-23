@@ -60,54 +60,58 @@ class ModernCollaborativeSystem:
 
         def waiter_agent_collect(state) -> Command[Literal["waiter_collect_info", "pantry_check", "return_to_user"]]:
             """
-            Corrected waiter logic:
-            - classify incoming message first
-            - only require full preferences for 'recipe' queries
-            - 'pantry' and 'general' skip preference requirements and proceed
+            Waiter agent logic:
+            - Classify every new user message
+            - Maintain full messages history for context-aware classification
+            - Only require full preferences for 'recipe' queries
+            - 'pantry' and 'general' skip preference requirements
             """
             log = state.get("coordination_log", [])
             current_prefs = state.get("user_preferences", {}) or {}
+            messages = state.get("messages", [])  # full chat history
 
-            # Helper: determine if user preferences contain any meaningful info
+            # Helper: check if preferences contain any meaningful info
             def _is_prefs_empty(prefs: dict) -> bool:
-                return not any(
-                    prefs.get(k)
-                    for k in ["diet", "skill", "allergies", "restrictions", "cuisines"]
-                )
+                return not any(prefs.get(k) for k in ["allergies", "restrictions"])
 
             latest = state.get("latest_user_message")
-            if latest:
-                # 1) classify the query first (recipe | pantry | general)
-                classification = self.waiter.classify_query(llm, latest)
-                query_type = classification.get("query_type")
 
+            # --- Update messages history ---
+            if latest:
+                messages.append({"role": "user", "content": latest})
             else:
-                # No latest user message -> default behavior
-                intro = self.waiter.run(llm)
+                # No latest message, trigger initial greeting
+                intro = self.waiter.run(llm, context="query_type")
                 print(f"\nWaiter: {intro}")
+                messages.append({"role": "assistant", "content": intro})
                 return Command(
                     update={
-                        "coordination_log": [],
+                        "coordination_log": log,
+                        "user_preferences": current_prefs,
                         "waiter_satisfied": False,
                         "latest_user_message": None,
-                        "query_type": None
+                        "query_type": None,
+                        "messages": messages,
                     },
-                    goto="return_to_user"  # triggers interrupt_before so user can type
+                    goto="return_to_user"
                 )
 
+            # --- Classify query using full chat history ---
+            # classification = self.waiter.classify_query(llm, messages)
+            # query_type = classification.get("query_type")
+            # state["query_type"] = query_type
+            prev_query_type = state.get("query_type")
+            if prev_query_type == "recipe" and _is_prefs_empty(current_prefs):
+                query_type = "recipe"
+            else:
+                classification = self.waiter.classify_query(llm, messages)
+                query_type = classification.get("query_type", "general")
             # --- BEHAVIOR BRANCHES ---
 
-            # 1) If this is NOT a recipe query, do NOT require full preferences.
-            #    Proceed directly to pantry_check (for 'pantry') or return_to_user (for 'general')
+            # 1) Pantry or general queries
             if query_type in {"pantry", "general"}:
-
-                # If preferences exist or we intentionally skip greeting, continue flow:
-                # For pantry -> go check pantry; for general -> return to user (no further pipeline work)
                 if query_type == "pantry":
-                    ### NEED TO CHECK IF IT IS SATISFIED
-                    # check if sufficient info is present
-                    suff_info = self.waiter.pantry_info_sufficient(llm, latest).get("sufficient_info")
-                    
+                    suff_info = self.waiter.pantry_info_sufficient(llm, messages).get("sufficient_info")
                     if suff_info:
                         return Command(
                             update={
@@ -115,71 +119,83 @@ class ModernCollaborativeSystem:
                                 "user_preferences": current_prefs,
                                 "waiter_satisfied": True,
                                 "query_type": query_type,
+                                "messages": messages,
                             },
                             goto="pantry_check"
                         )
                     else:
-                        # ask user for clarification
-                        prompt = "Could you clarify what pantry action you'd like to take? For example, add, update, remove, or view items."
+                        prompt = (
+                            "Could you clarify what pantry action you'd like to take? "
+                            "For example, add, update, remove, or view items."
+                        )
                         print(f"\nWaiter: {prompt}")
+                        messages.append({"role": "assistant", "content": prompt})
                         return Command(
                             update={
                                 "coordination_log": log,
                                 "user_preferences": current_prefs,
                                 "waiter_satisfied": False,
                                 "query_type": query_type,
+                                "messages": messages,
                             },
                             goto="return_to_user"
                         )
                 else:  # general
-                    res = self.waiter.respond(llm, latest)
+                    user_text = latest  # latest user message string
+                    res = self.waiter.respond(llm, user_text)
                     print(res)
+                    messages.append({"role": "assistant", "content": res})
                     return Command(
                         update={
                             "coordination_log": log,
                             "user_preferences": current_prefs,
                             "waiter_satisfied": False,
                             "query_type": query_type,
+                            "messages": messages,
                         },
                         goto="return_to_user"
                     )
 
-            # 2) If this IS a recipe query, require the full preference set
-            #    If prefs are entirely empty -> greet/ask and return control to user
+            # 2) Recipe queries
             if query_type == "recipe":
-                
-                extracted = self.waiter.extract_preferences(llm, latest)
+                extracted = self.waiter.extract_preferences(llm, messages)
                 print(f"extracted: {extracted}")
 
+                # Merge extracted preferences
                 def merge_list(key):
                     existing = list(current_prefs.get(key, []) or [])
                     incoming = list(extracted.get(key, []) or [])
                     return existing + [x for x in incoming if x not in existing]
 
                 current_prefs = {
-                    "diet": current_prefs.get("diet") or extracted.get("diet"),
-                    "skill": current_prefs.get("skill") or extracted.get("skill"),
                     "allergies": merge_list("allergies"),
                     "restrictions": merge_list("restrictions"),
-                    "cuisines": merge_list("cuisines"),
                 }
-                
+
                 if _is_prefs_empty(current_prefs):
-                    intro = self.waiter.run(llm, context = "recipe") 
-                    print(f"\nWaiter: {intro}")
+                    missing_fields = [k for k in ["allergies", "restrictions"] if not current_prefs.get(k)]
+
+                    missing_prompt = (
+                        "I need some more information to suggest recipes.\n"
+                        f"Please provide your {', '.join(missing_fields)}."
+                    )
+                    print(f"\nWaiter: {missing_prompt}")
+                    
+                    messages.append({"role": "assistant", "content": missing_prompt})
                     return Command(
                         update={
                             "coordination_log": log,
                             "user_preferences": current_prefs,
                             "waiter_satisfied": False,
-                            "latest_user_message": None,
+                            "latest_user_message": latest,
                             "query_type": query_type,
+                            "messages": messages,
                         },
                         goto="return_to_user"
                     )
 
-                # Otherwise check for missing essential fields
-                required = ["diet", "allergies", "restrictions", "cuisines", "skill"]
+                # Check for missing essential fields
+                required = ["allergies", "restrictions"]
                 missing = [k for k in required if not current_prefs.get(k)]
                 if missing:
                     print(f"Waiter: missing fields for recipe query -> {', '.join(missing)}")
@@ -188,12 +204,14 @@ class ModernCollaborativeSystem:
                             "coordination_log": log,
                             "user_preferences": current_prefs,
                             "waiter_satisfied": False,
+                            "latest_user_message": latest,
                             "query_type": query_type,
+                            "messages": messages,
                         },
                         goto="return_to_user"
                     )
 
-                # All required recipe preferences present -> handoff to pantry check
+                # All required recipe preferences present -> handoff
                 log.append("Waiter: recipe preferences complete; handing off")
                 return Command(
                     update={
@@ -206,17 +224,19 @@ class ModernCollaborativeSystem:
                             "notes": "Collected by waiter; ready for pantry check."
                         },
                         "query_type": query_type,
+                        "messages": messages,
                     },
                     goto="pantry_check"
                 )
 
-            # Safety fallback (shouldn't happen): treat as general
+            # Safety fallback
             return Command(
                 update={
                     "coordination_log": log,
                     "user_preferences": current_prefs,
                     "waiter_satisfied": True,
                     "query_type": query_type,
+                    "messages": messages,
                 },
                 goto="return_to_user"
             )
