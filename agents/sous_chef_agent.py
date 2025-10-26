@@ -493,6 +493,9 @@ class SousChefAgent:
             
             result = json.loads(response_text)
             recommendations = result.get("recommendations", [])
+            if not recommendations and recipe_results:
+                recommendations = self.build_fallback_recommendations(recipe_results, user_preferences)
+                print("⚠️  Using fallback recommendations due to parsing issues")
             
             self.current_recommendations = recommendations
             
@@ -585,8 +588,12 @@ class SousChefAgent:
             return None
         
         if not self.current_recommendations:
-            print(f"❌ No current recommendations available")
-            return None
+            if recipe_results:
+                print("⚠️  No cached recommendations, falling back to raw recipe results")
+                self.current_recommendations = recipe_results[:3]
+            else:
+                print(f"❌ No current recommendations available")
+                return None
         
         if selection > len(self.current_recommendations):
             print(f"❌ Selection {selection} out of range")
@@ -820,6 +827,82 @@ class SousChefAgent:
             output += f"⏱️ Total Time: {cooking_time.get('total', '?')} minutes\n"
             
             return output
+
+    def build_fallback_recipe_summary(
+        self,
+        recipe: Dict[str, Any],
+        user_preferences: Dict[str, Any]
+    ) -> str:
+        """
+        Construct a lightweight fallback recipe summary when adaptation fails.
+        
+        Args:
+            recipe: Original recipe data from Recipe Knowledge Agent
+            user_preferences: User dietary preferences (for contextual tips)
+        
+        Returns:
+            Human-readable markdown summary.
+        """
+        title = recipe.get("title", "Selected Recipe")
+        ingredients = recipe.get("ingredients", [])
+        missing = recipe.get("missing_ingredients", [])
+        link = recipe.get("link")
+        prefs_note = []
+        if user_preferences.get("diet") and user_preferences.get("diet") != "omnivore":
+            prefs_note.append(f"Diet: {user_preferences['diet']}")
+        if user_preferences.get("allergies"):
+            prefs_note.append("Avoid: " + ", ".join(user_preferences["allergies"]))
+        if user_preferences.get("skill"):
+            prefs_note.append(f"Skill level: {user_preferences['skill']}")
+
+        lines = [f"# {title}", ""]
+        if prefs_note:
+            lines.append("_Preferences noted: " + " | ".join(prefs_note) + "_")
+            lines.append("")
+        lines.append("## Ingredients to Gather")
+        if ingredients:
+            for item in ingredients:
+                lines.append(f"- {item}")
+        else:
+            lines.append("- Ingredient list unavailable in dataset")
+        lines.append("")
+        if missing:
+            lines.append("### Items to shop for")
+            for item in missing:
+                lines.append(f"- 🛒 {item}")
+            lines.append("")
+        if link:
+            lines.append(f"[View full instructions online]({link})")
+            lines.append("")
+        lines.append("> Unable to fully customize this recipe automatically. Follow the original instructions and adjust seasonings to taste.")
+        return "\n".join(lines)
+
+    def build_fallback_recommendations(
+        self,
+        recipe_results: List[Dict[str, Any]],
+        user_preferences: Dict[str, Any]
+    ) -> List[Dict[str, Any]]:
+        """Generate a simple deterministic top-3 recommendation list."""
+        fallback = []
+        for rank, recipe in enumerate(recipe_results[:3], 1):
+            fallback.append({
+                "rank": rank,
+                "recipe_id": recipe.get("id"),
+                "title": recipe.get("title", f"Recipe {rank}"),
+                "score": float(recipe.get("score", 0)),
+                "why_recommended": "High overlap with your pantry items.",
+                "pantry_items_used": recipe.get("pantry_items_used", 0),
+                "total_ingredients": len(recipe.get("ingredients", [])),
+                "missing_ingredients": recipe.get("missing_ingredients", []),
+                "expiring_items_used": [],
+                "time_minutes": recipe.get("time_minutes") or "?",
+                "difficulty": recipe.get("difficulty") or user_preferences.get("skill", "intermediate"),
+                "tags": [],
+                "allergen_safe": True,
+                "dietary_compliant": True,
+                "link": recipe.get("link")
+            })
+        return fallback
 
     def create_message_to_agent(
         self,

@@ -24,6 +24,58 @@ class PantryAgent:
         self.last_sync: Optional[datetime] = None
         self.operation_log: List[Dict[str, Any]] = []
 
+    def _normalize_name(self, ingredient_name: str) -> str:
+        """Normalize ingredient name for consistent cache keys."""
+        return ingredient_name.strip().lower()
+
+    def add_or_update_ingredient(
+        self,
+        ingredient_name: str,
+        quantity: Any,
+        unit: str = "pieces",
+        expiration_date: Optional[str] = None,
+        category: str = "other",
+        location: str = "pantry"
+    ) -> Dict[str, Any]:
+        """
+        Add a new ingredient or update an existing one in the in-memory cache.
+
+        Args:
+            ingredient_name: Display name of the ingredient.
+            quantity: Quantity available (attempts to coerce to float).
+            unit: Unit of measure (defaults to pieces).
+            expiration_date: Optional ISO-8601 formatted expiration string.
+            category: Ingredient category tag.
+            location: Storage location tag.
+
+        Returns:
+            The ingredient record stored in the cache.
+        """
+        normalized = self._normalize_name(ingredient_name)
+        existing = self.inventory_cache.get(normalized, {}).copy()
+
+        try:
+            qty_value = float(quantity)
+        except (TypeError, ValueError):
+            qty_value = existing.get("quantity", 1.0)
+
+        record = {
+            "ingredient_name": ingredient_name,
+            "quantity": qty_value,
+            "unit": unit or existing.get("unit", ""),
+            "expiration_date": expiration_date if expiration_date is not None else existing.get("expiration_date"),
+            "category": category or existing.get("category", "other"),
+            "location": location or existing.get("location", "pantry"),
+            "last_updated": datetime.now().isoformat()
+        }
+
+        self.inventory_cache[normalized] = record
+        self.log_operation(
+            "add_or_update_ingredient",
+            {"ingredient": ingredient_name, "quantity": qty_value, "unit": record["unit"]}
+        )
+        return record
+
     def build_system_prompt(self) -> str:
         """Return the pantry agent system prompt."""
         return """
@@ -341,7 +393,7 @@ class PantryAgent:
                     inventory_items.append(item)
 
                     # Update cache
-                    self.inventory_cache[item['ingredient_name']] = item
+                    self.inventory_cache[self._normalize_name(item['ingredient_name'])] = item
 
             self.last_sync = datetime.now()
             self.log_operation('fetch_inventory', {
@@ -410,7 +462,14 @@ class PantryAgent:
             for update in updates:
                 name = update.get('ingredient_name')
                 if name:
-                    self.inventory_cache[name] = update
+                    self.add_or_update_ingredient(
+                        ingredient_name=name,
+                        quantity=update.get('quantity', 0),
+                        unit=update.get('unit', ''),
+                        expiration_date=update.get('expiration_date'),
+                        category=update.get('category', 'other'),
+                        location=update.get('location', 'pantry')
+                    )
 
             self.log_operation('update_inventory', {
                 'status': 'success',
@@ -453,7 +512,8 @@ class PantryAgent:
         Returns:
             Ingredient details or None if not found
         """
-        return self.inventory_cache.get(ingredient_name)
+        normalized = self._normalize_name(ingredient_name)
+        return self.inventory_cache.get(normalized) or self.inventory_cache.get(ingredient_name)
 
     def get_expiring_soon(self, days_threshold: int = 3) -> List[Dict[str, Any]]:
         """
@@ -701,7 +761,8 @@ class PantryAgent:
             consumed_qty = item['quantity']
             unit = item['unit']
 
-            inv_item = self.inventory_cache.get(name)
+            normalized_name = self._normalize_name(name)
+            inv_item = self.inventory_cache.get(normalized_name)
 
             if not inv_item:
                 errors.append(f"Ingredient '{name}' not found in inventory")
@@ -720,6 +781,7 @@ class PantryAgent:
             # Update cache
             inv_item['quantity'] = new_quantity
             inv_item['last_updated'] = datetime.now().isoformat()
+            self.inventory_cache[normalized_name] = inv_item
 
             updates.append({
                 'ingredient': name,
@@ -898,4 +960,3 @@ class PantryAgent:
     def clear_logs(self):
         """Clear operation logs (useful for testing or fresh start)."""
         self.operation_log = []
-
