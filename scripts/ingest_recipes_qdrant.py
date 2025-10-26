@@ -7,13 +7,15 @@ Usage:
   # Also populate Qdrant with all recipes (slow - 3-4 hours for 2.2M recipes)
   python scripts/ingest_recipes_qdrant.py --input assets/full_dataset.csv --outdir data --build-qdrant
 
-  # Populate Qdrant with subset of recipes
-  python scripts/ingest_recipes_qdrant.py --input assets/full_dataset.csv --outdir data --build-qdrant --sample 100000
+  # Process only first N recipes (for testing) - limits BOTH metadata AND Qdrant
+  python scripts/ingest_recipes_qdrant.py --input assets/full_dataset.csv --outdir data --build-qdrant --sample 10000
 
 Produces:
   - data/recipe_metadata.jsonl (recipe metadata)
   - data/ingredient_index.json (ingredient→recipe_ids mapping for fast lookup)
   - ./qdrant_data/ (vector database - if --build-qdrant used)
+
+Note: --sample limits the total number of recipes processed (not just Qdrant ingestion)
 """
 from __future__ import annotations
 
@@ -23,6 +25,7 @@ import json
 import os
 import re
 from collections import defaultdict
+from itertools import islice
 from typing import List, Optional
 
 try:
@@ -120,12 +123,20 @@ def build_indices(
 
     # Process recipes
     print(f"\n📂 Processing recipes from {input_path}...")
+    if sample_size:
+        print(f"   📏 Sample mode: Processing first {sample_size:,} recipes only")
+    
     count = 0
     qdrant_count = 0
     points_batch = []
     
+    # Limit the iterator if sample_size is specified
+    recipe_rows = read_csv_rows(input_path)
+    if sample_size is not None:
+        recipe_rows = islice(recipe_rows, sample_size)
+    
     with open(metadata_path, 'w', encoding='utf8') as meta_fh:
-        for row in read_csv_rows(input_path):
+        for row in recipe_rows:
             count += 1
             if count % 10000 == 0:
                 print(f"   Processed {count:,} recipes...")
@@ -162,8 +173,8 @@ def build_indices(
             for t in ner_norm:
                 ingredient_index[t].append(rid)
 
-            # Add to Qdrant (if enabled and within sample size)
-            if build_qdrant and (sample_size is None or qdrant_count < sample_size):
+            # Add to Qdrant (if enabled)
+            if build_qdrant:
                 # Create embedding text
                 title = row.get('title') or ''
                 ingredients = ', '.join(ner_norm)

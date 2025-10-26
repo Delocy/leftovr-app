@@ -1,7 +1,8 @@
 import os
 from dotenv import load_dotenv
-from typing import Dict, List, Any, Optional, Literal
+from typing import Dict, List, Any, Optional, Literal, Annotated
 import json
+import operator
 from langchain_openai import ChatOpenAI
 from langgraph.graph import StateGraph, MessagesState
 from langgraph.types import Command
@@ -26,6 +27,7 @@ from agents.waiter_agent import WaiterAgent
 from agents.recipe_knowledge_agent import RecipeKnowledgeAgent
 from agents.executive_chef_agent import ExecutiveChefAgent
 from agents.pantry_agent import PantryAgent
+from agents.sous_chef_agent import SousChefAgent
 
 
 # Modern collaborative state
@@ -40,13 +42,21 @@ class ModernCollaborativeState(MessagesState):
     final_recommendation: Optional[str]
     quality_passed: bool
     quality_issues: List[str]
-    coordination_log: List[str]
+    # Use Annotated with operator.add to allow multiple updates per step
+    coordination_log: Annotated[List[str], operator.add]
 
     # Pantry-related fields
     pantry_inventory: List[Dict[str, Any]]
     expiring_items: List[Dict[str, Any]]
     pantry_summary: Dict[str, Any]
     recipe_feasibility: Optional[Dict[str, Any]]
+    
+    # Sous chef states
+    sous_chef_recommendations: List[Dict[str, Any]]
+    user_recipe_selection: Optional[int]  # User's choice (1, 2, or 3)
+    selected_recipe_data: Optional[Dict[str, Any]]  # Full selected recipe
+    adapted_recipe: Optional[Dict[str, Any]]  # Adapted recipe
+    formatted_recipe: Optional[str]  # Final formatted recipe for user
 
 class ModernCollaborativeSystem:
     """collaborative system with enhanced orchestration"""
@@ -68,6 +78,7 @@ class ModernCollaborativeSystem:
             self.recipe_agent = None
         self.exec_chef = ExecutiveChefAgent(name="Executive Chef")
         self.pantry = PantryAgent(name="Pantry Manager")
+        self.sous_chef = SousChefAgent(name="Sous Chef", recipe_knowledge_agent=self.recipe_agent)
 
     def _create_modern_collaborative_graph(self) -> StateGraph:
         """Create collaborative workflow with Command API"""
@@ -228,6 +239,19 @@ class ModernCollaborativeSystem:
 
                 # All required recipe preferences present -> handoff
                 log.append("Waiter: recipe preferences complete; handing off")
+
+            prefs = current_prefs
+            required_scalar = ["diet", "skill"]
+            optional_lists = ["allergies", "restrictions", "cuisines"]
+            satisfied = all(bool(prefs.get(k)) for k in required_scalar)
+
+            for field in optional_lists:
+                if prefs.get(field) is None:
+                    prefs[field] = []
+
+            if satisfied:
+                log.append("Waiter: preferences complete, checking pantry inventory")
+                print("Waiter: preferences complete, checking pantry inventory")
                 return Command(
                     update={
                         "coordination_log": log,
@@ -306,7 +330,7 @@ class ModernCollaborativeSystem:
                 goto="executive_chef_review"
             )
 
-        def exec_chef_review(state) -> Command[Literal["executive_chef_quality_check"]]:
+        def exec_chef_review(state) -> Command[Literal["recipe_knowledge_retrieve"]]:
             """Executive Chef reviews preferences and pantry data, coordinates with Pantry Agent."""
             log = state.get("coordination_log", [])
             handoff = state.get("handoff_packet", {})
@@ -355,7 +379,7 @@ class ModernCollaborativeSystem:
                         "coordination_log": log,
                         "query_type": query_type
                     },
-                    goto="executive_chef_quality_check"
+                    goto="recipe_knowledge_retrieve"
                 )
             else:
                 log.append("Executive Chef: no handoff packet found; proceeding cautiously")
@@ -364,11 +388,294 @@ class ModernCollaborativeSystem:
                         "coordination_log": log,
                         "query_type": "ingredient"  # default
                     },
+                    goto="recipe_knowledge_retrieve"
+                )
+
+        def sous_chef_recommend(state) -> Command[Literal["wait_for_user_selection"]]:
+            """
+            Sous Chef generates top 3 recipe recommendations.
+            
+            Flow:
+            1. Receive recipe results from Recipe Knowledge Agent
+            2. Analyze based on pantry, preferences, expiring items
+            3. Generate top 3 recommendations
+            4. Present to user
+            5. Always go to wait_for_user_selection (which handles auto-select or user input)
+            """
+            log = state.get("coordination_log", [])
+            
+            log.append("Sous Chef: Analyzing recipes and generating recommendations")
+            print("\n👨‍🍳 Sous Chef: Generating top 3 recommendations...\n")
+            
+            # Get required data from state
+            recipe_results = state.get("recipe_results", [])
+            pantry_summary = state.get("pantry_summary", {})
+            user_prefs = state.get("user_preferences", {})
+            expiring_items = state.get("expiring_items", [])
+            
+            if not recipe_results:
+                log.append("Sous Chef: ERROR - No recipe results available")
+                print("❌ No recipe results to analyze")
+                return Command(update={
+                    "coordination_log": log,
+                    "sous_chef_recommendations": []
+                })
+            
+            # Generate recommendations
+            recommendations = self.sous_chef.generate_recommendations(
+                llm=llm,
+                pantry_summary=pantry_summary,
+                user_preferences=user_prefs,
+                expiring_items=expiring_items,
+                recipe_results=recipe_results
+            )
+            
+            if not recommendations:
+                log.append("Sous Chef: ERROR - Failed to generate recommendations")
+                print("❌ Failed to generate recommendations")
+                return Command(update={
+                    "coordination_log": log,
+                    "sous_chef_recommendations": []
+                })
+            
+            # Present to user
+            presentation = self.sous_chef.present_recommendations(llm, recommendations)
+            
+            print("\n" + "="*80)
+            print("🍽️  SOUS CHEF RECOMMENDATIONS")
+            print("="*80 + "\n")
+            print(presentation)
+            print("\n" + "="*80 + "\n")
+            
+            log.append(f"Sous Chef: Generated {len(recommendations)} recommendations")
+            
+            # Always go to wait_for_user_selection (it handles auto-select logic)
+            return Command(
+                update={
+                    "coordination_log": log,
+                    "sous_chef_recommendations": recommendations
+                },
+                goto="wait_for_user_selection"
+            )
+
+        def wait_for_user_selection(state) -> Command[Literal["sous_chef_adapt"]]:
+            """
+            Wait for user to select a recipe (1, 2, or 3).
+            
+            This node interrupts execution (via interrupt_before) to get user input,
+            OR can auto-select if configured.
+            """
+            log = state.get("coordination_log", [])
+            
+            # Check if auto-select is enabled
+            auto_select = state.get("auto_select_recipe", False)
+            
+            if auto_select:
+                # Auto-select first recipe (for demo/testing)
+                log.append("Auto-selecting recipe #1 (demo mode)")
+                print(f"\n[Demo Mode] Auto-selecting recipe #1\n")
+                return Command(
+                    update={
+                        "coordination_log": log,
+                        "user_recipe_selection": 1
+                    },
+                    goto="sous_chef_adapt"
+                )
+            
+            # Check if user has made a selection
+            selection = state.get("user_recipe_selection")
+            
+            if selection:
+                log.append(f"User selected recipe #{selection}")
+                print(f"\n✅ User selected recipe #{selection}\n")
+                return Command(
+                    update={"coordination_log": log},
+                    goto="sous_chef_adapt"
+                )
+            else:
+                # Need user input - the interrupt_before will pause execution here
+                # Just indicate we're waiting and continue (interrupt will happen)
+                log.append("Waiting for user recipe selection...")
+                print("\n⏳ Waiting for your selection (1, 2, or 3)...\n")
+                return Command(
+                    update={"coordination_log": log},
+                    goto="wait_for_user_selection"
+                )
+
+        # def sous_chef_adapt(state) -> Command[Literal["executive_chef_quality_check"]]:
+        #     """
+        #     Sous Chef adapts the selected recipe to user's dietary requirements.
+            
+        #     Flow:
+        #     1. Get user's recipe selection
+        #     2. Find full recipe data
+        #     3. Adapt based on dietary restrictions and allergies
+        #     4. Format for user presentation
+        #     5. Pass to Executive Chef for quality check
+        #     """
+        #     log = state.get("coordination_log", [])
+            
+        #     log.append("Sous Chef: Adapting selected recipe")
+        #     print("\n🔧 Sous Chef: Adapting recipe to your dietary needs...\n")
+            
+        #     # Get selection and recipe data
+        #     selection = state.get("user_recipe_selection")
+        #     recipe_results = state.get("recipe_results", [])
+        #     user_prefs = state.get("user_preferences", {})
+        #     pantry_inventory = state.get("pantry_inventory", [])
+
+        #     if not selection:
+        #         log.append("Sous Chef: ERROR - No recipe selection found")
+        #         print("❌ No recipe selection found")
+        #         return Command(update={"coordination_log": log})
+
+        #     # Ensure Sous Chef remembers the latest recommendations
+        #     if not self.sous_chef.current_recommendations:
+        #         cached_recs = state.get("sous_chef_recommendations", [])
+        #         if cached_recs:
+        #             self.sous_chef.current_recommendations = cached_recs
+
+        #     # Handle selection
+        #     selected_recipe = self.sous_chef.handle_user_selection(selection, recipe_results)
+            
+        #     if not selected_recipe:
+        #         log.append(f"Sous Chef: ERROR - Invalid selection: {selection}")
+        #         print(f"❌ Invalid selection: {selection}")
+        #         return Command(update={"coordination_log": log})
+            
+        #     log.append(f"Sous Chef: Selected recipe: {selected_recipe.get('title', 'Unknown')}")
+            
+        #     # Adapt recipe
+        #     adapted_recipe = self.sous_chef.adapt_recipe(
+        #         llm=llm,
+        #         recipe=selected_recipe,
+        #         user_preferences=user_prefs,
+        #         pantry_inventory=pantry_inventory
+        #     )
+            
+        #     if "error" in adapted_recipe:
+        #         log.append(f"Sous Chef: ERROR - Adaptation failed: {adapted_recipe['error']}")
+        #         print(f"❌ Adaptation failed: {adapted_recipe.get('error')}")
+        #         fallback_text = self.sous_chef.build_fallback_recipe_summary(selected_recipe, user_prefs)
+        #         return Command(
+        #             update={
+        #                 "coordination_log": log,
+        #                 "selected_recipe_data": selected_recipe,
+        #                 "adapted_recipe": adapted_recipe,
+        #                 "formatted_recipe": fallback_text,
+        #                 "final_recommendation": fallback_text
+        #             },
+        #             goto="executive_chef_quality_check"
+        #         )
+            
+        #     # Format for presentation
+        #     formatted_recipe = self.sous_chef.format_adapted_recipe(llm, adapted_recipe)
+            
+        #     log.append("Sous Chef: Recipe adapted successfully")
+        #     print("✅ Recipe adaptation complete\n")
+            
+        #     # Show preview (optional)
+        #     if state.get("show_adapted_preview", True):
+        #         print("="*80)
+        #         print("🍳 ADAPTED RECIPE PREVIEW")
+        #         print("="*80 + "\n")
+        #         print(formatted_recipe[:500] + "..." if len(formatted_recipe) > 500 else formatted_recipe)
+        #         print("\n" + "="*80 + "\n")
+            
+        #     return Command(
+        #         update={
+        #             "coordination_log": log,
+        #             "selected_recipe_data": selected_recipe,
+        #             "adapted_recipe": adapted_recipe,
+        #             "formatted_recipe": formatted_recipe,
+        #             "final_recommendation": formatted_recipe  # For Executive Chef quality check
+        #         },
+        #         goto="executive_chef_quality_check"
+        #     )
+
+        def sous_chef_adapt(state) -> Command[Literal["executive_chef_quality_check"]]:
+            """
+            Sous Chef adapts the selected recipe to user's dietary requirements.
+
+            Flow:
+            1. Get user's recipe selection
+            2. Resolve full recipe data from cached recommendations / prior results
+            3. Adapt based on dietary restrictions and allergies
+            4. Format for user presentation
+            5. Pass to Executive Chef for quality check
+            """
+            log = state.get("coordination_log", [])
+            log.append("Sous Chef: Adapting selected recipe")
+            print("\n🔧 Sous Chef: Adapting recipe to your dietary needs...\n")
+
+            # --- gather prior state (NO NEW SEARCH HERE) ---
+            selection = state.get("user_recipe_selection")
+            recipe_results = state.get("recipe_results", [])  # from RECIPE_SEARCH node
+            user_prefs = state.get("user_preferences", {})
+            pantry_inventory = state.get("pantry_inventory", [])
+
+            if not selection:
+                log.append("Sous Chef: ERROR - No recipe selection found")
+                print("❌ No recipe selection found")
+                return Command(update={"coordination_log": log})
+
+            # seed in-memory recs from state if needed
+            if not self.sous_chef.current_recommendations:
+                cached_recs = state.get("sous_chef_recommendations", [])
+                if cached_recs:
+                    self.sous_chef.current_recommendations = cached_recs
+
+            # resolve the user's chosen recipe solely from cached results
+            selected_recipe = self.sous_chef.handle_user_selection(selection, recipe_results)
+            if not selected_recipe:
+                log.append(f"Sous Chef: ERROR - Invalid selection: {selection}")
+                print(f"❌ Invalid selection: {selection}")
+                return Command(update={"coordination_log": log})
+
+            log.append(f"Sous Chef: Selected recipe: {selected_recipe.get('title', 'Unknown')}")
+
+            # --- adapt the chosen recipe only (NO RECOMMEND / NO SEARCH) ---
+            adapted_recipe = self.sous_chef.adapt_recipe(
+                llm=llm,
+                recipe=selected_recipe,
+                user_preferences=user_prefs,
+                pantry_inventory=pantry_inventory
+            )
+
+            if "error" in adapted_recipe:
+                log.append(f"Sous Chef: ERROR - Adaptation failed: {adapted_recipe['error']}")
+                print(f"❌ Adaptation failed: {adapted_recipe.get('error')}")
+                fallback_text = self.sous_chef.build_fallback_recipe_summary(selected_recipe, user_prefs)
+                return Command(
+                    update={
+                        "coordination_log": log,
+                        "selected_recipe_data": selected_recipe,
+                        "adapted_recipe": None,
+                        "formatted_recipe": fallback_text
+                    },
                     goto="executive_chef_quality_check"
                 )
 
-        def sous_chef_handle(state):
-            return Command(update={})
+            formatted_recipe = self.sous_chef.format_recipe_for_user(adapted_recipe, user_prefs)
+
+            # optional preview
+            if state.get("show_adapted_preview", True):
+                print("="*80)
+                print("🍳 ADAPTED RECIPE PREVIEW")
+                print("="*80 + "\n")
+                print(formatted_recipe[:500] + "..." if len(formatted_recipe) > 500 else formatted_recipe)
+                print("\n" + "="*80 + "\n")
+
+            return Command(
+                update={
+                    "coordination_log": log,
+                    "selected_recipe_data": selected_recipe,
+                    "adapted_recipe": adapted_recipe,
+                    "formatted_recipe": formatted_recipe,
+                },
+                goto="executive_chef_quality_check"
+            )
+
 
         def recipe_knowledge_agent(state):
             """Retrieve recipes based on user preferences and ingredients"""
@@ -448,20 +755,26 @@ class ModernCollaborativeSystem:
                         print(f"   ✅ Can make NOW!")
                     print(f"   Source: {recipe['source']}")
                 
-                return Command(update={
-                    "coordination_log": log,
-                    "recipe_results": recipe_results
-                })
+                return Command(
+                    update={
+                        "coordination_log": log,
+                        "recipe_results": recipe_results
+                    },
+                    goto="sous_chef_recommend"
+                )
                 
             except Exception as e:
                 log.append(f"Recipe Knowledge Agent: Error during search - {str(e)}")
                 print(f"❌ Error: {e}")
                 import traceback
                 traceback.print_exc()
-                return Command(update={
-                    "coordination_log": log,
-                    "recipe_results": []
-                })
+                return Command(
+                    update={
+                        "coordination_log": log,
+                        "recipe_results": []
+                    },
+                    goto="sous_chef_recommend"
+                )
 
         def exec_chef_check(state):
             log = state.get("coordination_log", [])
@@ -541,21 +854,34 @@ class ModernCollaborativeSystem:
         workflow.add_node("waiter_collect_info", waiter_agent_collect)
         workflow.add_node("pantry_check", pantry_check)
         workflow.add_node("executive_chef_review", exec_chef_review)
-        workflow.add_node("sous_chef_prepare_recipe", sous_chef_handle)
         workflow.add_node("recipe_knowledge_retrieve", recipe_knowledge_agent)
+        workflow.add_node("sous_chef_recommend", sous_chef_recommend)
+        workflow.add_node("wait_for_user_selection", wait_for_user_selection)
+        workflow.add_node("sous_chef_adapt", sous_chef_adapt)
         workflow.add_node("executive_chef_quality_check", exec_chef_check)
         workflow.add_node("return_to_user", waiter_return)
 
 
-        # 2. Define edges
-        # Routing from waiter_collect_info is controlled at runtime via Command.goto
+        # 2. Define edges - Fixed workflow logic
+        # Flow: waiter → pantry → exec_chef_review → recipe_knowledge → sous_chef_recommend → 
+        #       wait_for_selection → sous_chef_adapt → exec_chef_quality_check → return_to_user
+        
         workflow.add_edge("pantry_check", "executive_chef_review")
-        workflow.add_edge("executive_chef_review", "executive_chef_quality_check")
+        
+        workflow.add_edge("executive_chef_review", "recipe_knowledge_retrieve")
+        
+        # Recipe Knowledge Agent retrieves recipes, then Sous Chef recommends
+        workflow.add_edge("recipe_knowledge_retrieve", "sous_chef_recommend")
+        workflow.add_edge("sous_chef_recommend", "wait_for_user_selection")
+        
+        # Sous Chef recommends, then waits for user selection (routing handled by Command.goto)
+        # Note: wait_for_user_selection routes via Command.goto to either return_to_user or sous_chef_adapt
+        workflow.add_edge("wait_for_user_selection", "sous_chef_adapt")
 
-        workflow.add_edge("sous_chef_prepare_recipe", "recipe_knowledge_retrieve")
-        # workflow.add_edge("recipe_knowledge_retrieve", "sous_chef_prepare_recipe")
-        # workflow.add_edge("sous_chef_prepare_recipe", "executive_chef_quality_check")
-        workflow.add_edge("recipe_knowledge_retrieve", "executive_chef_quality_check")
+        # After user selects and recipe is adapted, quality check happens
+        workflow.add_edge("sous_chef_adapt", "executive_chef_quality_check")
+        
+        # Finally, return to user
         workflow.add_edge("executive_chef_quality_check", "return_to_user")
 
         # 3. Set entry and end nodes
@@ -565,7 +891,7 @@ class ModernCollaborativeSystem:
         # Modern compilation with advanced features
         return workflow.compile(
             cache=InMemoryCache(),
-            interrupt_before=["return_to_user"],
+            interrupt_before=["return_to_user", "wait_for_user_selection"],
             interrupt_after=[],
         )
 
@@ -588,6 +914,15 @@ class ModernCollaborativeSystem:
             "expiring_items": [],
             "pantry_summary": {},
             "recipe_feasibility": None,
+            
+            # Sous chef state
+            "sous_chef_recommendations": [],
+            "user_recipe_selection": None,
+            "selected_recipe_data": None,
+            "adapted_recipe": None,
+            "formatted_recipe": None,
+            "auto_select_recipe": False,  # Set to True for demo mode
+            "show_adapted_preview": True
         }
 
         state = await self.graph.ainvoke(state)
@@ -603,6 +938,31 @@ class ModernCollaborativeSystem:
                 # Inject user input and resume from where we paused
                 state["latest_user_message"] = user_text
                 state = await self.graph.ainvoke(state, config={"resume": True})
+                
+            elif state.get("_interrupt") == "wait_for_user_selection":
+                # Get user's recipe selection
+                recommendations = state.get("sous_chef_recommendations", [])
+                if recommendations:
+                    print("\nWhich recipe would you like to make?")
+                    selection = input("Enter 1, 2, or 3 (or 'quit' to exit): ").strip()
+                    
+                    if selection.lower() in {"exit", "quit"}:
+                        break
+                    
+                    try:
+                        selection_int = int(selection)
+                        if 1 <= selection_int <= 3:
+                            state["user_recipe_selection"] = selection_int
+                            state = await self.graph.ainvoke(state, config={"resume": True})
+                        else:
+                            print("❌ Please enter 1, 2, or 3")
+                            continue
+                    except ValueError:
+                        print("❌ Please enter a number (1, 2, or 3)")
+                        continue
+                else:
+                    print("❌ No recommendations available")
+                    break
             else:
                 # Workflow has reached finish point
                 print("\n✅ Workflow complete!")
