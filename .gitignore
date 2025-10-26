@@ -8,10 +8,9 @@ build/
 
 # Data files (too large for git)
 data/
-assets/*.csv
+assets/
 qdrant_data/
 
 # Environment
 .env
 .DS_Store
-test_agent_integration.py
