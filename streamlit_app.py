@@ -7,7 +7,7 @@ import time
 import traceback
 import tempfile
 from datetime import datetime
-from typing import Dict, List, Any, Optional, Tuple
+from typing import Dict, Any, Optional, Tuple
 from queue import Queue
 
 import streamlit as st
@@ -151,7 +151,7 @@ Examples:
         # Add to session state pantry
         added_items = []
         updates_for_sheets = []
-        
+
         for ing in ingredients:
             item_name = ing.get("name", "")
             raw_quantity = ing.get("quantity", 1)
@@ -198,7 +198,7 @@ Examples:
                     quantity=pantry_quantity,
                     unit=unit
                 )
-                
+
                 updates_for_sheets.append(ingredient_record)
 
                 added_items.append(f"{display_quantity_str} {unit} of {name_clean}")
@@ -221,12 +221,12 @@ Examples:
             return f"Great! I've added {items_text} to your pantry. 🗄️\n\nWhat else would you like to add, or would you like to see what recipes you can make?"
 
         return "I couldn't add those items. Could you try again?"
-    
+
     def handle_add_pantry(self, entities: Dict[str, Any]) -> str:
         """Handle adding ingredients to pantry (sync wrapper)"""
         # Get spreadsheet_id from session state or environment
         spreadsheet_id = st.session_state.get("google_sheets_id") or os.getenv("GOOGLE_SHEETS_ID")
-        
+
         # Run async function
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
@@ -258,10 +258,10 @@ Examples:
         """Handle recipe selection - returns (message, should_trigger_adaptation)"""
         if not st.session_state.recipe_recommendations:
             return ("I don't have any recipe recommendations yet. Please request recipes first!", False)
-        
+
         if recipe_number < 1 or recipe_number > len(st.session_state.recipe_recommendations):
             return (f"Please select a recipe number between 1 and {len(st.session_state.recipe_recommendations)}.", False)
-        
+
         # Store selection
         st.session_state.user_recipe_selection = recipe_number
         return (f"Excellent choice! Let me prepare recipe #{recipe_number} for you... 👨‍🍳", True)
@@ -269,7 +269,7 @@ Examples:
     def process_message(self, message: str, llm) -> Tuple[str, bool, Optional[str]]:
         """
         Process user message and return (bot_response, should_trigger_workflow, workflow_type)
-        
+
         workflow_type can be: None, "recipe_search", "recipe_adapt"
         """
         # Parse intent
@@ -311,7 +311,7 @@ Examples:
                     recipe_num = int(recipe_num)
                 except (TypeError, ValueError):
                     return ("I couldn't tell which recipe number you meant. Please say 'recipe 1', 'recipe 2', or 'recipe 3'.", False, None)
-                
+
                 response, should_trigger = self.handle_select_recipe(recipe_num)
                 workflow_type = "recipe_adapt" if should_trigger else None
                 print("DEBUG: workflow_type =", workflow_type)
@@ -322,7 +322,7 @@ Examples:
         elif intent == "preferences":
             # Use waiter agent to extract and respond to preferences
             prefs = entities.get("preferences", {})
-            
+
             # Update session state with extracted preferences
             if prefs.get("diet"):
                 st.session_state.user_diet = prefs["diet"]
@@ -359,7 +359,7 @@ def init_session_state():
         st.session_state.chat_history = []
     if 'logs' not in st.session_state:
         st.session_state.logs = []
-    
+
     # User pantry and preferences
     if 'user_pantry' not in st.session_state:
         st.session_state.user_pantry = []
@@ -371,7 +371,7 @@ def init_session_state():
         st.session_state.user_difficulty = "intermediate"
     if 'user_diet' not in st.session_state:
         st.session_state.user_diet = "omnivore"
-    
+
     # Recipe workflow state
     if 'recipe_recommendations' not in st.session_state:
         st.session_state.recipe_recommendations = []
@@ -387,7 +387,7 @@ def init_session_state():
         st.session_state.workflow_complete = False
     if 'final_state' not in st.session_state:
         st.session_state.final_state = None
-    
+
     # Google Sheets integration
     if 'google_sheets_id' not in st.session_state:
         st.session_state.google_sheets_id = os.getenv("GOOGLE_SHEETS_ID")
@@ -437,16 +437,16 @@ async def run_workflow_async(
     """Run the workflow asynchronously"""
     try:
         add_log(f"Starting {workflow_type} workflow", "System", "INFO")
-        
+
         system = system_instance
-        
+
         print("\n" + "="*80)
         print(f"STARTING WORKFLOW - {workflow_type.upper()}")
         print("="*80)
         print(f"User preferences: {initial_state.get('user_preferences')}")
         print(f"User ingredients: {initial_state.get('user_ingredients')}")
         print("="*80 + "\n")
-        
+
         # Execute the graph
         config = graph_config or {}
         state = await system.graph.ainvoke(initial_state, config=config)
@@ -459,13 +459,13 @@ async def run_workflow_async(
             resume_config = dict(config)
             resume_config["resume"] = True
             state = await system.graph.ainvoke(state, config=resume_config)
-        
+
         print("\n" + "="*80)
         print("WORKFLOW EXECUTION COMPLETE")
         print("="*80)
         print(f"Recommendations: {len(state.get('sous_chef_recommendations', []))}")
         print("="*80 + "\n")
-        
+
         # Process state updates based on coordination log
         coord_log = state.get("coordination_log", [])
         for log_entry in coord_log:
@@ -474,7 +474,7 @@ async def run_workflow_async(
                 agent = parts[0].strip()
                 message = parts[1].strip()
                 add_log(message, agent, "INFO")
-        
+
         # Store results
         result_data = {
             "recommendations": state.get("sous_chef_recommendations", []),
@@ -484,11 +484,11 @@ async def run_workflow_async(
             "complete": True,
             "workflow_type": workflow_type
         }
-        
+
         add_log(f"{workflow_type} workflow completed successfully", "System", "INFO")
-        
+
         return result_data
-        
+
     except Exception as e:
         add_log(f"Workflow error: {str(e)}", "System", "ERROR")
         stack_trace = traceback.format_exc()
@@ -544,7 +544,7 @@ if st.session_state.system is None:
                 pantry_agent=st.session_state.system.pantry,
                 system=st.session_state.system
             )
-            
+
             # Send initial greeting
             if not st.session_state.chat_history:
                 greeting = st.session_state.system.waiter.run(llm)
@@ -569,7 +569,7 @@ col_chat, col_sidebar = st.columns([3, 1])
 
 with col_sidebar:
     st.subheader("📊 Your Profile")
-    
+
     # Display current pantry
     if st.session_state.user_pantry:
         st.markdown("**🗄️ Pantry:**")
@@ -582,9 +582,9 @@ with col_sidebar:
             st.markdown(f'<span class="ingredient-badge">{qty_display} {item["unit"]} {item["name"]}</span>', unsafe_allow_html=True)
     else:
         st.info("No ingredients yet. Try: 'I got 3 apples'")
-    
+
     st.divider()
-    
+
     # Display preferences
     st.markdown("**👤 Preferences:**")
     if st.session_state.user_diet != "omnivore":
@@ -597,17 +597,17 @@ with col_sidebar:
             st.markdown(f'<span class="pref-badge">{cuisine}</span>', unsafe_allow_html=True)
     if st.session_state.user_difficulty != "intermediate":
         st.markdown(f'<span class="pref-badge">{st.session_state.user_difficulty}</span>', unsafe_allow_html=True)
-    
+
     st.divider()
-    
+
     # Status
     if st.session_state.workflow_running:
         st.info("🔄 Searching for recipes...")
     elif st.session_state.recipe_recommendations:
         st.success(f"✅ {len(st.session_state.recipe_recommendations)} recipes found!")
-    
+
     st.divider()
-    
+
     # Google Sheets Configuration
     with st.expander("⚙️ Settings"):
         st.markdown("**Google Sheets Integration**")
@@ -618,17 +618,17 @@ with col_sidebar:
             placeholder="Enter your Google Sheets ID",
             help="Your ingredients will be synced to this Google Sheet"
         )
-        
+
         if sheets_id_input != current_sheets_id:
             st.session_state.google_sheets_id = sheets_id_input
             if sheets_id_input:
                 st.success("✅ Google Sheets ID saved!")
-        
+
         if st.session_state.google_sheets_id:
             st.info(f"📊 Syncing to: `{st.session_state.google_sheets_id[:20]}...`")
         else:
             st.warning("⚠️ No Google Sheets ID set. Items won't sync to cloud.")
-    
+
     # Reset button
     if st.button("🔄 Start Over", use_container_width=True):
         for key in list(st.session_state.keys()):
@@ -638,12 +638,12 @@ with col_sidebar:
 with col_chat:
     # Chat history container
     chat_container = st.container()
-    
+
     with chat_container:
         for msg in st.session_state.chat_history:
             role = msg["role"]
             content = msg["content"]
-            
+
             if role == "user":
                 st.markdown(f"""
                 <div class="chat-message user-message">
@@ -656,12 +656,12 @@ with col_chat:
                     <strong>🍽️ Leftovr:</strong><br/>{content}
                 </div>
                 """, unsafe_allow_html=True)
-    
+
     # Show recipe recommendations if available
     if st.session_state.recipe_recommendations and not st.session_state.adapted_recipe:
         st.markdown("---")
         st.subheader("🍳 Top Recipe Recommendations")
-        
+
         for i, rec in enumerate(st.session_state.recipe_recommendations[:3], 1):
             with st.expander(f"**#{i}. {rec.get('title', 'Unknown Recipe')}** (Score: {rec.get('score', 0):.0f})"):
                 col1, col2 = st.columns(2)
@@ -675,7 +675,7 @@ with col_chat:
                 with col2:
                     if rec.get('link'):
                         st.markdown(f"[View Recipe]({rec['link']})")
-                
+
                 if st.button(f"Select Recipe #{i}", key=f"select_{i}"):
                     # Add user message
                     st.session_state.chat_history.append({
@@ -685,13 +685,13 @@ with col_chat:
                     })
                     st.session_state.user_recipe_selection = i
                     st.rerun()
-    
+
     # Show adapted recipe if available
     if st.session_state.adapted_recipe:
         st.markdown("---")
         st.subheader("📖 Your Personalized Recipe")
         st.markdown(st.session_state.adapted_recipe)
-    
+
     # Chat input
     user_input = st.chat_input("Type your message... (e.g., 'i got 3 apples', 'what can I make?')")
 
@@ -706,22 +706,22 @@ if user_input:
         "content": user_input,
         "timestamp": datetime.now().isoformat()
     })
-    
+
     # Process message with chatbot
     if st.session_state.chatbot:
         bot_response, should_trigger_workflow, workflow_type = st.session_state.chatbot.process_message(user_input, llm)
-        
+
         # Add bot response to history
         st.session_state.chat_history.append({
             "role": "assistant",
             "content": bot_response,
             "timestamp": datetime.now().isoformat()
         })
-        
+
         # Trigger workflow if needed
         if should_trigger_workflow and workflow_type:
             st.session_state.workflow_running = True
-            
+
             # Build user preferences
             user_prefs = {
                 "diet": st.session_state.user_diet,
@@ -730,10 +730,10 @@ if user_input:
                 "cuisines": st.session_state.user_cuisines,
                 "skill": st.session_state.user_difficulty
             }
-            
+
             # Extract ingredient names
             ingredients = [item["name"] for item in st.session_state.user_pantry]
-            
+
             if workflow_type == "recipe_search":
                 # Prepare initial state for recipe search
                 initial_state = {
@@ -764,7 +764,7 @@ if user_input:
                     "auto_select_recipe": False,
                     "show_adapted_preview": False
                 }
-                
+
                 # Run workflow in background thread
                 thread = threading.Thread(
                     target=run_workflow_threaded,
@@ -773,7 +773,7 @@ if user_input:
                     daemon=True
                 )
                 thread.start()
-            
+
             elif workflow_type == "recipe_adapt":
                 # Prepare state for recipe adaptation
                 initial_state = {
@@ -799,7 +799,7 @@ if user_input:
                     "auto_select_recipe": False,
                     "show_adapted_preview": False
                 }
-                
+
                 adapt_kwargs = {"graph_config": {"interrupt_before": ["return_to_user"]}}
                 # Run adaptation workflow
                 thread = threading.Thread(
@@ -809,7 +809,7 @@ if user_input:
                     daemon=True
                 )
                 thread.start()
-    
+
     st.rerun()
 
 
@@ -829,15 +829,15 @@ if st.session_state.workflow_running:
             if os.path.exists(result_path):
                 with open(result_path, 'r') as f:
                     result = json.load(f)
-                
+
                 # Apply results to session state
                 if result.get("complete"):
                     workflow_type = result.get("workflow_type", "")
-                    
+
                     if workflow_type == "recipe_search":
                         st.session_state.recipe_recommendations = result.get("recommendations", [])
                         st.session_state.recipe_results = result.get("recipe_results", [])
-                        
+
                         # Add bot message with recommendations
                         num_recipes = len(st.session_state.recipe_recommendations)
                         if num_recipes > 0:
@@ -847,10 +847,10 @@ if st.session_state.workflow_running:
                                 "content": bot_msg,
                                 "timestamp": datetime.now().isoformat()
                             })
-                    
+
                     elif workflow_type == "recipe_adapt":
                         st.session_state.adapted_recipe = result.get("formatted_recipe")
-                        
+
                         # Add bot message with adapted recipe
                         if st.session_state.adapted_recipe:
                             bot_msg = "Here's your personalized recipe adapted to your preferences! Check it out below. 👨‍🍳"
@@ -859,15 +859,15 @@ if st.session_state.workflow_running:
                                 "content": bot_msg,
                                 "timestamp": datetime.now().isoformat()
                             })
-                    
+
                     st.session_state.final_state = result
                     st.session_state.workflow_running = False
                     st.session_state.workflow_complete = True
-                    
+
                     # Clean up temp files
                     os.remove(result_path)
                     os.remove('/tmp/leftovr_result_path.txt')
-                    
+
                     st.rerun()
                 else:
                     st.session_state.workflow_running = False
