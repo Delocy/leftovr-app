@@ -4,7 +4,6 @@ __pycache__/
 *.pyo
 *.pyd
 .Python
-env/
 build/
 
 # Data files (too large for git)
@@ -15,3 +14,4 @@ qdrant_data/
 # Environment
 .env
 .DS_Store
+test_agent_integration.py
