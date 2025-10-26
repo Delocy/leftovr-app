@@ -1,7 +1,7 @@
 import json
-from typing import Dict, List, Any, Optional, Literal, Tuple
+from typing import Dict, List, Any, Optional, Literal
 from datetime import datetime
-from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
+from langchain_core.messages import SystemMessage, HumanMessage
 
 
 class SousChefAgent:
@@ -81,7 +81,7 @@ class SousChefAgent:
         skill_match = 20 if recipe difficulty matches user skill, else -10
         dietary_compliance = 100 if compliant, else -1000 (disqualify)
         allergen_check = 0 if safe, else -10000 (immediate disqualification)
-        
+
         final_score = base_score + expiration_boost + skill_match + dietary_compliance + allergen_check
         ```
 
@@ -278,9 +278,9 @@ class SousChefAgent:
         ###FEW-SHOT EXAMPLES###
 
         **Example 1: Initial Recommendation**
-        
+
         Input: User is vegan, beginner level, has: spinach (expires tomorrow), pasta, garlic, olive oil
-        
+
         Output:
         "Based on your pantry, here are my top 3 recommendations:
 
@@ -308,7 +308,7 @@ class SousChefAgent:
         Which recipe would you like to make? (Reply 1, 2, or 3)"
 
         **Example 2: Recipe Adaptation**
-        
+
         User selects Recipe #2, but is allergic to nuts
 
         Output:
@@ -370,7 +370,7 @@ class SousChefAgent:
         Ready to start cooking? I'll guide you through any step!"
 
         **Example 3: Handling Missing Critical Ingredient**
-        
+
         User wants recipe but is missing key ingredient
 
         Output:
@@ -419,39 +419,39 @@ class SousChefAgent:
     ) -> List[Dict[str, Any]]:
         """
         Generate top 3 recipe recommendations based on pantry and preferences.
-        
+
         Args:
             llm: Language model for reasoning
             pantry_summary: Summary of pantry inventory
             user_preferences: User's dietary preferences and constraints
             expiring_items: List of items expiring soon
             recipe_results: Optional pre-fetched recipe results from Recipe Knowledge Agent
-            
+
         Returns:
             List of top 3 recipe recommendations
         """
         print(f"\n👨‍🍳 {self.name}: Analyzing recipes and generating recommendations...")
-        
+
         system_prompt = self.build_system_prompt()
-        
+
         context = {
             "pantry_summary": pantry_summary,
             "user_preferences": user_preferences,
             "expiring_items": expiring_items,
             "recipe_results": recipe_results[:10] if recipe_results else []  # Top 10 for analysis
         }
-        
+
         instruction = """
         Based on the provided pantry inventory, user preferences, and recipe results,
         generate your TOP 3 recipe recommendations.
-        
+
         CRITICAL REQUIREMENTS:
         1. NEVER recommend recipes containing user's allergens
         2. Respect dietary restrictions (vegan, halal, kosher, etc.)
         3. Prioritize recipes using expiring ingredients
         4. Match user's cooking skill level
         5. Maximize use of available pantry items
-        
+
         Return ONLY valid JSON in this format:
         {
             "recommendations": [
@@ -475,30 +475,30 @@ class SousChefAgent:
             "recommendation_summary": "Brief explanation of why these are the best choices"
         }
         """
-        
+
         messages = [
             SystemMessage(content=system_prompt),
             HumanMessage(content=f"{instruction}\n\nContext:\n{json.dumps(context, indent=2, default=str)}")
         ]
-        
+
         try:
             response = llm.invoke(messages)
-            
+
             response_text = response.content.strip()
             if response_text.startswith("```"):
                 response_text = response_text.split("```")[1]
                 if response_text.startswith("json"):
                     response_text = response_text[4:]
                 response_text = response_text.strip()
-            
+
             result = json.loads(response_text)
             recommendations = result.get("recommendations", [])
             if not recommendations and recipe_results:
                 recommendations = self.build_fallback_recommendations(recipe_results, user_preferences)
                 print("⚠️  Using fallback recommendations due to parsing issues")
-            
+
             self.current_recommendations = recommendations
-            
+
             # Log the recommendations
             self.recommendation_history.append({
                 "timestamp": datetime.now().isoformat(),
@@ -506,10 +506,10 @@ class SousChefAgent:
                 "context": context,
                 "recommendations": recommendations
             })
-            
+
             print(f"✅ Generated {len(recommendations)} recommendations")
             return recommendations
-            
+
         except json.JSONDecodeError as e:
             print(f"❌ Failed to parse recommendation response: {e}")
             print(f"Response was: {response.content[:200]}...")
@@ -525,19 +525,19 @@ class SousChefAgent:
     ) -> str:
         """
         Format recommendations for user-friendly presentation.
-        
+
         Args:
             llm: Language model for formatting
             recommendations: List of recipe recommendations
-            
+
         Returns:
             Formatted string for user presentation
         """
         system_prompt = self.build_system_prompt()
-        
+
         instruction = """
         Present these recipe recommendations to the user in a warm, engaging way.
-        
+
         Format:
         - Use emojis for visual appeal (🥇 🥈 🥉)
         - Highlight why each recipe is recommended
@@ -545,15 +545,15 @@ class SousChefAgent:
         - Show missing ingredients clearly
         - Include time and difficulty
         - End with: "Which recipe would you like to make? (Reply 1, 2, or 3)"
-        
+
         Be conversational, encouraging, and focus on waste reduction!
         """
-        
+
         messages = [
             SystemMessage(content=system_prompt),
             HumanMessage(content=f"{instruction}\n\nRecommendations:\n{json.dumps(recommendations, indent=2)}")
         ]
-        
+
         try:
             response = llm.invoke(messages)
             return response.content
@@ -575,18 +575,18 @@ class SousChefAgent:
     ) -> Optional[Dict[str, Any]]:
         """
         Handle user's recipe selection.
-        
+
         Args:
             selection: User's choice (1, 2, or 3)
             recipe_results: Full recipe results from Recipe Knowledge Agent
-            
+
         Returns:
             Selected recipe data or None if invalid selection
         """
         if not 1 <= selection <= 3:
             print(f"❌ Invalid selection: {selection}. Please choose 1, 2, or 3.")
             return None
-        
+
         if not self.current_recommendations:
             if recipe_results:
                 print("⚠️  No cached recommendations, falling back to raw recipe results")
@@ -594,30 +594,30 @@ class SousChefAgent:
             else:
                 print(f"❌ No current recommendations available")
                 return None
-        
+
         if selection > len(self.current_recommendations):
             print(f"❌ Selection {selection} out of range")
             return None
-        
+
         # Get the selected recommendation
         selected_rec = self.current_recommendations[selection - 1]
         recipe_id = selected_rec.get("recipe_id")
-        
+
         # Find full recipe data
         selected_recipe = None
         for recipe in recipe_results:
             if recipe.get("id") == recipe_id or recipe.get("title") == selected_rec.get("title"):
                 selected_recipe = recipe
                 break
-        
+
         if not selected_recipe:
             print(f"⚠️  Could not find full recipe data, using recommendation data")
             selected_recipe = selected_rec
-        
+
         self.selected_recipe = selected_recipe
-        
+
         print(f"✅ User selected: {selected_recipe.get('title', 'Unknown')}")
-        
+
         return selected_recipe
 
     def adapt_recipe(
@@ -629,29 +629,29 @@ class SousChefAgent:
     ) -> Dict[str, Any]:
         """
         Adapt the selected recipe based on dietary requirements and preferences.
-        
+
         Args:
             llm: Language model for adaptation
             recipe: Selected recipe data
             user_preferences: User's preferences and restrictions
             pantry_inventory: Current pantry inventory
-            
+
         Returns:
             Adapted recipe with modifications
         """
         print(f"\n🔧 {self.name}: Adapting recipe to meet dietary requirements...")
-        
+
         system_prompt = self.build_system_prompt()
-        
+
         instruction = """
         Adapt this recipe to meet the user's dietary requirements and preferences.
-        
+
         CRITICAL SAFETY CHECKS:
         1. Remove ALL ingredients matching user's allergies
         2. Ensure recipe complies with dietary restrictions (vegan, halal, etc.)
         3. Provide safe substitutions for removed ingredients
         4. Double-check final recipe has NO allergens
-        
+
         Adaptation Steps:
         1. Identify ingredients that violate dietary requirements
         2. Find appropriate substitutions
@@ -659,7 +659,7 @@ class SousChefAgent:
         4. Simplify/enhance based on skill level
         5. Provide shopping list for missing items
         6. Add helpful cooking tips for beginners
-        
+
         Return ONLY valid JSON in this format:
         {
             "original_title": "Original Recipe Name",
@@ -709,30 +709,30 @@ class SousChefAgent:
             "waste_reduction_note": "This recipe uses [expiring ingredients]"
         }
         """
-        
+
         context = {
             "recipe": recipe,
             "user_preferences": user_preferences,
             "pantry_inventory": pantry_inventory
         }
-        
+
         messages = [
             SystemMessage(content=system_prompt),
             HumanMessage(content=f"{instruction}\n\nContext:\n{json.dumps(context, indent=2, default=str)}")
         ]
-        
+
         try:
             response = llm.invoke(messages)
-            
+
             response_text = response.content.strip()
             if response_text.startswith("```"):
                 response_text = response_text.split("```")[1]
                 if response_text.startswith("json"):
                     response_text = response_text[4:]
                 response_text = response_text.strip()
-            
+
             adapted_recipe = json.loads(response_text)
-            
+
             self.adaptation_log.append({
                 "timestamp": datetime.now().isoformat(),
                 "action": "adapt_recipe",
@@ -740,12 +740,12 @@ class SousChefAgent:
                 "adapted_recipe": adapted_recipe.get("adapted_title"),
                 "adaptations": adapted_recipe.get("adaptations_made", [])
             })
-            
+
             print(f"✅ Recipe adapted successfully")
             print(f"   Adaptations made: {len(adapted_recipe.get('adaptations_made', []))}")
-            
+
             return adapted_recipe
-            
+
         except json.JSONDecodeError as e:
             print(f"❌ Failed to parse adaptation response: {e}")
             print(f"Response was: {response.content[:200]}...")
@@ -761,19 +761,19 @@ class SousChefAgent:
     ) -> str:
         """
         Format adapted recipe for user-friendly presentation.
-        
+
         Args:
             llm: Language model for formatting
             adapted_recipe: Adapted recipe data
-            
+
         Returns:
             Formatted string for user presentation
         """
         system_prompt = self.build_system_prompt()
-        
+
         instruction = """
         Present this adapted recipe to the user in a clear, step-by-step format.
-        
+
         Format Requirements:
         - Start with adapted recipe title
         - Show what modifications were made
@@ -784,15 +784,15 @@ class SousChefAgent:
         - Show total cooking time
         - Include safety notes about allergens
         - End with shopping list if needed
-        
+
         Be warm, encouraging, and supportive. Make the user feel confident!
         """
-        
+
         messages = [
             SystemMessage(content=system_prompt),
             HumanMessage(content=f"{instruction}\n\nAdapted Recipe:\n{json.dumps(adapted_recipe, indent=2, default=str)}")
         ]
-        
+
         try:
             response = llm.invoke(messages)
             return response.content
@@ -800,14 +800,14 @@ class SousChefAgent:
             print(f"❌ Error formatting adapted recipe: {e}")
             title = adapted_recipe.get("adapted_title", "Adapted Recipe")
             output = f"# {title}\n\n"
-            
+
             adaptations = adapted_recipe.get("adaptations_made", [])
             if adaptations:
                 output += "## Modifications Made:\n"
                 for mod in adaptations:
                     output += f"- {mod}\n"
                 output += "\n"
-            
+
             ingredients = adapted_recipe.get("ingredients", [])
             if ingredients:
                 output += "## Ingredients:\n"
@@ -815,17 +815,17 @@ class SousChefAgent:
                     mark = "✅" if ing.get("available_in_pantry") else "🛒"
                     output += f"{mark} {ing.get('quantity')} {ing.get('unit', '')} {ing.get('item')}\n"
                 output += "\n"
-            
+
             steps = adapted_recipe.get("steps", [])
             if steps:
                 output += "## Instructions:\n"
                 for step in steps:
                     output += f"{step.get('id')}. {step.get('text')} ({step.get('time_minutes')}min)\n"
                 output += "\n"
-            
+
             cooking_time = adapted_recipe.get("cooking_time", {})
             output += f"⏱️ Total Time: {cooking_time.get('total', '?')} minutes\n"
-            
+
             return output
 
     def build_fallback_recipe_summary(
@@ -835,11 +835,11 @@ class SousChefAgent:
     ) -> str:
         """
         Construct a lightweight fallback recipe summary when adaptation fails.
-        
+
         Args:
             recipe: Original recipe data from Recipe Knowledge Agent
             user_preferences: User dietary preferences (for contextual tips)
-        
+
         Returns:
             Human-readable markdown summary.
         """
@@ -912,12 +912,12 @@ class SousChefAgent:
     ) -> Dict[str, Any]:
         """
         Create a standardized message to send to another agent.
-        
+
         Args:
             target_agent: Target agent identifier
             action: Action type
             data: Message data payload
-            
+
         Returns:
             Formatted message dictionary
         """
@@ -928,7 +928,7 @@ class SousChefAgent:
             "data": data,
             "timestamp": datetime.now().isoformat()
         }
-        
+
         return message
 
     def request_recipes_from_knowledge_agent(
@@ -939,12 +939,12 @@ class SousChefAgent:
     ) -> Dict[str, Any]:
         """
         Request recipe recommendations from Recipe Knowledge Agent.
-        
+
         Args:
             pantry_items: Available ingredients
             user_preferences: User's dietary preferences
             allow_missing: Maximum number of missing ingredients allowed
-            
+
         Returns:
             Message to send to Recipe Knowledge Agent
         """
@@ -955,7 +955,7 @@ class SousChefAgent:
                 "pantry_items": pantry_items,
                 "preferences": user_preferences,
                 "allow_missing": allow_missing,
-                "top_k": 20 
+                "top_k": 20
             }
         )
 
@@ -965,10 +965,10 @@ class SousChefAgent:
     ) -> Dict[str, Any]:
         """
         Check ingredient availability with Pantry Agent.
-        
+
         Args:
             required_ingredients: List of required ingredients for recipe
-            
+
         Returns:
             Message to send to Pantry Agent
         """
@@ -1007,7 +1007,7 @@ def sous_chef_workflow(
 ) -> Dict[str, Any]:
     """
     Complete Sous Chef workflow: recommend -> select -> adapt.
-    
+
     Args:
         llm: Language model
         pantry_summary: Pantry summary
@@ -1015,40 +1015,40 @@ def sous_chef_workflow(
         expiring_items: Expiring items list
         recipe_results: Recipe results from Recipe Knowledge Agent
         pantry_inventory: Full pantry inventory
-        
+
     Returns:
         Dict with recommendations, selected recipe, and adapted recipe
     """
     sous_chef = SousChefAgent()
-    
+
     # Step 1: Generate recommendations
     recommendations = sous_chef.generate_recommendations(
         llm, pantry_summary, user_preferences, expiring_items, recipe_results
     )
-    
+
     if not recommendations:
         return {"error": "Failed to generate recommendations"}
-    
+
     # Step 2: Present to user
     presentation = sous_chef.present_recommendations(llm, recommendations)
     print("\n" + "="*80)
     print(presentation)
     print("="*80 + "\n")
-    
+
     # Step 3: Get user selection
     selection = 1
     print(f"[Auto-selecting recipe #{selection} for demo]\n")
-    
+
     selected_recipe = sous_chef.handle_user_selection(selection, recipe_results)
-    
+
     if not selected_recipe:
         return {"error": "Failed to handle selection"}
-    
+
     # Step 4: Adapt recipe
     adapted_recipe = sous_chef.adapt_recipe(
         llm, selected_recipe, user_preferences, pantry_inventory
     )
-    
+
     # Step 5: Format for presentation
     formatted_recipe = sous_chef.format_adapted_recipe(llm, adapted_recipe)
     print("\n" + "="*80)
@@ -1056,7 +1056,7 @@ def sous_chef_workflow(
     print("="*80)
     print(formatted_recipe)
     print("="*80 + "\n")
-    
+
     return {
         "recommendations": recommendations,
         "selected_recipe": selected_recipe,
