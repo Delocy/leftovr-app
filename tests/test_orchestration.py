@@ -3,7 +3,7 @@ Test script for Executive Chef Orchestration with Unified Validator
 
 Tests:
 1. Pantry flow → Validator
-2. Recipe flow (Recipe Knowledge + Sous Chef) → Validator  
+2. Recipe flow (Recipe Knowledge + Sous Chef) → Validator
 3. Sous Chef dialogue for recipe selection
 """
 import asyncio
@@ -14,10 +14,10 @@ async def test_recipe_flow():
     print("\n" + "="*80)
     print("TEST: Recipe Flow with Validator")
     print("="*80 + "\n")
-    
+
     system = ModernCollaborativeSystem()
     system.seed_sample_pantry()
-    
+
     # Simulate recipe request
     initial_state = {
         "user_preferences": {
@@ -50,7 +50,7 @@ async def test_recipe_flow():
         "waiter_quality_passed": False,
         "waiter_quality_issues": []
     }
-    
+
     print("✅ Recipe flow test setup complete")
     print(f"   Pantry: {len(system.pantry.get_inventory())} items")
     print(f"   User: vegetarian, no allergies")
@@ -62,19 +62,19 @@ async def test_pantry_integration():
     print("\n" + "="*80)
     print("TEST: Recipe Knowledge Agent Pantry Integration")
     print("="*80 + "\n")
-    
+
     system = ModernCollaborativeSystem()
     system.seed_sample_pantry()
-    
+
     if not system.recipe_agent:
         print("❌ Recipe Knowledge Agent not available")
         return
-    
+
     # Test get_pantry_items
     print("1. Testing get_pantry_items()...")
     pantry_items = system.recipe_agent.get_pantry_items()
     print(f"   Retrieved {len(pantry_items)} items: {', '.join(pantry_items[:5])}...")
-    
+
     # Test hybrid_query with auto-pantry
     print("\n2. Testing hybrid_query() with auto-pantry...")
     try:
@@ -91,7 +91,7 @@ async def test_pantry_integration():
             print(f"   Score: {top_recipe[1]:.1f}, Uses {top_recipe[2]} pantry items")
     except Exception as e:
         print(f"   ⚠️ Hybrid query failed: {e}")
-    
+
     print("\n✅ Pantry integration test complete")
 
 
@@ -100,11 +100,11 @@ async def test_validator():
     print("\n" + "="*80)
     print("TEST: Result Validator")
     print("="*80 + "\n")
-    
-    from validators.output_validator import ResultValidator
-    
+
+    from utils.output_validator import ResultValidator
+
     validator = ResultValidator()
-    
+
     # Test 1: Recommendations validation (safe)
     print("1. Testing safe recommendations...")
     safe_recs = [
@@ -123,12 +123,12 @@ async def test_validator():
             "score": 88
         }
     ]
-    
+
     user_prefs = {"allergies": [], "restrictions": ["vegetarian"]}
     result = validator.validate_recommendations(safe_recs, user_prefs)
     print(f"   Passed: {result['passed']}")
     print(f"   Filtered: {len(result['filtered_recommendations'])} recipes")
-    
+
     # Test 2: Recommendations with allergens
     print("\n2. Testing recommendations with allergen...")
     unsafe_recs = [
@@ -140,14 +140,14 @@ async def test_validator():
             "score": 90
         }
     ]
-    
+
     user_prefs_allergic = {"allergies": ["peanuts"], "restrictions": []}
     result = validator.validate_recommendations(unsafe_recs, user_prefs_allergic)
     print(f"   Passed: {result['passed']}")
     print(f"   Issues: {len(result['issues'])} detected")
     if result['issues']:
         print(f"   First issue: {result['issues'][0]}")
-    
+
     # Test 3: Adapted recipe validation (safe)
     print("\n3. Testing safe adapted recipe...")
     safe_recipe = """
@@ -167,11 +167,11 @@ async def test_validator():
 
 ⏱️ Total Time: 15 minutes
 """
-    
+
     result = validator.validate_adapted_recipe(safe_recipe, user_prefs)
     print(f"   Passed: {result['passed']}")
     print(f"   Issues: {len(result['issues'])}")
-    
+
     # Test 4: Adapted recipe with allergen
     print("\n4. Testing recipe with allergen...")
     unsafe_recipe = """
@@ -186,13 +186,13 @@ async def test_validator():
 1. Cook noodles
 2. Mix with peanut sauce
 """
-    
+
     result = validator.validate_adapted_recipe(unsafe_recipe, user_prefs_allergic)
     print(f"   Passed: {result['passed']}")
     print(f"   Issues: {len(result['issues'])}")
     if result['issues']:
         print(f"   Critical issues: {[i for i in result['issues'] if 'CRITICAL' in i]}")
-    
+
     print("\n✅ Validator tests complete")
 
 
@@ -201,11 +201,11 @@ async def main():
     print("\n" + "="*80)
     print("EXECUTIVE CHEF ORCHESTRATION - TEST SUITE")
     print("="*80)
-    
+
     await test_validator()
     await test_pantry_integration()
     await test_recipe_flow()
-    
+
     print("\n" + "="*80)
     print("ALL TESTS COMPLETE")
     print("="*80 + "\n")

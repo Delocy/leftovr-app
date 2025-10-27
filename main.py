@@ -26,7 +26,7 @@ from agents.recipe_knowledge_agent import RecipeKnowledgeAgent
 from agents.executive_chef_agent import ExecutiveChefAgent
 from agents.pantry_agent import PantryAgent
 from agents.sous_chef_agent import SousChefAgent
-from validators.output_validator import ResultValidator
+from utils.output_validator import ResultValidator
 
 
 # Modern collaborative state
