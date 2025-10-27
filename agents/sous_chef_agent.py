@@ -1098,6 +1098,105 @@ class SousChefAgent:
         self.current_recommendations = []
         self.selected_recipe = None
 
+    def converse_about_recommendations(
+        self,
+        llm,
+        recommendations: List[Dict[str, Any]],
+        user_message: str,
+        user_preferences: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """
+        Allow user to have a direct conversation with Sous Chef about recipe recommendations.
+        User can ask questions, request comparisons, substitutions before making a selection.
+
+        Args:
+            llm: Language model
+            recommendations: Current top 3 recommendations
+            user_message: User's question or message
+            user_preferences: User dietary preferences
+
+        Returns:
+            {
+                "reply": str,              # Sous Chef's response
+                "selection": Optional[int]  # If user made a selection (1-3), otherwise None
+            }
+        """
+        system_prompt = self.build_system_prompt()
+
+        # Check if user is making a selection
+        selection = None
+        user_lower = user_message.lower().strip()
+
+        # Try to extract selection
+        if user_lower in ['1', '2', '3']:
+            selection = int(user_lower)
+        elif any(phrase in user_lower for phrase in ['i want', 'i choose', 'i\'ll take', 'let\'s make', 'i pick']):
+            for num in ['1', '2', '3', 'first', 'second', 'third']:
+                if num in user_lower:
+                    selection = {'1': 1, '2': 2, '3': 3, 'first': 1, 'second': 2, 'third': 3}.get(num)
+                    break
+
+        conversation_instruction = """
+        You are in a direct conversation with the user about the recipe recommendations you presented.
+        The user can:
+        - Ask questions about any recipe (ingredients, difficulty, substitutions, time)
+        - Compare recipes ("what's the difference between 1 and 2?")
+        - Request modifications ("can I make recipe 1 without garlic?")
+        - Make their selection (1, 2, or 3)
+
+        Your response should be:
+        - Conversational and friendly
+        - Specific and helpful
+        - Reference the actual recipes by number (1, 2, 3)
+        - Encourage them to ask more questions if they're unsure
+
+        Current recommendations context:
+        {recommendations_json}
+
+        User preferences:
+        {preferences_json}
+
+        User's message: "{user_message}"
+
+        Respond naturally and helpfully. If they make a selection, confirm it enthusiastically!
+        """
+
+        context = conversation_instruction.format(
+            recommendations_json=json.dumps(recommendations, indent=2, default=str),
+            preferences_json=json.dumps(user_preferences, indent=2),
+            user_message=user_message
+        )
+
+        messages = [
+            SystemMessage(content=system_prompt),
+            HumanMessage(content=context)
+        ]
+
+        try:
+            response = llm.invoke(messages)
+            reply = response.content
+
+            # Log conversation
+            self.recommendation_history.append({
+                "timestamp": datetime.now().isoformat(),
+                "action": "sous_chat_conversation",
+                "user_message": user_message,
+                "reply": reply,
+                "selection_detected": selection
+            })
+
+            return {
+                "reply": reply,
+                "selection": selection
+            }
+
+        except Exception as e:
+            print(f"❌ Error in Sous Chef conversation: {e}")
+            return {
+                "reply": "I apologize, I'm having trouble processing that. Could you rephrase your question?",
+                "selection": None
+            }
+
 
 # Helper function for integration
 def sous_chef_workflow(
