@@ -22,7 +22,6 @@ llm = ChatOpenAI(
     api_key=OPENAI_API_KEY
 )
 
-from agents.waiter_agent import WaiterAgent
 from agents.recipe_knowledge_agent import RecipeKnowledgeAgent
 from agents.executive_chef_agent import ExecutiveChefAgent
 from agents.pantry_agent import PantryAgent
@@ -70,7 +69,6 @@ class ModernCollaborativeSystem:
 
     def __init__(self):
         self.graph = self._create_modern_collaborative_graph()
-        self.waiter = WaiterAgent(name="Maison d'Être")
 
         # Initialize Recipe Knowledge Agent
         self.recipe_agent = RecipeKnowledgeAgent(data_dir='data')
@@ -106,7 +104,7 @@ class ModernCollaborativeSystem:
 
             # --- Stage: Initial Greeting ---
             if stage == "initial" and not latest:
-                intro = self.waiter.run(llm, context="general")
+                intro = self.exec_chef.run_waiter(llm, context="general")
                 print(f"\nWaiter: {intro}")
                 messages.append({"role": "assistant", "content": intro})
                 return Command(
@@ -198,7 +196,7 @@ class ModernCollaborativeSystem:
                 messages.append({"role": "user", "content": latest})
 
             # --- Classify query using full chat history ---
-            classification = self.waiter.classify_query(llm, messages)
+            classification = self.exec_chef.classify_query(llm, messages)
             query_type = classification.get("query_type", "general")
             log.append(f"Waiter: Classified query as '{query_type}'")
 
@@ -206,7 +204,7 @@ class ModernCollaborativeSystem:
 
             # 1) General queries - handle directly
             if query_type == "general":
-                res = self.waiter.respond(llm, latest)
+                res = self.exec_chef.respond_as_waiter(llm, latest)
                 print(f"\nWaiter: {res}")
                 messages.append({"role": "assistant", "content": res})
                 return Command(
@@ -236,7 +234,7 @@ class ModernCollaborativeSystem:
 
             # 3) Recipe queries - collect preferences
             if query_type == "recipe":
-                extracted = self.waiter.extract_preferences(llm, messages)
+                extracted = self.exec_chef.extract_preferences(llm, messages)
 
                 # Merge extracted preferences
                 def merge_list(key):
@@ -646,7 +644,7 @@ class ModernCollaborativeSystem:
                     )
 
                 # Perform quality check with full conversation context
-                qa_result = self.waiter.perform_quality_check(
+                qa_result = self.exec_chef.perform_quality_check(
                     llm, formatted_recipe, user_prefs, messages
                 )
 
