@@ -6,36 +6,49 @@ from langchain_core.messages import SystemMessage, HumanMessage
 
 class ExecutiveChefAgent:
     """
-    Executive Chef Agent - Orchestrator and Task Decomposer.
+    Executive Chef Agent - Unified Orchestrator & User Interface.
 
-    Responsibilities:
-    - Analyze user requests and determine complexity
+    This agent serves as BOTH the user-facing interface (Waiter) AND the backend orchestrator,
+    eliminating redundant communication layers for a streamlined architecture.
+
+    DUAL RESPONSIBILITIES:
+
+    🎭 USER INTERFACE (Waiter Role):
+    - Greet users and establish rapport
+    - Collect dietary preferences, allergies, and constraints
+    - Classify query types (recipe, pantry, general)
+    - Present recommendations and final recipes
+    - Perform quality assurance with user context
+    - Handle conversational interaction
+
+    🧠 ORCHESTRATION (Executive Chef Role):
+    - Analyze request complexity
     - Decompose complex queries into subtasks
-    - Delegate tasks to appropriate subagents
-    - Coordinate workflow between agents
+    - Delegate tasks to specialized agents (Pantry, Sous Chef, Recipe Knowledge)
+    - Coordinate multi-agent workflows
+    - Synthesize agent responses into coherent recommendations
     - Make strategic decisions about recipe selection
-    - Perform quality checks on final outputs
-    - Ensure all user constraints are satisfied
+    - Optimize for food waste reduction
     """
 
-    def __init__(self, name: str = "Executive Chef"):
+    def __init__(self, name: str = "Maison D'Être"):
         self.name = name
         self.task_history: List[Dict[str, Any]] = []
         self.delegation_log: List[Dict[str, Any]] = []
 
-    def build_system_prompt(self) -> str:
-        """Return the executive chef agent system prompt."""
+    # ==================== ORCHESTRATION METHODS ====================
+
+    def build_orchestration_prompt(self) -> str:
+        """Return the orchestration-focused system prompt for backend reasoning."""
         return """
         <system_prompt>
-        YOU ARE THE "EXECUTIVE CHEF" — THE MASTER ORCHESTRATOR AND STRATEGIC DECISION-MAKER
-        IN A MULTI-AGENT AI COOKING SYSTEM. YOUR PRIMARY ROLE IS TO ANALYZE USER REQUESTS,
-        DECOMPOSE COMPLEX TASKS, DELEGATE TO SPECIALIZED AGENTS, AND ENSURE HIGH-QUALITY
-        CULINARY SOLUTIONS.
+        YOU ARE "MAISON D'ÊTRE" — A UNIFIED AI CULINARY ASSISTANT THAT COMBINES USER INTERACTION
+        WITH INTELLIGENT ORCHESTRATION. YOU HANDLE BOTH THE FRIENDLY USER INTERFACE AND THE
+        STRATEGIC BACKEND COORDINATION OF SPECIALIZED COOKING AGENTS.
 
         ###OBJECTIVE###
-        YOUR GOAL IS TO COORDINATE THE ENTIRE COOKING ASSISTANCE WORKFLOW, MAKING INTELLIGENT
-        DECISIONS ABOUT TASK COMPLEXITY, RESOURCE ALLOCATION, AND AGENT DELEGATION TO DELIVER
-        OPTIMAL RECIPE RECOMMENDATIONS THAT REDUCE FOOD WASTE AND SATISFY USER PREFERENCES.
+        DELIVER OPTIMAL RECIPE RECOMMENDATIONS THAT REDUCE FOOD WASTE AND SATISFY USER PREFERENCES
+        BY INTELLIGENTLY COORDINATING SPECIALIZED AGENTS WHILE MAINTAINING WARM, HELPFUL INTERACTION.
 
         ###RESPONSIBILITIES###
         1. **TASK ANALYSIS**: Evaluate incoming requests for complexity and requirements
@@ -60,20 +73,12 @@ class ExecutiveChefAgent:
         - Generates recipe suggestions based on available ingredients
         - Adapts recipes to user skill level
         - Provides step-by-step cooking instructions
+        - Handles recipe Q&A dialogue
 
         **Recipe Knowledge Agent**:
-        - Retrieves recipes from vector database (Qdrant/Milvus)
-        - Performs semantic search for recipe matching
+        - Retrieves recipes from vector database (Qdrant)
+        - Performs semantic and hybrid search for recipe matching
         - Provides nutritional information and cooking tips
-
-        **Quality Control Agent**:
-        - Validates recipe completeness and safety
-        - Checks allergen compliance
-        - Verifies cooking instructions are clear
-
-        **Waiter Agent**:
-        - Collects user preferences (diet, allergies, skill level)
-        - Communicates final results to user
 
         ###DECISION FRAMEWORK###
 
@@ -104,17 +109,18 @@ class ExecutiveChefAgent:
         4. **Preference Matching**: Favor user's preferred cuisines
         5. **Ingredient Efficiency**: Minimize waste and maximize usage
 
-        ###INSTRUCTIONS###
-        1. **RECEIVE** handoff packet from Waiter Agent with user preferences
-        2. **ANALYZE** query type and complexity level
-        3. **CONSULT** Pantry Agent for current inventory and expiring items
-        4. **DETERMINE** optimal recipe strategy (use-what-you-have vs. specific recipe)
-        5. **DELEGATE** to appropriate agents in correct sequence
-        6. **COLLECT** responses from subagents
-        7. **SYNTHESIZE** information into coherent recommendation
-        8. **VALIDATE** via Quality Control Agent
-        9. **OPTIMIZE** for food waste reduction
-        10. **RETURN** final recommendation to Waiter Agent for user delivery
+        ###WORKFLOW###
+        1. **GREET** user warmly and establish context
+        2. **COLLECT** user preferences (diet, allergies, skill level, cuisines)
+        3. **CLASSIFY** query type (recipe, pantry, general)
+        4. **ANALYZE** query complexity level (simple, medium, complex)
+        5. **CONSULT** Pantry Agent for current inventory and expiring items
+        6. **DETERMINE** optimal strategy (ingredient-first vs. recipe-first)
+        7. **DELEGATE** to appropriate agents in correct sequence
+        8. **COLLECT** and synthesize responses from subagents
+        9. **PRESENT** recommendations to user with clear options
+        10. **VALIDATE** final recipe for safety and constraint satisfaction
+        11. **OPTIMIZE** for food waste reduction throughout
 
         ###CHAIN OF THOUGHTS###
         1. **UNDERSTAND**: What is the user really asking for?
@@ -233,7 +239,7 @@ class ExecutiveChefAgent:
         Returns:
             Dict with 'complexity', 'strategy', 'required_agents', 'reasoning'
         """
-        system_prompt = self.build_system_prompt()
+        system_prompt = self.build_orchestration_prompt()
 
         analysis_instruction = """
         Analyze the following user request and preferences to determine:
@@ -304,7 +310,7 @@ class ExecutiveChefAgent:
         Returns:
             Dict with 'tasks', 'delegation_order', 'success_criteria'
         """
-        system_prompt = self.build_system_prompt()
+        system_prompt = self.build_orchestration_prompt()
 
         planning_instruction = """
         Create a detailed execution plan for fulfilling this user request.
@@ -515,7 +521,7 @@ class ExecutiveChefAgent:
         Returns:
             Formatted recommendation text
         """
-        system_prompt = self.build_system_prompt()
+        system_prompt = self.build_orchestration_prompt()
 
         synthesis_instruction = """
         You are synthesizing responses from multiple specialized agents into a
@@ -557,10 +563,6 @@ class ExecutiveChefAgent:
         })
 
         return response.content
-
-    # DEPRECATED: Quality checks are now performed by Executive Chef's integrated waiter methods
-    # This method has been removed as Executive Chef has full conversation context
-    # for user-aware quality assessment. Use ExecutiveChefAgent.perform_quality_check() instead.
 
     def orchestrate_full_workflow(
         self,
@@ -624,8 +626,8 @@ class ExecutiveChefAgent:
         print(f"   Synthesizing recommendation...")
         recommendation = self.synthesize_recommendations(llm, agent_responses, user_preferences)
 
-        # Step 6: Return final result (NO quality check - Waiter handles QA)
-        print(f"   ✅ Orchestration complete - passing to Waiter for quality check")
+        # Step 6: Return final result (quality check happens during final presentation)
+        print(f"   ✅ Orchestration complete - preparing for quality validation")
 
         result = {
             'success': True,
@@ -656,10 +658,12 @@ class ExecutiveChefAgent:
         self.task_history = []
         self.delegation_log = []
 
-    # ==================== WAITER AGENT METHODS (Merged) ====================
+    # ==================== USER INTERFACE METHODS ====================
+    # These methods handle direct user interaction: greeting, classification,
+    # preference extraction, and conversational responses.
 
-    def build_waiter_prompt(self, context: str = "general") -> str:
-        """Return the waiter agent system prompt for greeting and collecting preferences."""
+    def build_user_interface_prompt(self, context: str = "general") -> str:
+        """Return the user interface prompt for conversation handling."""
         if context == "general":
             return (
                 "You are a friendly virtual assistant. "
@@ -791,8 +795,8 @@ class ExecutiveChefAgent:
             return "Hi there! I'm your Waiter — here to help with recipes, pantry ideas, and meal planning."
 
     def respond_as_waiter(self, llm, user_input: str, context: str = "general") -> str:
-        """Generate an interactive response given user input using the waiter system prompt."""
-        prompt = self.build_waiter_prompt(context)
+        """Generate an interactive response given user input using the user interface prompt."""
+        prompt = self.build_user_interface_prompt(context)
         response = llm.invoke([
             SystemMessage(content=prompt),
             HumanMessage(content=user_input)

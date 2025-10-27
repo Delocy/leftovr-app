@@ -26,6 +26,7 @@ from agents.recipe_knowledge_agent import RecipeKnowledgeAgent
 from agents.executive_chef_agent import ExecutiveChefAgent
 from agents.pantry_agent import PantryAgent
 from agents.sous_chef_agent import SousChefAgent
+from validators.output_validator import ResultValidator
 
 
 # Modern collaborative state
@@ -70,6 +71,13 @@ class ModernCollaborativeSystem:
     def __init__(self):
         self.graph = self._create_modern_collaborative_graph()
 
+        # Initialize Validator
+        self.validator = ResultValidator()
+
+        # Initialize Agents (ExecutiveChefAgent handles both orchestration and user interface)
+        self.exec_chef = ExecutiveChefAgent(name="Maison D'Être")
+        self.pantry = PantryAgent(name="Pantry Manager")
+
         # Initialize Recipe Knowledge Agent
         self.recipe_agent = RecipeKnowledgeAgent(data_dir='data')
         try:
@@ -81,20 +89,24 @@ class ModernCollaborativeSystem:
             print(f"⚠️  Warning: {e}")
             print("   Run the ingestion script first: python scripts/ingest_recipes_qdrant.py")
             self.recipe_agent = None
-        self.exec_chef = ExecutiveChefAgent(name="Executive Chef")
-        self.pantry = PantryAgent(name="Pantry Manager")
+
+        # Wire pantry to recipe agent
+        if self.recipe_agent:
+            self.recipe_agent.set_pantry_agent(self.pantry)
+
         self.sous_chef = SousChefAgent(name="Sous Chef", recipe_knowledge_agent=self.recipe_agent)
 
     def _create_modern_collaborative_graph(self) -> StateGraph:
         """Create collaborative workflow with Command API"""
         workflow = StateGraph(ModernCollaborativeState)
 
-        def waiter_node(state) -> Command[Literal["waiter_node", "executive_chef_orchestrate", "waiter_finalize"]]:
+        def waiter_node(state) -> Command[Literal["waiter_node", "executive_chef_orchestrate", "waiter_finalize", "sous_chat"]]:
             """
-            Waiter handles ALL user interaction based on workflow stage:
+            User interaction node (powered by ExecutiveChefAgent's user interface methods).
+            Handles conversation based on workflow stage:
             - Stage: initial/collecting - Greet, classify query, extract preferences
             - Stage: presenting_options - Display recipe recommendations
-            - Stage: final_qa - Perform quality check and present final recipe
+            - Stage: awaiting_selection - Collect user choice or questions
             """
             log = state.get("coordination_log", [])
             stage = state.get("current_workflow_stage", "initial")
@@ -105,7 +117,7 @@ class ModernCollaborativeSystem:
             # --- Stage: Initial Greeting ---
             if stage == "initial" and not latest:
                 intro = self.exec_chef.run_waiter(llm, context="general")
-                print(f"\nWaiter: {intro}")
+                print(f"\n🎭 Maison D'Être: {intro}")
                 messages.append({"role": "assistant", "content": intro})
                 return Command(
                     update={
@@ -130,22 +142,44 @@ class ModernCollaborativeSystem:
                         goto="waiter_finalize"
                     )
 
-                # Present recommendations to user
-                presentation = self.sous_chef.present_recommendations(llm, recommendations)
+                # Validate recommendations before presenting
+                validation = self.validator.validate_recommendations(recommendations, current_prefs)
+
+                if not validation["passed"]:
+                    error_msg = "I apologize, I couldn't find safe recipes matching your requirements."
+                    if validation["issues"]:
+                        error_msg += f"\n\nIssues: {'; '.join(validation['issues'][:3])}"
+                    print(f"\n⚠️ Waiter: {error_msg}")
+                    messages.append({"role": "assistant", "content": error_msg})
+                    return Command(
+                        update={
+                            "coordination_log": log,
+                            "messages": messages,
+                            "current_workflow_stage": "idle"
+                        },
+                        goto="waiter_finalize"
+                    )
+
+                # Present validated recommendations
+                filtered_recs = validation["filtered_recommendations"]
+                presentation = self.sous_chef.present_recommendations(llm, filtered_recs)
                 print("\n" + "="*80)
-                print("🍽️  WAITER RECOMMENDATIONS")
+                print("🍽️  RECIPE RECOMMENDATIONS")
                 print("="*80 + "\n")
                 print(presentation)
-                print("\n" + "="*80 + "\n")
+                print("\n" + "="*80)
+                print("\n💬 You can also ask questions about the recipes before choosing!")
+                print("   (e.g., 'What's the difference between 1 and 2?', 'Can I substitute ingredients?')\n")
 
                 messages.append({"role": "assistant", "content": presentation})
-                log.append("Waiter: Presented recipe recommendations to user")
+                log.append("Waiter: Presented validated recipe recommendations to user")
 
-                # Wait for user selection
+                # Wait for user selection or questions
                 return Command(
                     update={
                         "coordination_log": log,
                         "messages": messages,
+                        "sous_chef_recommendations": filtered_recs,  # Store filtered
                         "current_workflow_stage": "awaiting_selection"
                     },
                     goto="waiter_node"
@@ -154,6 +188,8 @@ class ModernCollaborativeSystem:
             # --- Stage: User Selection Received ---
             if stage == "awaiting_selection" and latest:
                 messages.append({"role": "user", "content": latest})
+
+                # Check if it's a direct selection (1, 2, or 3)
                 try:
                     selection = int(latest.strip())
                     if 1 <= selection <= 3:
@@ -169,7 +205,7 @@ class ModernCollaborativeSystem:
                             goto="executive_chef_orchestrate"
                         )
                     else:
-                        error_msg = "Please enter 1, 2, or 3"
+                        error_msg = "Please enter 1, 2, or 3, or ask me a question about the recipes!"
                         print(f"\nWaiter: {error_msg}")
                         messages.append({"role": "assistant", "content": error_msg})
                         return Command(
@@ -180,15 +216,16 @@ class ModernCollaborativeSystem:
                             goto="waiter_node"
                         )
                 except ValueError:
-                    error_msg = "Please enter a number (1, 2, or 3)"
-                    print(f"\nWaiter: {error_msg}")
-                    messages.append({"role": "assistant", "content": error_msg})
+                    # Not a number - could be a question, route to Sous Chef
+                    log.append("Waiter: User has a question, routing to Sous Chef")
+                    print(f"\n💬 Waiter: Connecting you with Sous Chef...")
                     return Command(
                         update={
                             "coordination_log": log,
-                            "messages": messages
+                            "messages": messages,
+                            "current_workflow_stage": "sous_dialogue"
                         },
-                        goto="waiter_node"
+                        goto="sous_chat"
                     )
 
             # --- Update messages history for collecting stage ---
@@ -297,7 +334,7 @@ class ModernCollaborativeSystem:
 
         def executive_chef_orchestrate(state) -> Command[Literal["agent_execute", "waiter_node", "waiter_finalize"]]:
             """
-            Central orchestrator that coordinates all agents.
+            Orchestration node (powered by ExecutiveChefAgent's orchestration methods).
             Analyzes request complexity, creates task plans, delegates to agents, and synthesizes results.
             """
             log = state.get("coordination_log", [])
@@ -601,10 +638,78 @@ class ModernCollaborativeSystem:
                 goto="waiter_finalize"
             )
 
+        def sous_chat(state) -> Command[Literal["waiter_node", "executive_chef_orchestrate"]]:
+            """
+            Sous Chef dialogue node - handles Q&A about recommendations.
+            User can ask questions, compare recipes, request substitutions.
+            """
+            log = state.get("coordination_log", [])
+            stage = state.get("current_workflow_stage")
+            latest = state.get("latest_user_message")
+            messages = state.get("messages", [])
+            recommendations = state.get("sous_chef_recommendations", [])
+            user_prefs = state.get("user_preferences", {})
+
+            if stage != "sous_dialogue":
+                # Safety fallback
+                return Command(
+                    update={"coordination_log": log, "current_workflow_stage": "awaiting_selection"},
+                    goto="waiter_node"
+                )
+
+            if not latest:
+                # No user message, go back to waiter
+                return Command(
+                    update={"coordination_log": log, "current_workflow_stage": "awaiting_selection"},
+                    goto="waiter_node"
+                )
+
+            # Call Sous Chef conversation handler
+            print(f"\n👨‍🍳 Sous Chef: Processing your question...")
+            conversation_result = self.sous_chef.converse_about_recommendations(
+                llm=llm,
+                recommendations=recommendations,
+                user_message=latest,
+                user_preferences=user_prefs
+            )
+
+            reply = conversation_result["reply"]
+            selection = conversation_result["selection"]
+
+            # Display Sous Chef's response
+            print(f"\n👨‍🍳 Sous Chef: {reply}\n")
+            messages.append({"role": "assistant", "content": reply})
+            log.append(f"Sous Chef: Responded to user question")
+
+            # Check if user made a selection
+            if selection:
+                log.append(f"Sous Chef: User selected recipe #{selection}")
+                print(f"✅ Selection confirmed: Recipe #{selection}")
+                return Command(
+                    update={
+                        "coordination_log": log,
+                        "messages": messages,
+                        "user_recipe_selection": selection,
+                        "current_workflow_stage": "adapting_recipe"
+                    },
+                    goto="executive_chef_orchestrate"
+                )
+            else:
+                # Continue dialogue
+                log.append("Sous Chef: Awaiting user selection or further questions")
+                return Command(
+                    update={
+                        "coordination_log": log,
+                        "messages": messages,
+                        "current_workflow_stage": "sous_dialogue"
+                    },
+                    goto="waiter_node"  # Return to waiter to get next input
+                )
+
         def waiter_finalize(state) -> Command:
             """
-            Final presentation with quality check performed by Waiter.
-            Waiter has full conversation context for user-aware quality assessment.
+            Final presentation node (powered by ExecutiveChefAgent + Validator).
+            Performs quality validation and presents final results to user.
             """
             log = state.get("coordination_log", [])
             stage = state.get("current_workflow_stage")
@@ -625,7 +730,7 @@ class ModernCollaborativeSystem:
                     }
                 )
 
-            # Final QA and presentation
+            # Final QA and presentation using Validator
             elif stage == "final_qa":
                 formatted_recipe = state.get("formatted_recipe", "")
                 user_prefs = state.get("user_preferences", {})
@@ -643,36 +748,33 @@ class ModernCollaborativeSystem:
                         }
                     )
 
-                # Perform quality check with full conversation context
-                qa_result = self.exec_chef.perform_quality_check(
-                    llm, formatted_recipe, user_prefs, messages
+                # Use Validator for safety checks
+                validation = self.validator.validate_adapted_recipe(
+                    formatted_recipe, user_prefs, messages
                 )
 
-                log.append(f"Waiter: Quality check - {'passed' if qa_result['passed'] else 'issues detected'}")
+                log.append(f"Validator: Recipe validation - {'passed' if validation['passed'] else 'FAILED'}")
 
-                if qa_result["passed"]:
-                    print("\n" + "="*80)
+                validated_content = validation["content"]
+
+                # Display validated recipe
+                print("\n" + "="*80)
+                if validation["passed"]:
                     print("🍽️  MAISON D'ÊTRE - Your Recipe")
-                    print("="*80 + "\n")
-                    print(formatted_recipe)
-                    print("\n" + "="*80 + "\n")
-                    messages.append({"role": "assistant", "content": formatted_recipe})
                 else:
-                    issues_str = ', '.join(qa_result['issues'])
-                    warning = f"⚠️  Quality concerns: {issues_str}\n\n{formatted_recipe}"
-                    print("\n" + "="*80)
-                    print("🍽️  MAISON D'ÊTRE - Your Recipe (with concerns)")
-                    print("="*80 + "\n")
-                    print(warning)
-                    print("\n" + "="*80 + "\n")
-                    messages.append({"role": "assistant", "content": warning})
+                    print("🚨 MAISON D'ÊTRE - Recipe Safety Alert")
+                print("="*80 + "\n")
+                print(validated_content)
+                print("\n" + "="*80 + "\n")
+
+                messages.append({"role": "assistant", "content": validated_content})
 
                 return Command(
                     update={
                         "coordination_log": log,
                         "messages": messages,
-                        "waiter_quality_passed": qa_result["passed"],
-                        "waiter_quality_issues": qa_result.get("issues", []),
+                        "waiter_quality_passed": validation["passed"],
+                        "waiter_quality_issues": validation.get("issues", []),
                         "current_workflow_stage": "idle"
                     }
                 )
@@ -692,6 +794,7 @@ class ModernCollaborativeSystem:
         workflow.add_node("waiter_node", waiter_node)
         workflow.add_node("executive_chef_orchestrate", executive_chef_orchestrate)
         workflow.add_node("agent_execute", agent_execute)
+        workflow.add_node("sous_chat", sous_chat)
         workflow.add_node("waiter_finalize", waiter_finalize)
 
         # Set entry and finish points
@@ -703,6 +806,39 @@ class ModernCollaborativeSystem:
             cache=InMemoryCache(),
             interrupt_before=["waiter_node"]  # Pause for user input
         )
+
+    def seed_sample_pantry(self):
+        """Add sample ingredients to pantry for testing."""
+        from datetime import datetime, timedelta
+
+        today = datetime.now()
+        tomorrow = today + timedelta(days=1)
+        week_later = today + timedelta(days=7)
+
+        sample_items = [
+            {"name": "chicken breast", "quantity": 2, "unit": "lbs", "expiration": tomorrow.date().isoformat(), "category": "protein"},
+            {"name": "spinach", "quantity": 1, "unit": "bunch", "expiration": tomorrow.date().isoformat(), "category": "vegetable"},
+            {"name": "tomatoes", "quantity": 5, "unit": "pieces", "expiration": (today + timedelta(days=3)).date().isoformat(), "category": "vegetable"},
+            {"name": "pasta", "quantity": 1, "unit": "lb", "expiration": week_later.date().isoformat(), "category": "grain"},
+            {"name": "olive oil", "quantity": 16, "unit": "oz", "expiration": None, "category": "pantry"},
+            {"name": "garlic", "quantity": 1, "unit": "bulb", "expiration": week_later.date().isoformat(), "category": "vegetable"},
+            {"name": "onion", "quantity": 2, "unit": "pieces", "expiration": week_later.date().isoformat(), "category": "vegetable"},
+            {"name": "parmesan cheese", "quantity": 8, "unit": "oz", "expiration": (today + timedelta(days=14)).date().isoformat(), "category": "dairy"},
+            {"name": "eggs", "quantity": 12, "unit": "pieces", "expiration": (today + timedelta(days=10)).date().isoformat(), "category": "protein"},
+            {"name": "milk", "quantity": 1, "unit": "quart", "expiration": (today + timedelta(days=4)).date().isoformat(), "category": "dairy"},
+        ]
+
+        for item in sample_items:
+            self.pantry.add_or_update_ingredient(
+                ingredient_name=item["name"],
+                quantity=item["quantity"],
+                unit=item["unit"],
+                expiration_date=item["expiration"],
+                category=item["category"]
+            )
+
+        print(f"✅ Seeded pantry with {len(sample_items)} sample ingredients")
+        print(f"   {len(self.pantry.get_expiring_soon())} items expiring soon")
 
     async def run_hybrid(self, initial_user_message: Optional[str] = None):
         state = {
@@ -757,5 +893,11 @@ class ModernCollaborativeSystem:
 
 if __name__ == "__main__":
     system = ModernCollaborativeSystem()
+
+    # Seed sample pantry data for testing
+    print("\n🌱 Seeding sample pantry data...")
+    system.seed_sample_pantry()
+    print()
+
     asyncio.run(system.run_hybrid())
 
