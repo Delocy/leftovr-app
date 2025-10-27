@@ -8,11 +8,11 @@ A multi-agent food concierge system that helps users discover, discuss, and enjo
 
 ```bash
 # Create virtual environment
-python3 -m venv venv
+python3 -m venv .venv
 
 # Activate virtual environment
 # On macOS/Linux:
-source venv/bin/activate
+source .venv/bin/activate
 
 # On Windows:
 # venv\Scripts\activate
