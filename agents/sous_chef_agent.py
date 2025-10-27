@@ -419,6 +419,7 @@ class SousChefAgent:
     ) -> List[Dict[str, Any]]:
         """
         Generate top 3 recipe recommendations based on pantry and preferences.
+        If recipe_results not provided, fetch from Recipe Knowledge Agent internally.
 
         Args:
             llm: Language model for reasoning
@@ -431,6 +432,52 @@ class SousChefAgent:
             List of top 3 recipe recommendations
         """
         print(f"\n👨‍🍳 {self.name}: Analyzing recipes and generating recommendations...")
+
+        # If no recipe results provided, fetch from Recipe Knowledge Agent
+        if not recipe_results and self.recipe_knowledge_agent:
+            print(f"   {self.name}: Fetching recipes from Recipe Knowledge Agent...")
+            user_ingredients = [item.get("ingredient_name", "") for item in pantry_summary.get("inventory", [])]
+            if not user_ingredients:
+                # Use pantry inventory if available in different format
+                user_ingredients = [item.get("name", "") for item in pantry_summary.get("items", [])]
+
+            # Build query text from preferences
+            query_parts = []
+            if user_preferences.get("cuisines"):
+                query_parts.append(", ".join(user_preferences["cuisines"]))
+            if user_preferences.get("diet"):
+                query_parts.append(user_preferences["diet"])
+
+            query_text = " ".join(query_parts) if query_parts else "dinner recipe"
+
+            try:
+                # Call Recipe Knowledge Agent hybrid_query
+                raw_results = self.recipe_knowledge_agent.hybrid_query(
+                    pantry_items=user_ingredients,
+                    query_text=query_text,
+                    allow_missing=2,
+                    top_k=10,
+                    use_semantic=True
+                )
+
+                # Format results from (metadata, score, num_used, missing) tuples
+                recipe_results = []
+                for metadata, score, num_used, missing in raw_results:
+                    recipe_results.append({
+                        "id": metadata.get("id"),
+                        "title": metadata.get("title"),
+                        "ingredients": metadata.get("ner", []),
+                        "link": metadata.get("link"),
+                        "source": metadata.get("source"),
+                        "score": float(score),
+                        "pantry_items_used": num_used,
+                        "missing_ingredients": missing
+                    })
+
+                print(f"   {self.name}: Retrieved {len(recipe_results)} recipes from knowledge base")
+            except Exception as e:
+                print(f"   ⚠️ {self.name}: Failed to fetch recipes: {e}")
+                recipe_results = []
 
         system_prompt = self.build_system_prompt()
 
@@ -827,6 +874,62 @@ class SousChefAgent:
             output += f"⏱️ Total Time: {cooking_time.get('total', '?')} minutes\n"
 
             return output
+
+    def format_recipe_for_user(
+        self,
+        adapted_recipe: Dict[str, Any],
+        user_preferences: Dict[str, Any]
+    ) -> str:
+        """
+        Format adapted recipe for user presentation (fallback to format_adapted_recipe if LLM available).
+
+        Args:
+            adapted_recipe: Adapted recipe data
+            user_preferences: User preferences for context
+
+        Returns:
+            Formatted string for user
+        """
+        if "error" in adapted_recipe:
+            # Use fallback if adaptation failed
+            original = adapted_recipe.get("original_recipe", {})
+            return self.build_fallback_recipe_summary(original, user_preferences)
+
+        title = adapted_recipe.get("adapted_title", "Adapted Recipe")
+        output = f"# {title}\n\n"
+
+        adaptations = adapted_recipe.get("adaptations_made", [])
+        if adaptations:
+            output += "## Modifications Made:\n"
+            for mod in adaptations:
+                output += f"- {mod}\n"
+            output += "\n"
+
+        ingredients = adapted_recipe.get("ingredients", [])
+        if ingredients:
+            output += "## Ingredients:\n"
+            for ing in ingredients:
+                mark = "✅" if ing.get("available_in_pantry") else "🛒"
+                output += f"{mark} {ing.get('quantity')} {ing.get('unit', '')} {ing.get('item')}\n"
+            output += "\n"
+
+        steps = adapted_recipe.get("steps", [])
+        if steps:
+            output += "## Instructions:\n"
+            for step in steps:
+                output += f"{step.get('id')}. {step.get('text')} ({step.get('time_minutes')}min)\n"
+            output += "\n"
+
+        cooking_time = adapted_recipe.get("cooking_time", {})
+        output += f"⏱️ Total Time: {cooking_time.get('total', '?')} minutes\n"
+
+        safety_notes = adapted_recipe.get("safety_notes", [])
+        if safety_notes:
+            output += "\n## Safety Notes:\n"
+            for note in safety_notes:
+                output += f"✓ {note}\n"
+
+        return output
 
     def build_fallback_recipe_summary(
         self,

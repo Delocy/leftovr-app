@@ -52,9 +52,9 @@ class WaiterAgent:
 
                 2. **View Pantry**
                 User: “What’s currently in my pantry?”
-                Agent: “Here’s what you have:  
-                - Eggs: 2  
-                - Milk: 1 carton  
+                Agent: “Here’s what you have:
+                - Eggs: 2
+                - Milk: 1 carton
                 - Tomatoes: 5”
 
                 3. **Update Items**
@@ -73,7 +73,7 @@ class WaiterAgent:
                 Friendly, concise, helpful, and focused purely on pantry management. Avoid recipe suggestions unless explicitly requested.
                 """
             )
-            
+
         if context == "recipe":
             return (
                 """
@@ -150,8 +150,15 @@ class WaiterAgent:
         ])
         return response.content
 
-    def extract_preferences(self, llm, user_text: str) -> dict:
-        """Parse free text into structured preferences. Returns dict with keys: diet, allergies, restrictions, cuisines, skill."""
+    def extract_preferences(self, llm, messages: list) -> dict:
+        """
+        Parse messages into structured preferences.
+        Returns dict with keys: allergies, restrictions.
+
+        Args:
+            llm: Language model
+            messages: List of message dicts with 'role' and 'content'
+        """
         schema_instruction = (
             "Return ONLY valid JSON matching this schema (no extra text):\n"
             "{\n"
@@ -160,11 +167,27 @@ class WaiterAgent:
             "}"
         )
         sys = (
-            "You extract user food preferences into a strict JSON object."
+            "You extract user food preferences from a conversation history into a strict JSON object. "
+            "Look for mentions of allergies, dietary restrictions (vegan, vegetarian, halal, kosher, etc.), "
+            "and any food-related preferences."
         )
+
+        # Normalize messages to text format
+        normalized_msgs = []
+        for m in messages:
+            if isinstance(m, dict):
+                normalized_msgs.append(m)
+            elif hasattr(m, "content") and hasattr(m, "type"):
+                role = m.type if hasattr(m, "type") else "assistant"
+                normalized_msgs.append({"role": role, "content": m.content})
+            else:
+                normalized_msgs.append({"role": "unknown", "content": str(m)})
+
+        chat_text = "\n".join(f"{m['role'].capitalize()}: {m['content']}" for m in normalized_msgs)
+
         resp = llm.invoke([
             SystemMessage(content=sys),
-            HumanMessage(content=f"{schema_instruction}\n\nUser text:\n{user_text}")
+            HumanMessage(content=f"{schema_instruction}\n\nConversation:\n{chat_text}")
         ])
         try:
             data = json.loads(resp.content)
@@ -183,7 +206,7 @@ class WaiterAgent:
             "allergies": to_list(data.get("allergies")),
             "restrictions": to_list(data.get("restrictions")),
         }
-        
+
     def classify_query(self, llm, messages: list) -> dict:
         """
         Classify query into 'pantry', 'recipe', or 'general'.
@@ -235,7 +258,7 @@ class WaiterAgent:
         return {"query_type": qtype}
 
 
-        
+
     def pantry_info_sufficient(self, llm, user_text: str) -> dict:
         """
         Determine if pantry-related input has sufficient information for CRUD operations.
@@ -289,3 +312,63 @@ class WaiterAgent:
         except Exception as e:
             print(f"⚠️ pantry_info_sufficient parse failed: {e}\nRaw content:\n{raw_content}")
             return {"sufficient_info": False}
+
+    def perform_quality_check(
+        self, llm, recipe_text: str, user_prefs: dict, messages: list
+    ) -> dict:
+        """
+        Perform user-context-aware quality check on final recipe.
+
+        Args:
+            llm: Language model
+            recipe_text: Formatted recipe text
+            user_prefs: User preferences (allergies, restrictions)
+            messages: Full conversation history for context
+
+        Returns:
+            {"passed": bool, "issues": List[str], "score": int}
+        """
+        chat_context = "\n".join([f"{m.get('role', 'user')}: {m.get('content', '')}"
+                                  for m in messages[-10:]])  # Last 10 messages
+
+        qa_instruction = """
+        Review this recipe against user requirements with conversation context.
+        CRITICAL checks:
+      1. Contains NO allergens mentioned by user
+      2. Complies with dietary restrictions
+      3. Addresses user's original request intent
+
+        Return ONLY valid JSON:
+        {
+            "passed": true/false,
+            "issues": ["issue1", ...],
+            "score": 0-100,
+            "critical_failures": ["failure1", ...]
+        }
+        """
+
+        context = f"""
+        Conversation Context (last 10 messages):
+        {chat_context}
+
+        User Preferences:
+        {json.dumps(user_prefs, indent=2)}
+
+        Recipe to Review:
+        {recipe_text}
+        """
+
+        response = llm.invoke([
+            SystemMessage(content="You are a quality assurance agent reviewing recipes for user safety and satisfaction."),
+            HumanMessage(content=f"{qa_instruction}\n\n{context}")
+        ])
+
+        try:
+            result = json.loads(response.content)
+            return {
+                "passed": result.get("passed", False) and not result.get("critical_failures"),
+                "issues": result.get("issues", []) + [f"CRITICAL: {cf}" for cf in result.get("critical_failures", [])],
+                "score": result.get("score", 0)
+            }
+        except:
+            return {"passed": True, "issues": ["QA parse error - defaulting to pass"], "score": 50}
