@@ -558,78 +558,9 @@ class ExecutiveChefAgent:
 
         return response.content
 
-    def perform_quality_check(
-        self,
-        llm,
-        recommendation: str,
-        user_preferences: Dict[str, Any]
-    ) -> Tuple[bool, List[str]]:
-        """
-        Perform executive-level quality check on final recommendation.
-
-        Returns:
-            Tuple of (passed: bool, issues: List[str])
-        """
-        system_prompt = self.build_system_prompt()
-
-        quality_instruction = """
-        Review this recipe recommendation against the user's requirements.
-        Check for:
-        1. Allergen compliance (CRITICAL - must not contain user's allergens)
-        2. Dietary restriction compliance (e.g., vegan, halal)
-        3. Skill level appropriateness
-        4. Ingredient availability transparency
-        5. Clear cooking instructions
-        6. Waste reduction focus (using expiring items)
-
-        Return ONLY valid JSON:
-        {
-            "passed": true/false,
-            "issues": ["issue1", "issue2", ...],
-            "score": 0-100,
-            "critical_failures": ["failure1", ...],
-            "suggestions": ["suggestion1", ...]
-        }
-        """
-
-        context = f"""
-        User Preferences:
-        {json.dumps(user_preferences, indent=2)}
-
-        Recommendation:
-        {recommendation}
-        """
-
-        messages = [
-            SystemMessage(content=system_prompt),
-            HumanMessage(content=f"{quality_instruction}\n\n{context}")
-        ]
-
-        try:
-            response = llm.invoke(messages)
-            result = json.loads(response.content)
-
-            passed = result.get('passed', False)
-            issues = result.get('issues', [])
-            critical = result.get('critical_failures', [])
-
-            # If there are critical failures, definitely fail
-            if critical:
-                passed = False
-                issues.extend([f"CRITICAL: {cf}" for cf in critical])
-
-            # Log quality check
-            self.task_history.append({
-                'timestamp': datetime.now().isoformat(),
-                'action': 'quality_check',
-                'result': result
-            })
-
-            return passed, issues
-
-        except json.JSONDecodeError:
-            # If we can't parse response, assume it passed but log warning
-            return True, ["Quality check response could not be parsed"]
+    # DEPRECATED: Quality checks are now performed by Waiter Agent with user context
+    # This method has been removed as Waiter Agent has full conversation context
+    # for user-aware quality assessment. Use WaiterAgent.perform_quality_check() instead.
 
     def orchestrate_full_workflow(
         self,
@@ -667,7 +598,7 @@ class ExecutiveChefAgent:
               f"{len(expiring_items)} expiring soon")
 
         if expiring_items:
-            print(f"   ⚠️  Priority items: {', '.join([item['name'] for item in expiring_items[:3]])}")
+            print(f"   ⚠️  Priority items: {', '.join([item.get('ingredient_name', item.get('name', 'Unknown')) for item in expiring_items[:3]])}")
 
         # Step 3: Create task plan
         print(f"   Creating execution plan...")
@@ -693,18 +624,11 @@ class ExecutiveChefAgent:
         print(f"   Synthesizing recommendation...")
         recommendation = self.synthesize_recommendations(llm, agent_responses, user_preferences)
 
-        # Step 6: Quality check
-        print(f"   Performing quality check...")
-        passed, issues = self.perform_quality_check(llm, recommendation, user_preferences)
+        # Step 6: Return final result (NO quality check - Waiter handles QA)
+        print(f"   ✅ Orchestration complete - passing to Waiter for quality check")
 
-        if not passed:
-            print(f"   ❌ Quality check failed: {', '.join(issues)}")
-        else:
-            print(f"   ✅ Quality check passed")
-
-        # Step 7: Return final result
         result = {
-            'success': passed,
+            'success': True,
             'recommendation': recommendation,
             'metadata': {
                 'complexity': complexity,
@@ -712,8 +636,7 @@ class ExecutiveChefAgent:
                 'pantry_summary': pantry_summary,
                 'expiring_items': expiring_items,
                 'task_history': self.task_history
-            },
-            'issues': issues if not passed else []
+            }
         }
 
         print(f"🔷 {self.name}: Workflow complete\n")
