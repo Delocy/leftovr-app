@@ -8,12 +8,12 @@ from typing import List, Dict, Any
 import asyncio
 import os
 from dotenv import load_dotenv
-
 import openai
 from langchain_openai import ChatOpenAI
-
 from .mcp_server import PantryMCPServer
 from database.database import PantryDatabase
+from datetime import datetime, timedelta
+import uuid
 
 print("Setting up Pantry MCP Client...")
 
@@ -28,6 +28,13 @@ llm = ChatOpenAI(
     api_key=OPENAI_API_KEY
 )
 
+def _deterministic_food_id(name: str) -> str:
+    """Generate a deterministic, clean ID from food name."""
+    return name.strip().lower().replace(' ', '-')
+
+def _default_expiry() -> str:
+    """Generate default expiry date 14 days from today"""
+    return (datetime.now() + timedelta(days=14)).strftime("%Y-%m-%d")
 
 class PantryMCPClient:
     """AI client that interacts with PantryMCPServer to answer user queries."""
@@ -36,22 +43,48 @@ class PantryMCPClient:
         self.mcp_server = mcp_server
         self.client = openai.OpenAI(api_key=OPENAI_API_KEY)
 
-        self.system_prompt = """You are an expert Food Pantry AI Assistant with access to real-time inventory data.
+        self.system_prompt = """
+        You are an expert Food Pantry AI Assistant with access to real-time inventory data.
 
-        Your role is to help users understand the pantry inventory, identify items that are low or expired, and provide actionable recommendations.
+        Your role:
+        - Help users manage pantry inventory.
+        - Interpret natural language statements about food usage, consumption, or restocking.
+        - Suggest actionable recommendations.
 
-        You have access to these tools:
-        - get_inventory_status: Check current inventory levels including quantity and expiry
-        - get_low_stock_items: Find items that need replenishment
-        - check_product_availability: Check availability for a specific food item
-        - get_products: Browse food items by category
+        Tools you can use:
+        - get_all_food_items
+        - get_expiring_soon
+        - get_food_item
+        - add_food_item
+        - update_food_item
+        - delete_food_item
 
-        Guidelines:
-        - Always use relevant tools to get current data
-        - Provide clear, actionable insights for pantry management
-        - Highlight risks such as low stock or expired items
-        - Suggest practical actions
+        - If the user mentions multiple items in one statement, produce one structured tool call per item.
+        - Each call must include name, quantity, and optionally expire_date.
+        - For any new food item:
+            - If `expire_date` is not specified, automatically assign a 14-day default expiry.
+            - If the item is generic (like "Vegetables") and no type is specified, add it as-is without asking for clarification.
+            
+        Semantic guidance:
+        If the user mentions consuming, using, or eating an item:
+            - Always produce a structured tool call to `update_food_item`.
+            - Use negative quantity if decreasing inventory.
+            - Generate an ID deterministically from the item name if unknown.
+            - Do NOT call `get_all_food_items` unless explicitly requested by the user.
+        - If the user mentions removing spoiled or unwanted items, call `delete_food_item`.
+        - Only use `get_all_food_items` or `get_food_item` when the user explicitly wants to view inventory.
+        - Always return structured actions for tool calls; infer quantities from user text.
+
+        Example:
+        - "I ate 2 eggs" → call `update_food_item` with quantity = current - 2
+        - "Add 5 oranges" → call `add_food_item` with quantity = 5
+        - "I have 2 eggs" → call `add_food_item` with quantity = 2
+        - "i bought 1 egg and 2 oranges and 3 vegetables" → produce three calls: one for each item
+        
+        Always respond with a structured tool call if the user wants to add, consume, or remove items.
+        Do not respond in text only. Only explain **after** executing the tool call.
         """
+
 
     def _convert_tools_to_openai_format(self) -> List[Dict[str, Any]]:
         """Convert MCP tools into OpenAI function format."""
@@ -78,7 +111,8 @@ class PantryMCPClient:
         return results
 
     async def process_query(self, user_query: str) -> Dict[str, Any]:
-        """Process a user query and optionally execute MCP tool calls."""
+        """Process a user query and execute MCP tool calls reliably."""
+
         try:
             messages = [
                 {"role": "system", "content": self.system_prompt},
@@ -91,54 +125,44 @@ class PantryMCPClient:
                 model="gpt-5-nano",
                 messages=messages,
                 tools=tools,
-                tool_choice="auto"
+                tool_choice="required"
             )
 
             message = response.choices[0].message
+            print(f"message: {message}")
 
-            if getattr(message, "tool_calls", None):
-                # Model requested function/tool calls
+            # Process GPT tool calls
+            for call in getattr(message, "tool_calls", []) or []:
+                args = json.loads(call.function.arguments)
+
+                # Ensure deterministic ID for all items
+                if "id" not in args or not args["id"]:
+                    args["id"] = _deterministic_food_id(args.get("name", ""))
+
+                # Set default expiry for new additions
+                if call.function.name == "add_food_item" and "expire_date" not in args:
+                    args["expire_date"] = _default_expiry()
+
+                # Directly call the server — let server handle quantity addition or subtraction
+                tool_result = await self.mcp_server.execute_tool(call.function.name, args)
+                
                 messages.append({
-                    "role": "assistant",
-                    "content": message.content,
-                    "tool_calls": [
-                        {"id": call.id, "type": call.type,
-                         "function": {"name": call.function.name, "arguments": call.function.arguments}}
-                        for call in message.tool_calls
-                    ]
+                    "role": "system",
+                    "tool_call_id": call.id,
+                    "name": call.function.name,
+                    "content": json.dumps(tool_result)
                 })
 
-                function_results = await self._execute_function_calls([
-                    {"id": call.id, "function": {"name": call.function.name, "arguments": call.function.arguments}}
-                    for call in message.tool_calls
-                ])
+            # Optionally, get final response from GPT after executing actions
+            final_response = self.client.chat.completions.create(
+                model="gpt-5-nano",
+                messages=messages,
+            )
 
-                for result in function_results:
-                    messages.append({
-                        "role": "tool",
-                        "tool_call_id": result["call_id"],
-                        "name": result["function_name"],
-                        "content": json.dumps(result["result"])
-                    })
-
-                final_response = self.client.chat.completions.create(
-                    model="gpt-5-nano",
-                    messages=messages,
-                )
-
-                return {
-                    "success": True,
-                    "response": final_response.choices[0].message.content,
-                    "tools_used": [result["function_name"] for result in function_results],
-                    "query": user_query,
-                    "timestamp": datetime.now().isoformat()
-                }
-
-            # If no tools were called
             return {
                 "success": True,
-                "response": message.content,
-                "tools_used": [],
+                "response": final_response.choices[0].message.content,
+                "tools_used": [call.function.name for call in getattr(message, "tool_calls", []) or []],
                 "query": user_query,
                 "timestamp": datetime.now().isoformat()
             }
@@ -151,5 +175,3 @@ class PantryMCPClient:
                 "query": user_query,
                 "timestamp": datetime.now().isoformat()
             }
-
-

@@ -35,11 +35,11 @@ if __name__ == "__main__":
     print("PantryAgent ready!")
 
     async def main():
-        query = "What are the items expiring in the next 3 days?"
+        query = "What do I have?"
         result = await agent.handle_query(query)
         if result["success"]:
             print("AI Response:")
-            print(result["response"])
+            print(result['response'])
             print("Tools used:", result["tools_used"])
         else:
             print("Error:", result.get("error"))
