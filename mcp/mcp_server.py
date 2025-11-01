@@ -18,13 +18,26 @@ import random
 import logging
 import time
 from database.database import PantryDatabase
+import inflect
+
+p = inflect.engine()
 
 # ============================================================================
 # MCP SERVER
 # ============================================================================
-def _deterministic_food_id(name: str) -> str:
-    """Generate a deterministic, clean ID from food name."""
-    return name.strip().lower().replace(' ', '-')
+def normalize_food_id(name: str) -> str:
+    """
+    Normalize a food name for deterministic IDs:
+    - singularize
+    - lowercase
+    - strip spaces
+    - replace spaces with hyphens
+    """
+    if not name:
+        return ""
+    singular = p.singular_noun(name)  # Returns False if already singular
+    singular_name = singular if singular else name
+    return singular_name.lower().strip().replace(' ', '-')
 
 print("Building MCP Server...")
 
@@ -38,11 +51,12 @@ class MCPTool:
     async def call(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         try:
             result = await self.handler(arguments)
-            return {
-                "success": True,
-                "data": result,
-                "message": f"Successfully executed {self.name}"
-            }
+            # return {
+            #     "success": True,
+            #     "data": result,
+            #     "message": f"Successfully executed {self.name}"
+            # }
+            return result
         except Exception as e:
             logging.error(f"Error executing tool {self.name}: {str(e)}")
             return {
@@ -151,17 +165,23 @@ class PantryMCPServer:
         days = args.get("days", 7)
         return self.db.get_expiring_soon(days)
 
+
     async def _get_food_item(self, args: Dict[str, Any]):
-        ''' Returns a specific food item by ID'''
+        '''Returns a specific food item by ID'''
+        # Normalize ID
+        args["id"] = normalize_food_id(args.get("id") or "")
         return self.db.get_food_item_by_id(args["id"])
 
     async def _add_food_item(self, args):
+        '''Adds a new food item to the database'''
+        # Ensure ID is normalized
+        args["id"] = normalize_food_id(args.get("id") or args.get("name", ""))
         self.db.add_food_item(args["id"], args["name"], args["quantity"], args["expire_date"])
         return {"success": True, "data": args}
 
     async def _update_food_item(self, args: Dict[str, Any]):
         if "id" not in args or not args["id"]:
-            args["id"] = _deterministic_food_id(args.get("name", ""))
+            args["id"] = normalize_food_id(args.get("name", ""))
 
         item = self.db.get_food_item_by_id(args["id"])
         if not item:
@@ -172,15 +192,22 @@ class PantryMCPServer:
 
         if new_quantity <= 0:
             self.db.delete_food_item(args["id"])
-            return {"success": True, "message": f"Item {args['id']} removed from pantry"}
+            # Return the full info before deletion if you want
+            return {"success": True, "data": item, "message": f"Item {args['id']} removed from pantry"}
         
         self.db.update_food_item(args["id"], quantity=new_quantity)
-        return {"success": True, "data": {"id": args["id"], "quantity": new_quantity}}
+        # Return full item info
+        updated_item = self.db.get_food_item_by_id(args["id"])
+        return {"success": True, "data": updated_item}
+
 
     async def _delete_food_item(self, args: Dict[str, Any]):
-        ''' Deletes a food item from the database'''
+        '''Deletes a food item from the database'''
+        # Normalize ID
+        args["id"] = normalize_food_id(args.get("id") or "")
         self.db.delete_food_item(args["id"])
         return {"success": True}
+
 
     # -------------------------------
     # Tool Access
