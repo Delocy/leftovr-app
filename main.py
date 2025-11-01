@@ -6,6 +6,7 @@ import operator
 from langchain_openai import ChatOpenAI
 from langgraph.graph import StateGraph, MessagesState
 from langgraph.types import Command
+from mcp.mcp_client import MCPClient
 
 from langgraph.cache.memory import InMemoryCache
 import asyncio
