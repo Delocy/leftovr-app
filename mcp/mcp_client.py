@@ -12,8 +12,9 @@ import openai
 from langchain_openai import ChatOpenAI
 from .mcp_server import PantryMCPServer
 from database.database import PantryDatabase
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 import uuid
+from pydantic import BaseModel
 
 print("Setting up Pantry MCP Client...")
 
@@ -27,6 +28,7 @@ llm = ChatOpenAI(
     temperature=0.7,
     api_key=OPENAI_API_KEY
 )
+
 
 def _deterministic_food_id(name: str) -> str:
     """Generate a deterministic, clean ID from food name."""
@@ -129,7 +131,7 @@ class PantryMCPClient:
             )
 
             message = response.choices[0].message
-            print(f"message: {message}")
+            tool_results = []
 
             # Process GPT tool calls
             for call in getattr(message, "tool_calls", []) or []:
@@ -144,25 +146,26 @@ class PantryMCPClient:
                     args["expire_date"] = _default_expiry()
 
                 # Directly call the server — let server handle quantity addition or subtraction
-                tool_result = await self.mcp_server.execute_tool(call.function.name, args)
+                result = await self.mcp_server.execute_tool(call.function.name, args)
+                tool_results.append({"tool_name": call.function.name, "data": result})
                 
-                messages.append({
-                    "role": "system",
-                    "tool_call_id": call.id,
-                    "name": call.function.name,
-                    "content": json.dumps(tool_result)
-                })
+                # messages.append({
+                #     "role": "system",
+                #     "tool_call_id": call.id,
+                #     "name": call.function.name,
+                #     "content": json.dumps(result)
+                # })
 
             # Optionally, get final response from GPT after executing actions
-            final_response = self.client.chat.completions.create(
-                model="gpt-5-nano",
-                messages=messages,
-            )
+            # final_response = self.client.chat.completions.create(
+            #     model="gpt-5-nano",
+            #     messages=messages,
+            # )
 
             return {
                 "success": True,
-                "response": final_response.choices[0].message.content,
-                "tools_used": [call.function.name for call in getattr(message, "tool_calls", []) or []],
+                "tools_used": [r["tool_name"] for r in tool_results],
+                "tool_outputs": tool_results,
                 "query": user_query,
                 "timestamp": datetime.now().isoformat()
             }

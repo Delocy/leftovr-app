@@ -6,8 +6,7 @@ import operator
 from langchain_openai import ChatOpenAI
 from langgraph.graph import StateGraph, MessagesState
 from langgraph.types import Command
-from mcp.mcp_client import MCPClient
-
+from langchain.schema import HumanMessage
 from langgraph.cache.memory import InMemoryCache
 import asyncio
 from datetime import datetime, timezone
@@ -281,52 +280,33 @@ class ModernCollaborativeSystem:
                 goto="return_to_user"
             )
 
-        def pantry_check(state) -> Command[Literal["executive_chef_review"]]:
+        async def pantry_check(state) -> Command[Literal["executive_chef_review"]]:
             """Pantry Agent checks inventory and communicates with Executive Chef."""
             log = state.get("coordination_log", [])
 
             log.append("Pantry Agent: Checking inventory status")
             print("\n🗄️  Pantry Agent: Checking inventory...")
+            
+            full_query = []
+            for msg in state.get("messages", []):
+                if msg.__class__.__name__ == "HumanMessage":
+                    full_query.append(msg.content)
 
-            # Get pantry data
-            summary = self.pantry.get_pantry_summary()
-            expiring = self.pantry.get_expiring_soon(days_threshold=3)
-            inventory = self.pantry.get_inventory()
-
-            print(f"   📊 {summary['total_ingredients']} ingredients in stock")
-            print(f"   ⚠️  {len(expiring)} items expiring soon")
-
-            # Alert about critical items
-            if expiring:
-                critical = [x for x in expiring if x.get('priority') == 'CRITICAL']
-                high = [x for x in expiring if x.get('priority') == 'HIGH']
-
-                if critical:
-                    print(f"   🚨 {len(critical)} CRITICAL items (use immediately):")
-                    for item in critical[:3]:
-                        print(f"      • {item['ingredient_name']}: {item['quantity']} {item['unit']} "
-                              f"(expires in {item['days_until_expiry']} day(s))")
-
-                if high:
-                    print(f"   ⚠️  {len(high)} HIGH priority items (use soon):")
-                    for item in high[:3]:
-                        print(f"      • {item['ingredient_name']}: {item['quantity']} {item['unit']} "
-                              f"(expires in {item['days_until_expiry']} day(s))")
-
-            # Generate proactive alerts for Executive Chef
-            alerts = self.pantry.generate_expiration_alerts()
-            if alerts:
-                log.append(f"Pantry Agent: Generated {len(alerts)} expiration alerts for Executive Chef")
-                print(f"   📢 Sent {len(alerts)} alert(s) to Executive Chef")
-
-            log.append(f"Pantry Agent: Inventory check complete - {summary['total_ingredients']} items, {len(expiring)} expiring")
-
+            combined_query = " ".join(full_query)
+            
+            # Get pantry inventory
+            inventory = await self.pantry.handle_query(combined_query)
+            expiring = self.pantry.identify_expiring_items(inventory)
+            
+            print(f"   Inventory items: {inventory}")
+            print(f" Expiring Items: {expiring}")
+            
             return Command(
                 update={
                     "coordination_log": log,
                     "pantry_inventory": inventory,
                     "expiring_items": expiring,
-                    "pantry_summary": summary
+                    # "pantry_summary": summary
                 },
                 goto="executive_chef_review"
             )
