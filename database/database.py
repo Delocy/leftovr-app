@@ -1,55 +1,56 @@
 import sqlite3
 from contextlib import contextmanager
 from datetime import datetime, timedelta
-
+import os
 # ============================================================================
 # DATABASE LAYER
 # ============================================================================
 
 class PantryDatabase:
-    """
-    Food Pantry Database with full CRUD operations.
-    Tracks food name, quantity, and expiration date.
-    """
+    def __init__(self, db_path=None):
+        if db_path is None:
+            base_dir = os.path.expanduser("~/.leftovr")
+            os.makedirs(base_dir, exist_ok=True)
+            db_path = os.path.join(base_dir, "pantry.db")
 
-    def __init__(self, db_path: str = "food_pantry.db"):
         self.db_path = db_path
-        self.init_database()
+        self._initialize()
+        
+        print(f"Connected to pantry database at: {self.db_path}")
 
-    @contextmanager
-    def get_connection(self):
-        conn = sqlite3.connect(self.db_path)
-        conn.row_factory = sqlite3.Row
-        try:
-            yield conn
-        finally:
-            conn.close()
 
-    def init_database(self):
-        """Create the food_items table if it doesn't exist."""
+    def _initialize(self):
         with self.get_connection() as conn:
-            conn.execute('''
+            conn.execute("""
                 CREATE TABLE IF NOT EXISTS food_items (
                     id TEXT PRIMARY KEY,
-                    name TEXT NOT NULL,
-                    quantity INTEGER NOT NULL,
-                    expire_date DATE NOT NULL
+                    name TEXT,
+                    quantity INTEGER,
+                    expire_date TEXT
                 )
-            ''')
+            """)
             conn.commit()
+
+    def get_connection(self):
+        conn = sqlite3.connect(self.db_path)
+        conn.row_factory = sqlite3.Row  # <-- Add this line
+        return conn
+
 
     # ------------------------------
     # CREATE
     # ------------------------------
     def add_food_item(self, id: str, name: str, quantity: int, expire_date: str):
-        """Add a new food item."""
+        existing = self.get_food_item_by_id(id)
+        if existing:
+            # Increment quantity instead of overwrite
+            quantity += existing["quantity"]
         with self.get_connection() as conn:
             conn.execute('''
                 INSERT OR REPLACE INTO food_items (id, name, quantity, expire_date)
                 VALUES (?, ?, ?, ?)
             ''', (id, name, quantity, expire_date))
             conn.commit()
-
     # ------------------------------
     # READ
     # ------------------------------
