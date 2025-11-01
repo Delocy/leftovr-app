@@ -22,6 +22,9 @@ from database.database import PantryDatabase
 # ============================================================================
 # MCP SERVER
 # ============================================================================
+def _deterministic_food_id(name: str) -> str:
+    """Generate a deterministic, clean ID from food name."""
+    return name.strip().lower().replace(' ', '-')
 
 print("Building MCP Server...")
 
@@ -140,24 +143,42 @@ class PantryMCPServer:
     # Tool Handlers
     # -------------------------------
     async def _get_all_food_items(self, args: Dict[str, Any]):
+        '''Returns all food items in the database'''
         return self.db.get_all_food_items()
 
     async def _get_expiring_soon(self, args: Dict[str, Any]):
+        '''Returns food items expiring within the next `7 days'''
         days = args.get("days", 7)
         return self.db.get_expiring_soon(days)
 
     async def _get_food_item(self, args: Dict[str, Any]):
+        ''' Returns a specific food item by ID'''
         return self.db.get_food_item_by_id(args["id"])
 
-    async def _add_food_item(self, args: Dict[str, Any]):
+    async def _add_food_item(self, args):
         self.db.add_food_item(args["id"], args["name"], args["quantity"], args["expire_date"])
-        return {"success": True}
+        return {"success": True, "data": args}
 
     async def _update_food_item(self, args: Dict[str, Any]):
-        self.db.update_food_item(args["id"], args.get("name"), args.get("quantity"), args.get("expire_date"))
-        return {"success": True}
+        if "id" not in args or not args["id"]:
+            args["id"] = _deterministic_food_id(args.get("name", ""))
+
+        item = self.db.get_food_item_by_id(args["id"])
+        if not item:
+            return {"success": False, "error": "Item not found"}
+
+        delta = args.get("quantity", 0)  # can be negative for consumption
+        new_quantity = item["quantity"] + delta
+
+        if new_quantity <= 0:
+            self.db.delete_food_item(args["id"])
+            return {"success": True, "message": f"Item {args['id']} removed from pantry"}
+        
+        self.db.update_food_item(args["id"], quantity=new_quantity)
+        return {"success": True, "data": {"id": args["id"], "quantity": new_quantity}}
 
     async def _delete_food_item(self, args: Dict[str, Any]):
+        ''' Deletes a food item from the database'''
         self.db.delete_food_item(args["id"])
         return {"success": True}
 
@@ -171,7 +192,11 @@ class PantryMCPServer:
     async def execute_tool(self, tool_name: str, arguments: Dict[str, Any]):
         if tool_name not in self.tools:
             return {"success": False, "error": f"Tool '{tool_name}' not found"}
+        if tool_name == "get_all_food_items":
+            items = self.db.get_all_food_items()
+            return {"data": items, "success": True}
         return await self.tools[tool_name].call(arguments)
+
 
 db = PantryDatabase()
 pantry_server = PantryMCPServer(db)
