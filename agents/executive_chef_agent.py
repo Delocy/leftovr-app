@@ -6,36 +6,49 @@ from langchain_core.messages import SystemMessage, HumanMessage
 
 class ExecutiveChefAgent:
     """
-    Executive Chef Agent - Orchestrator and Task Decomposer.
+    Executive Chef Agent - Unified Orchestrator & User Interface.
 
-    Responsibilities:
-    - Analyze user requests and determine complexity
+    This agent serves as BOTH the user-facing interface (Waiter) AND the backend orchestrator,
+    eliminating redundant communication layers for a streamlined architecture.
+
+    DUAL RESPONSIBILITIES:
+
+    🎭 USER INTERFACE (Waiter Role):
+    - Greet users and establish rapport
+    - Collect dietary preferences, allergies, and constraints
+    - Classify query types (recipe, pantry, general)
+    - Present recommendations and final recipes
+    - Perform quality assurance with user context
+    - Handle conversational interaction
+
+    🧠 ORCHESTRATION (Executive Chef Role):
+    - Analyze request complexity
     - Decompose complex queries into subtasks
-    - Delegate tasks to appropriate subagents
-    - Coordinate workflow between agents
+    - Delegate tasks to specialized agents (Pantry, Sous Chef, Recipe Knowledge)
+    - Coordinate multi-agent workflows
+    - Synthesize agent responses into coherent recommendations
     - Make strategic decisions about recipe selection
-    - Perform quality checks on final outputs
-    - Ensure all user constraints are satisfied
+    - Optimize for food waste reduction
     """
 
-    def __init__(self, name: str = "Executive Chef"):
+    def __init__(self, name: str = "Maison D'Être"):
         self.name = name
         self.task_history: List[Dict[str, Any]] = []
         self.delegation_log: List[Dict[str, Any]] = []
 
-    def build_system_prompt(self) -> str:
-        """Return the executive chef agent system prompt."""
+    # ==================== ORCHESTRATION METHODS ====================
+
+    def build_orchestration_prompt(self) -> str:
+        """Return the orchestration-focused system prompt for backend reasoning."""
         return """
         <system_prompt>
-        YOU ARE THE "EXECUTIVE CHEF" — THE MASTER ORCHESTRATOR AND STRATEGIC DECISION-MAKER
-        IN A MULTI-AGENT AI COOKING SYSTEM. YOUR PRIMARY ROLE IS TO ANALYZE USER REQUESTS,
-        DECOMPOSE COMPLEX TASKS, DELEGATE TO SPECIALIZED AGENTS, AND ENSURE HIGH-QUALITY
-        CULINARY SOLUTIONS.
+        YOU ARE "MAISON D'ÊTRE" — A UNIFIED AI CULINARY ASSISTANT THAT COMBINES USER INTERACTION
+        WITH INTELLIGENT ORCHESTRATION. YOU HANDLE BOTH THE FRIENDLY USER INTERFACE AND THE
+        STRATEGIC BACKEND COORDINATION OF SPECIALIZED COOKING AGENTS.
 
         ###OBJECTIVE###
-        YOUR GOAL IS TO COORDINATE THE ENTIRE COOKING ASSISTANCE WORKFLOW, MAKING INTELLIGENT
-        DECISIONS ABOUT TASK COMPLEXITY, RESOURCE ALLOCATION, AND AGENT DELEGATION TO DELIVER
-        OPTIMAL RECIPE RECOMMENDATIONS THAT REDUCE FOOD WASTE AND SATISFY USER PREFERENCES.
+        DELIVER OPTIMAL RECIPE RECOMMENDATIONS THAT REDUCE FOOD WASTE AND SATISFY USER PREFERENCES
+        BY INTELLIGENTLY COORDINATING SPECIALIZED AGENTS WHILE MAINTAINING WARM, HELPFUL INTERACTION.
 
         ###RESPONSIBILITIES###
         1. **TASK ANALYSIS**: Evaluate incoming requests for complexity and requirements
@@ -60,20 +73,12 @@ class ExecutiveChefAgent:
         - Generates recipe suggestions based on available ingredients
         - Adapts recipes to user skill level
         - Provides step-by-step cooking instructions
+        - Handles recipe Q&A dialogue
 
         **Recipe Knowledge Agent**:
-        - Retrieves recipes from vector database (Qdrant/Milvus)
-        - Performs semantic search for recipe matching
+        - Retrieves recipes from vector database (Qdrant)
+        - Performs semantic and hybrid search for recipe matching
         - Provides nutritional information and cooking tips
-
-        **Quality Control Agent**:
-        - Validates recipe completeness and safety
-        - Checks allergen compliance
-        - Verifies cooking instructions are clear
-
-        **Waiter Agent**:
-        - Collects user preferences (diet, allergies, skill level)
-        - Communicates final results to user
 
         ###DECISION FRAMEWORK###
 
@@ -104,17 +109,18 @@ class ExecutiveChefAgent:
         4. **Preference Matching**: Favor user's preferred cuisines
         5. **Ingredient Efficiency**: Minimize waste and maximize usage
 
-        ###INSTRUCTIONS###
-        1. **RECEIVE** handoff packet from Waiter Agent with user preferences
-        2. **ANALYZE** query type and complexity level
-        3. **CONSULT** Pantry Agent for current inventory and expiring items
-        4. **DETERMINE** optimal recipe strategy (use-what-you-have vs. specific recipe)
-        5. **DELEGATE** to appropriate agents in correct sequence
-        6. **COLLECT** responses from subagents
-        7. **SYNTHESIZE** information into coherent recommendation
-        8. **VALIDATE** via Quality Control Agent
-        9. **OPTIMIZE** for food waste reduction
-        10. **RETURN** final recommendation to Waiter Agent for user delivery
+        ###WORKFLOW###
+        1. **GREET** user warmly and establish context
+        2. **COLLECT** user preferences (diet, allergies, skill level, cuisines)
+        3. **CLASSIFY** query type (recipe, pantry, general)
+        4. **ANALYZE** query complexity level (simple, medium, complex)
+        5. **CONSULT** Pantry Agent for current inventory and expiring items
+        6. **DETERMINE** optimal strategy (ingredient-first vs. recipe-first)
+        7. **DELEGATE** to appropriate agents in correct sequence
+        8. **COLLECT** and synthesize responses from subagents
+        9. **PRESENT** recommendations to user with clear options
+        10. **VALIDATE** final recipe for safety and constraint satisfaction
+        11. **OPTIMIZE** for food waste reduction throughout
 
         ###CHAIN OF THOUGHTS###
         1. **UNDERSTAND**: What is the user really asking for?
@@ -233,7 +239,7 @@ class ExecutiveChefAgent:
         Returns:
             Dict with 'complexity', 'strategy', 'required_agents', 'reasoning'
         """
-        system_prompt = self.build_system_prompt()
+        system_prompt = self.build_orchestration_prompt()
 
         analysis_instruction = """
         Analyze the following user request and preferences to determine:
@@ -304,7 +310,7 @@ class ExecutiveChefAgent:
         Returns:
             Dict with 'tasks', 'delegation_order', 'success_criteria'
         """
-        system_prompt = self.build_system_prompt()
+        system_prompt = self.build_orchestration_prompt()
 
         planning_instruction = """
         Create a detailed execution plan for fulfilling this user request.
@@ -515,7 +521,7 @@ class ExecutiveChefAgent:
         Returns:
             Formatted recommendation text
         """
-        system_prompt = self.build_system_prompt()
+        system_prompt = self.build_orchestration_prompt()
 
         synthesis_instruction = """
         You are synthesizing responses from multiple specialized agents into a
@@ -558,79 +564,6 @@ class ExecutiveChefAgent:
 
         return response.content
 
-    def perform_quality_check(
-        self,
-        llm,
-        recommendation: str,
-        user_preferences: Dict[str, Any]
-    ) -> Tuple[bool, List[str]]:
-        """
-        Perform executive-level quality check on final recommendation.
-
-        Returns:
-            Tuple of (passed: bool, issues: List[str])
-        """
-        system_prompt = self.build_system_prompt()
-
-        quality_instruction = """
-        Review this recipe recommendation against the user's requirements.
-        Check for:
-        1. Allergen compliance (CRITICAL - must not contain user's allergens)
-        2. Dietary restriction compliance (e.g., vegan, halal)
-        3. Skill level appropriateness
-        4. Ingredient availability transparency
-        5. Clear cooking instructions
-        6. Waste reduction focus (using expiring items)
-
-        Return ONLY valid JSON:
-        {
-            "passed": true/false,
-            "issues": ["issue1", "issue2", ...],
-            "score": 0-100,
-            "critical_failures": ["failure1", ...],
-            "suggestions": ["suggestion1", ...]
-        }
-        """
-
-        context = f"""
-        User Preferences:
-        {json.dumps(user_preferences, indent=2)}
-
-        Recommendation:
-        {recommendation}
-        """
-
-        messages = [
-            SystemMessage(content=system_prompt),
-            HumanMessage(content=f"{quality_instruction}\n\n{context}")
-        ]
-
-        try:
-            response = llm.invoke(messages)
-            result = json.loads(response.content)
-
-            passed = result.get('passed', False)
-            issues = result.get('issues', [])
-            critical = result.get('critical_failures', [])
-
-            # If there are critical failures, definitely fail
-            if critical:
-                passed = False
-                issues.extend([f"CRITICAL: {cf}" for cf in critical])
-
-            # Log quality check
-            self.task_history.append({
-                'timestamp': datetime.now().isoformat(),
-                'action': 'quality_check',
-                'result': result
-            })
-
-            return passed, issues
-
-        except json.JSONDecodeError:
-            # If we can't parse response, assume it passed but log warning
-            return True, ["Quality check response could not be parsed"]
-
     def orchestrate_full_workflow(
         self,
         llm,
@@ -667,7 +600,7 @@ class ExecutiveChefAgent:
               f"{len(expiring_items)} expiring soon")
 
         if expiring_items:
-            print(f"   ⚠️  Priority items: {', '.join([item['name'] for item in expiring_items[:3]])}")
+            print(f"   ⚠️  Priority items: {', '.join([item.get('ingredient_name', item.get('name', 'Unknown')) for item in expiring_items[:3]])}")
 
         # Step 3: Create task plan
         print(f"   Creating execution plan...")
@@ -693,18 +626,11 @@ class ExecutiveChefAgent:
         print(f"   Synthesizing recommendation...")
         recommendation = self.synthesize_recommendations(llm, agent_responses, user_preferences)
 
-        # Step 6: Quality check
-        print(f"   Performing quality check...")
-        passed, issues = self.perform_quality_check(llm, recommendation, user_preferences)
+        # Step 6: Return final result (quality check happens during final presentation)
+        print(f"   ✅ Orchestration complete - preparing for quality validation")
 
-        if not passed:
-            print(f"   ❌ Quality check failed: {', '.join(issues)}")
-        else:
-            print(f"   ✅ Quality check passed")
-
-        # Step 7: Return final result
         result = {
-            'success': passed,
+            'success': True,
             'recommendation': recommendation,
             'metadata': {
                 'complexity': complexity,
@@ -712,8 +638,7 @@ class ExecutiveChefAgent:
                 'pantry_summary': pantry_summary,
                 'expiring_items': expiring_items,
                 'task_history': self.task_history
-            },
-            'issues': issues if not passed else []
+            }
         }
 
         print(f"🔷 {self.name}: Workflow complete\n")
@@ -732,4 +657,369 @@ class ExecutiveChefAgent:
         """Clear logs (useful for starting fresh workflow)."""
         self.task_history = []
         self.delegation_log = []
+
+    # ==================== USER INTERFACE METHODS ====================
+    # These methods handle direct user interaction: greeting, classification,
+    # preference extraction, and conversational responses.
+
+    def build_user_interface_prompt(self, context: str = "general") -> str:
+        """Return the user interface prompt for conversation handling."""
+        if context == "general":
+            return (
+                "You are a friendly virtual assistant. "
+                "Answer the user's question naturally. "
+                "If it's not about food, just provide the info politely. "
+                "Do not ask about diet, allergies, or cuisines unless the user brings it up."
+                "DO NOT PROVIDE RECIPES."
+            )
+        if context == "pantry":
+            return (
+                """
+                You are "Maison D'Être — Pantry Assistant," a warm, friendly food concierge focused on helping users manage their virtual pantry. Your role is to assist users in keeping track of ingredients by allowing them to **add, view, update, or remove items** from their pantry.
+
+                ### OBJECTIVE ###
+                1. Interpret user input as pantry management commands (CRUD: Create, Read, Update, Delete).
+                2. Validate user input to ensure pantry actions are clear and safe.
+                3. Confirm actions back to the user in a friendly and concise manner.
+                4. Handle unclear or ambiguous input by asking one clarifying question at a time.
+
+                ### INSTRUCTIONS ###
+                - **Add Items**: If the user wants to add ingredients, ask for quantities and optional categories (e.g., "3 tomatoes, vegetables").
+                - **View Items**: If the user wants to see the pantry, provide a neatly formatted list.
+                - **Update Items**: If the user wants to change quantities or details, confirm the item and the new values.
+                - **Delete Items**: Confirm before removing items to prevent mistakes.
+                - **Stay Friendly**: Use cheerful, approachable language.
+                - **Do Not Give Recipes** unless explicitly requested.
+
+                ### RESPONSE FORMAT ###
+                Always respond in **plain text** that is:
+                - Clear
+                - Short
+                - Confirms the action taken or asks a clarifying question if needed
+
+                ### EXAMPLES ###
+
+                1. **Add Items**
+                User: "Add 2 eggs and 1 carton of milk to my pantry."
+                Agent: "Got it! I've added 2 eggs and 1 carton of milk to your pantry."
+
+                2. **View Pantry**
+                User: "What's currently in my pantry?"
+                Agent: "Here's what you have:
+                - Eggs: 2
+                - Milk: 1 carton
+                - Tomatoes: 5"
+
+                3. **Update Items**
+                User: "Change the number of tomatoes to 10."
+                Agent: "Sure! I've updated your tomatoes count to 10."
+
+                4. **Delete Items**
+                User: "Remove the milk from my pantry."
+                Agent: "Okay! I've removed the milk from your pantry."
+
+                5. **Ambiguous Input**
+                User: "Add some veggies."
+                Agent: "Which vegetables would you like to add, and how many of each?"
+
+                ### TONE ###
+                Friendly, concise, helpful, and focused purely on pantry management. Avoid recipe suggestions unless explicitly requested.
+                """
+            )
+
+        if context == "recipe":
+            return (
+                """
+                <system_prompt>
+                YOU ARE "MAISON D'ÊTRE" — A WARM, FRIENDLY, AND ATTENTIVE FOOD CONCIERGE AGENT WITHIN A MULTI-AGENT SYSTEM DEDICATED TO HELPING USERS DISCOVER, DISCUSS, AND ENJOY FOOD IN ALL ITS FORMS. YOUR PRIMARY ROLE IS TO GREET USERS, MAKE THEM FEEL WELCOME, AND GENTLY COLLECT ESSENTIAL INFORMATION ABOUT THEIR FOOD PREFERENCES, DIETARY RESTRICTIONS, AND ALLERGIES BEFORE PASSING THEM TO THE NEXT AGENT (THE RECIPE EXPERT OR CULINARY CREATOR).
+
+                ###OBJECTIVE###
+                YOUR GOAL IS TO CREATE A COMFORTABLE AND ENGAGING ATMOSPHERE WHILE GATHERING CRUCIAL USER DETAILS THAT WILL ENABLE THE NEXT AGENT TO PROVIDE HIGHLY PERSONALIZED AND SAFE RECIPE RECOMMENDATIONS.
+
+                ###INSTRUCTIONS###
+                1. **WELCOME THE USER** with a warm and engaging introduction. Establish a friendly tone and express enthusiasm about helping them explore delicious food options.
+                2. **ASK ESSENTIAL QUESTIONS** about:
+                - ALLERGIES (e.g., nuts, shellfish, gluten)
+                - DIETARY RESTRICTIONS (e.g., vegetarian, vegan, pescatarian, omnivore, halal, kosher, lactose intolerance)
+                3. **CONFIRM UNDERSTANDING** by restating key preferences to ensure accuracy.
+                4. **PREPARE HANDOFF**: Once all essential information is gathered, SUMMARIZE the details clearly and POLITELY INFORM the user that their preferences will be shared with the next agent for tailored recipe recommendations.
+                5. **MAINTAIN A CONSISTENT PERSONA**: You are polite, conversational, knowledgeable about food culture, and naturally curious about people's tastes.
+
+                ###CHAIN OF THOUGHTS###
+                FOLLOW THIS STRUCTURED REASONING PROCESS TO ENSURE A CONSISTENT AND EFFECTIVE CONVERSATION FLOW:
+
+                1. **UNDERSTAND** the user's initial greeting or request — identify if they want to talk about food, recipes, or preferences.
+                2. **BASICS** — determine what essential dietary information is missing to create a complete food profile.
+                3. **BREAK DOWN** the conversation into small, friendly questions that make the user feel comfortable.
+                4. **ANALYZE** their responses to infer personality cues (e.g., adventurous eater vs. comfort food lover).
+                5. **BUILD** a concise summary of their preferences (dietary restrictions, allergies).
+                6. **EDGE CASES** — handle users who refuse to share certain information by politely offering general options instead.
+                7. **FINAL ANSWER** — deliver a warm closing message, confirming that their information will be passed to the next culinary agent.
+
+                ###WHAT NOT TO DO###
+                - DO NOT BE COLD, ROBOTIC, OR FORMAL — YOU MUST SOUND HUMAN AND FRIENDLY.
+                - DO NOT JUMP TO RECIPE RECOMMENDATIONS — THAT IS THE NEXT AGENT'S ROLE.
+                - DO NOT SKIP ASKING ABOUT ALLERGIES OR RESTRICTIONS — THIS INFORMATION IS ESSENTIAL.
+                - DO NOT PRESS USERS FOR INFORMATION THEY DECLINE TO SHARE — RESPECT THEIR CHOICES.
+                - DO NOT USE TECHNICAL OR CLINICAL LANGUAGE — KEEP THE CONVERSATION NATURAL AND WARM.
+                - DO NOT PROVIDE MEDICAL ADVICE OR NUTRITIONAL PRESCRIPTIONS — FOCUS ON FOOD PREFERENCES ONLY.
+
+                ###FEW-SHOT EXAMPLES###
+
+                **Example 1 (Desired Behavior)**
+                User: "Hey there! I'm looking for something new to cook."
+                Agent: "Bonjour! I'm delighted to help. Before we begin, could you share a little about what you enjoy eating — and if you have any dietary restrictions or allergies I should keep in mind?"
+
+                **Example 2 (Confirming Understanding)**
+                User: "I'm vegan, and I'm allergic to peanuts."
+                Agent: "Perfect, thank you! So, vegan and peanut-free — got it. Do you have a favorite cuisine, or should I note that you're open to exploring a variety?"
+
+                **Example 3 (Smooth Handoff)**
+                Agent: "Thank you for sharing that! I've noted your preferences — vegan, peanut-free, and you love spicy Asian flavors. I'll pass this to our culinary expert who'll find you the perfect recipes!"
+
+                ###OPTIMIZATION STRATEGY###
+                For **gpt-4o-mini**, USE CLEAR, SIMPLE LANGUAGE and FRIENDLY SENTENCES. AVOID OVERLY LONG QUESTIONS. USE NATURAL TRANSITIONS AND POSITIVE EMOTION TO CREATE A WELCOMING TONE.
+
+                </system_prompt>
+
+                """
+            )
+
+    def run_waiter(self, llm, context: str = "general") -> str:
+        """Generate initial greeting based on context."""
+        if context == "recipe":
+            return "Bonjour! I'm your culinary assistant. Tell me a bit about what you like to eat and any dietary restrictions you have."
+        elif context == "pantry":
+            return "Hello! What would you like to do with your pantry today? "
+        else:  # general
+            return "Hi there! I'm your Waiter — here to help with recipes, pantry ideas, and meal planning."
+
+    def respond_as_waiter(self, llm, user_input: str, context: str = "general") -> str:
+        """Generate an interactive response given user input using the user interface prompt."""
+        prompt = self.build_user_interface_prompt(context)
+        response = llm.invoke([
+            SystemMessage(content=prompt),
+            HumanMessage(content=user_input)
+        ])
+        return response.content
+
+    def extract_preferences(self, llm, messages: list) -> dict:
+        """
+        Parse messages into structured preferences.
+        Returns dict with keys: allergies, restrictions.
+
+        Args:
+            llm: Language model
+            messages: List of message dicts with 'role' and 'content'
+        """
+        schema_instruction = (
+            "Return ONLY valid JSON matching this schema (no extra text):\n"
+            "{\n"
+            "  \"allergies\": string[] | [],\n"
+            "  \"restrictions\": string[] | [],\n"
+            "}"
+        )
+        sys = (
+            "You extract user food preferences from a conversation history into a strict JSON object. "
+            "Look for mentions of allergies, dietary restrictions (vegan, vegetarian, halal, kosher, etc.), "
+            "and any food-related preferences."
+        )
+
+        # Normalize messages to text format
+        normalized_msgs = []
+        for m in messages:
+            if isinstance(m, dict):
+                normalized_msgs.append(m)
+            elif hasattr(m, "content") and hasattr(m, "type"):
+                role = m.type if hasattr(m, "type") else "assistant"
+                normalized_msgs.append({"role": role, "content": m.content})
+            else:
+                normalized_msgs.append({"role": "unknown", "content": str(m)})
+
+        chat_text = "\n".join(f"{m['role'].capitalize()}: {m['content']}" for m in normalized_msgs)
+
+        resp = llm.invoke([
+            SystemMessage(content=sys),
+            HumanMessage(content=f"{schema_instruction}\n\nConversation:\n{chat_text}")
+        ])
+        try:
+            data = json.loads(resp.content)
+        except Exception:
+            return {"allergies": [], "restrictions": []}
+
+        # Normalize types
+        def to_list(v):
+            if v is None:
+                return []
+            if isinstance(v, list):
+                return [str(x).strip() for x in v if str(x).strip()]
+            return [str(v).strip()] if str(v).strip() else []
+
+        return {
+            "allergies": to_list(data.get("allergies")),
+            "restrictions": to_list(data.get("restrictions")),
+        }
+
+    def classify_query(self, llm, messages: list) -> dict:
+        """
+        Classify query into 'pantry', 'recipe', or 'general'.
+        messages: list of dicts OR LangChain Message objects
+        """
+        schema_instruction = (
+            "Return ONLY valid JSON matching this schema (no extra text):\n"
+            "{\n"
+            "  \"query_type\": \"pantry\" | \"recipe\" | \"general\"\n"
+            "}"
+        )
+        sys = (
+            "You classify the user's query strictly as one of three types: "
+            "'pantry', 'recipe', or 'general'. "
+            "Focus primarily on the most recent messages, but consider earlier messages "
+            "to maintain ongoing context (e.g., if a recipe request was started previously). "
+            "Return only the JSON object and nothing else."
+        )
+
+        # Normalize messages to dicts
+        normalized_msgs = []
+        for m in messages:
+            if isinstance(m, dict):
+                normalized_msgs.append(m)
+            elif hasattr(m, "content") and hasattr(m, "type"):  # LangChain messages
+                role = m.type if hasattr(m, "type") else "assistant"
+                normalized_msgs.append({"role": role, "content": m.content})
+            else:
+                # fallback
+                normalized_msgs.append({"role": "unknown", "content": str(m)})
+
+        # Flatten for LLM input
+        chat_text = "\n".join(f"{m['role'].capitalize()}: {m['content']}" for m in normalized_msgs)
+
+        resp = llm.invoke([
+            SystemMessage(content=sys),
+            HumanMessage(content=f"{schema_instruction}\n\nChat history:\n{chat_text}")
+        ])
+
+        # normalize and parse JSON
+        raw_content = resp.content if isinstance(resp.content, str) else str(resp.content)
+        try:
+            data = json.loads(raw_content)
+            qtype = data.get("query_type", "general")
+        except Exception as e:
+            print(f"⚠️ classify_query parse failed: {e}\nRaw content:\n{raw_content}")
+            qtype = "general"
+
+        return {"query_type": qtype}
+
+    def pantry_info_sufficient(self, llm, user_text: str) -> dict:
+        """
+        Determine if pantry-related input has sufficient information for CRUD operations.
+        Returns {'sufficient_info': True/False}.
+        """
+        schema_instruction = (
+            "Return ONLY valid JSON matching this schema (no extra text):\n"
+            "{\n"
+            "  \"sufficient_info\": \"true\" | \"false\"\n"
+            "}"
+        )
+
+        sys = (
+            "You are a Pantry Assistant. "
+            "Classify the user's input strictly as 'true' or 'false' under the key 'sufficient_info'.\n"
+            "- 'true' means the input contains enough information for a pantry agent to perform a CRUD operation (add, update, remove, or view items) without asking for clarification.\n"
+            "- 'false' means the input is insufficient and the pantry agent would need to ask the user for more details.\n"
+            "Examples of sufficient inputs:\n"
+            "  - 'Add 2 eggs'\n"
+            "  - 'Remove milk from my pantry'\n"
+            "  - 'Show all items in my pantry'\n"
+            "Examples of insufficient inputs:\n"
+            "  - 'I want to manage my pantry'\n"
+            "  - 'Can you help me with pantry items?'\n"
+            "Return only JSON, nothing else."
+        )
+
+        resp = llm.invoke([
+            SystemMessage(content=sys),
+            HumanMessage(content=f"{schema_instruction}\n\nUser text:\n{user_text}")
+        ])
+
+        # Normalize content
+        raw_content = ""
+        if isinstance(resp.content, str):
+            raw_content = resp.content
+        elif isinstance(resp.content, list):
+            raw_content = "".join(
+                part.get("text", "") if isinstance(part, dict) else str(part)
+                for part in resp.content
+            )
+        else:
+            raw_content = str(resp)
+
+        # Parse JSON and convert to boolean
+        try:
+            data = json.loads(raw_content)
+            suff_str = data.get("sufficient_info", "false").lower()
+            return {"sufficient_info": suff_str == "true"}
+        except Exception as e:
+            print(f"⚠️ pantry_info_sufficient parse failed: {e}\nRaw content:\n{raw_content}")
+            return {"sufficient_info": False}
+
+    def perform_quality_check(
+        self, llm, recipe_text: str, user_prefs: dict, messages: list
+    ) -> dict:
+        """
+        Perform user-context-aware quality check on final recipe.
+
+        Args:
+            llm: Language model
+            recipe_text: Formatted recipe text
+            user_prefs: User preferences (allergies, restrictions)
+            messages: Full conversation history for context
+
+        Returns:
+            {"passed": bool, "issues": List[str], "score": int}
+        """
+        chat_context = "\n".join([f"{m.get('role', 'user')}: {m.get('content', '')}"
+                                  for m in messages[-10:]])  # Last 10 messages
+
+        qa_instruction = """
+        Review this recipe against user requirements with conversation context.
+        CRITICAL checks:
+      1. Contains NO allergens mentioned by user
+      2. Complies with dietary restrictions
+      3. Addresses user's original request intent
+
+        Return ONLY valid JSON:
+        {
+            "passed": true/false,
+            "issues": ["issue1", ...],
+            "score": 0-100,
+            "critical_failures": ["failure1", ...]
+        }
+        """
+
+        context = f"""
+        Conversation Context (last 10 messages):
+        {chat_context}
+
+        User Preferences:
+        {json.dumps(user_prefs, indent=2)}
+
+        Recipe to Review:
+        {recipe_text}
+        """
+
+        response = llm.invoke([
+            SystemMessage(content="You are a quality assurance agent reviewing recipes for user safety and satisfaction."),
+            HumanMessage(content=f"{qa_instruction}\n\n{context}")
+        ])
+
+        try:
+            result = json.loads(response.content)
+            return {
+                "passed": result.get("passed", False) and not result.get("critical_failures"),
+                "issues": result.get("issues", []) + [f"CRITICAL: {cf}" for cf in result.get("critical_failures", [])],
+                "score": result.get("score", 0)
+            }
+        except:
+            return {"passed": True, "issues": ["QA parse error - defaulting to pass"], "score": 50}
 
