@@ -419,6 +419,7 @@ class SousChefAgent:
     ) -> List[Dict[str, Any]]:
         """
         Generate top 3 recipe recommendations based on pantry and preferences.
+        If recipe_results not provided, fetch from Recipe Knowledge Agent internally.
 
         Args:
             llm: Language model for reasoning
@@ -431,6 +432,52 @@ class SousChefAgent:
             List of top 3 recipe recommendations
         """
         print(f"\n👨‍🍳 {self.name}: Analyzing recipes and generating recommendations...")
+
+        # If no recipe results provided, fetch from Recipe Knowledge Agent
+        if not recipe_results and self.recipe_knowledge_agent:
+            print(f"   {self.name}: Fetching recipes from Recipe Knowledge Agent...")
+            user_ingredients = [item.get("ingredient_name", "") for item in pantry_summary.get("inventory", [])]
+            if not user_ingredients:
+                # Use pantry inventory if available in different format
+                user_ingredients = [item.get("name", "") for item in pantry_summary.get("items", [])]
+
+            # Build query text from preferences
+            query_parts = []
+            if user_preferences.get("cuisines"):
+                query_parts.append(", ".join(user_preferences["cuisines"]))
+            if user_preferences.get("diet"):
+                query_parts.append(user_preferences["diet"])
+
+            query_text = " ".join(query_parts) if query_parts else "dinner recipe"
+
+            try:
+                # Call Recipe Knowledge Agent hybrid_query
+                raw_results = self.recipe_knowledge_agent.hybrid_query(
+                    pantry_items=user_ingredients,
+                    query_text=query_text,
+                    allow_missing=2,
+                    top_k=10,
+                    use_semantic=True
+                )
+
+                # Format results from (metadata, score, num_used, missing) tuples
+                recipe_results = []
+                for metadata, score, num_used, missing in raw_results:
+                    recipe_results.append({
+                        "id": metadata.get("id"),
+                        "title": metadata.get("title"),
+                        "ingredients": metadata.get("ner", []),
+                        "link": metadata.get("link"),
+                        "source": metadata.get("source"),
+                        "score": float(score),
+                        "pantry_items_used": num_used,
+                        "missing_ingredients": missing
+                    })
+
+                print(f"   {self.name}: Retrieved {len(recipe_results)} recipes from knowledge base")
+            except Exception as e:
+                print(f"   ⚠️ {self.name}: Failed to fetch recipes: {e}")
+                recipe_results = []
 
         system_prompt = self.build_system_prompt()
 
@@ -828,6 +875,62 @@ class SousChefAgent:
 
             return output
 
+    def format_recipe_for_user(
+        self,
+        adapted_recipe: Dict[str, Any],
+        user_preferences: Dict[str, Any]
+    ) -> str:
+        """
+        Format adapted recipe for user presentation (fallback to format_adapted_recipe if LLM available).
+
+        Args:
+            adapted_recipe: Adapted recipe data
+            user_preferences: User preferences for context
+
+        Returns:
+            Formatted string for user
+        """
+        if "error" in adapted_recipe:
+            # Use fallback if adaptation failed
+            original = adapted_recipe.get("original_recipe", {})
+            return self.build_fallback_recipe_summary(original, user_preferences)
+
+        title = adapted_recipe.get("adapted_title", "Adapted Recipe")
+        output = f"# {title}\n\n"
+
+        adaptations = adapted_recipe.get("adaptations_made", [])
+        if adaptations:
+            output += "## Modifications Made:\n"
+            for mod in adaptations:
+                output += f"- {mod}\n"
+            output += "\n"
+
+        ingredients = adapted_recipe.get("ingredients", [])
+        if ingredients:
+            output += "## Ingredients:\n"
+            for ing in ingredients:
+                mark = "✅" if ing.get("available_in_pantry") else "🛒"
+                output += f"{mark} {ing.get('quantity')} {ing.get('unit', '')} {ing.get('item')}\n"
+            output += "\n"
+
+        steps = adapted_recipe.get("steps", [])
+        if steps:
+            output += "## Instructions:\n"
+            for step in steps:
+                output += f"{step.get('id')}. {step.get('text')} ({step.get('time_minutes')}min)\n"
+            output += "\n"
+
+        cooking_time = adapted_recipe.get("cooking_time", {})
+        output += f"⏱️ Total Time: {cooking_time.get('total', '?')} minutes\n"
+
+        safety_notes = adapted_recipe.get("safety_notes", [])
+        if safety_notes:
+            output += "\n## Safety Notes:\n"
+            for note in safety_notes:
+                output += f"✓ {note}\n"
+
+        return output
+
     def build_fallback_recipe_summary(
         self,
         recipe: Dict[str, Any],
@@ -994,6 +1097,105 @@ class SousChefAgent:
         self.adaptation_log = []
         self.current_recommendations = []
         self.selected_recipe = None
+
+    def converse_about_recommendations(
+        self,
+        llm,
+        recommendations: List[Dict[str, Any]],
+        user_message: str,
+        user_preferences: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """
+        Allow user to have a direct conversation with Sous Chef about recipe recommendations.
+        User can ask questions, request comparisons, substitutions before making a selection.
+
+        Args:
+            llm: Language model
+            recommendations: Current top 3 recommendations
+            user_message: User's question or message
+            user_preferences: User dietary preferences
+
+        Returns:
+            {
+                "reply": str,              # Sous Chef's response
+                "selection": Optional[int]  # If user made a selection (1-3), otherwise None
+            }
+        """
+        system_prompt = self.build_system_prompt()
+
+        # Check if user is making a selection
+        selection = None
+        user_lower = user_message.lower().strip()
+
+        # Try to extract selection
+        if user_lower in ['1', '2', '3']:
+            selection = int(user_lower)
+        elif any(phrase in user_lower for phrase in ['i want', 'i choose', 'i\'ll take', 'let\'s make', 'i pick']):
+            for num in ['1', '2', '3', 'first', 'second', 'third']:
+                if num in user_lower:
+                    selection = {'1': 1, '2': 2, '3': 3, 'first': 1, 'second': 2, 'third': 3}.get(num)
+                    break
+
+        conversation_instruction = """
+        You are in a direct conversation with the user about the recipe recommendations you presented.
+        The user can:
+        - Ask questions about any recipe (ingredients, difficulty, substitutions, time)
+        - Compare recipes ("what's the difference between 1 and 2?")
+        - Request modifications ("can I make recipe 1 without garlic?")
+        - Make their selection (1, 2, or 3)
+
+        Your response should be:
+        - Conversational and friendly
+        - Specific and helpful
+        - Reference the actual recipes by number (1, 2, 3)
+        - Encourage them to ask more questions if they're unsure
+
+        Current recommendations context:
+        {recommendations_json}
+
+        User preferences:
+        {preferences_json}
+
+        User's message: "{user_message}"
+
+        Respond naturally and helpfully. If they make a selection, confirm it enthusiastically!
+        """
+
+        context = conversation_instruction.format(
+            recommendations_json=json.dumps(recommendations, indent=2, default=str),
+            preferences_json=json.dumps(user_preferences, indent=2),
+            user_message=user_message
+        )
+
+        messages = [
+            SystemMessage(content=system_prompt),
+            HumanMessage(content=context)
+        ]
+
+        try:
+            response = llm.invoke(messages)
+            reply = response.content
+
+            # Log conversation
+            self.recommendation_history.append({
+                "timestamp": datetime.now().isoformat(),
+                "action": "sous_chat_conversation",
+                "user_message": user_message,
+                "reply": reply,
+                "selection_detected": selection
+            })
+
+            return {
+                "reply": reply,
+                "selection": selection
+            }
+
+        except Exception as e:
+            print(f"❌ Error in Sous Chef conversation: {e}")
+            return {
+                "reply": "I apologize, I'm having trouble processing that. Could you rephrase your question?",
+                "selection": None
+            }
 
 
 # Helper function for integration
