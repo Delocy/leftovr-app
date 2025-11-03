@@ -51,6 +51,7 @@ class RecipeKnowledgeAgent:
         self.embed_model = None
         self.embed_dim = None
         self.collection_name = "recipes"
+        self.pantry_agent = None  # Injected PantryAgent for inventory access
 
     def load_metadata(self, path: Optional[str] = None) -> None:
         """Load recipe metadata from JSONL file"""
@@ -79,7 +80,7 @@ class RecipeKnowledgeAgent:
     def setup_qdrant(self, embed_model_name: str = 'all-MiniLM-L6-v2', force_recreate: bool = False) -> None:
         """
         Initialize Qdrant client and create collection
-        
+
         Args:
             embed_model_name: SentenceTransformer model name
             force_recreate: If True, delete and recreate collection
@@ -87,21 +88,21 @@ class RecipeKnowledgeAgent:
         if SentenceTransformer is None:
             print("⚠️  sentence-transformers not available, semantic search disabled")
             return
-        
+
         try:
             # Initialize client (embedded mode - no Docker needed!)
             print(f"🔧 Initializing Qdrant (embedded mode)...")
             self.qdrant_client = QdrantClient(path=self.qdrant_path)
-            
+
             # Load embedding model
             print(f"📦 Loading embedding model: {embed_model_name}...")
             self.embed_model = SentenceTransformer(embed_model_name)
             self.embed_dim = self.embed_model.get_sentence_embedding_dimension()
-            
+
             # Check if collection exists
             collections = self.qdrant_client.get_collections().collections
             collection_exists = any(c.name == self.collection_name for c in collections)
-            
+
             if collection_exists and not force_recreate:
                 print(f"✅ Collection '{self.collection_name}' already exists")
                 # Get collection info
@@ -111,7 +112,7 @@ class RecipeKnowledgeAgent:
                 if collection_exists and force_recreate:
                     print(f"🗑️  Deleting existing collection...")
                     self.qdrant_client.delete_collection(self.collection_name)
-                
+
                 # Create new collection
                 print(f"📝 Creating collection '{self.collection_name}'...")
                 self.qdrant_client.create_collection(
@@ -122,7 +123,7 @@ class RecipeKnowledgeAgent:
                     )
                 )
                 print(f"✅ Collection created (ready to ingest recipes)")
-                
+
         except Exception as e:
             print(f"❌ Qdrant setup failed: {e}")
             self.qdrant_client = None
@@ -130,7 +131,7 @@ class RecipeKnowledgeAgent:
     def ingest_recipes_to_qdrant(self, recipe_ids: Optional[List[int]] = None, batch_size: int = 100) -> None:
         """
         Ingest recipes into Qdrant
-        
+
         Args:
             recipe_ids: List of recipe IDs to ingest (None = all recipes)
             batch_size: Number of recipes to process at once
@@ -138,24 +139,24 @@ class RecipeKnowledgeAgent:
         if self.qdrant_client is None or self.embed_model is None:
             print("❌ Qdrant not initialized. Call setup_qdrant() first")
             return
-        
+
         if recipe_ids is None:
             recipe_ids = list(self.metadata.keys())
-        
+
         print(f"\n🔄 Ingesting {len(recipe_ids):,} recipes to Qdrant...")
-        
+
         points = []
         for i, rid in enumerate(recipe_ids):
             recipe = self.metadata.get(rid)
             if not recipe:
                 continue
-            
+
             # Build text for embedding (same as FAISS version)
             text = f"{recipe['title']}. Ingredients: {', '.join(recipe['ner'])}"
-            
+
             # Create embedding
             embedding = self.embed_model.encode(text, normalize_embeddings=True).tolist()
-            
+
             # Create point with metadata (payload)
             point = PointStruct(
                 id=rid,
@@ -168,7 +169,7 @@ class RecipeKnowledgeAgent:
                 }
             )
             points.append(point)
-            
+
             # Upload in batches
             if len(points) >= batch_size or i == len(recipe_ids) - 1:
                 self.qdrant_client.upsert(
@@ -178,8 +179,73 @@ class RecipeKnowledgeAgent:
                 points = []
                 if (i + 1) % 1000 == 0:
                     print(f"   Ingested {i+1:,} / {len(recipe_ids):,} recipes...")
-        
+
         print(f"✅ Ingestion complete!")
+
+    def set_pantry_agent(self, pantry_agent) -> None:
+        """
+        Inject PantryAgent for inventory access.
+
+        Args:
+            pantry_agent: Instance of PantryAgent
+        """
+        self.pantry_agent = pantry_agent
+        print(f"✅ Recipe Knowledge Agent: Pantry integration enabled")
+
+    def get_pantry_items(self) -> List[str]:
+        """
+        Get current pantry items from injected PantryAgent.
+
+        Returns:
+            List of ingredient names from pantry
+        """
+        if not self.pantry_agent:
+            print("⚠️ Recipe Knowledge Agent: No pantry agent connected")
+            return []
+
+        inventory = self.pantry_agent.get_inventory()
+        pantry_items = [item.get('ingredient_name', '') for item in inventory]
+        print(f"📦 Recipe Knowledge Agent: Retrieved {len(pantry_items)} items from pantry")
+        return pantry_items
+
+    def feasibility_with_pantry(
+        self,
+        recipe_meta: dict,
+        allow_missing: int = 0
+    ) -> Dict[str, Any]:
+        """
+        Check recipe feasibility using live pantry data.
+
+        Args:
+            recipe_meta: Recipe metadata with 'ner' field (ingredients)
+            allow_missing: How many ingredients can be missing
+
+        Returns:
+            {feasible: bool, available: List[str], missing: List[str],
+             num_available: int, num_missing: int}
+        """
+        if not self.pantry_agent:
+            return {
+                "feasible": False,
+                "available": [],
+                "missing": recipe_meta.get('ner', []),
+                "num_available": 0,
+                "num_missing": len(recipe_meta.get('ner', []))
+            }
+
+        pantry_items = set(self.normalize_ingredients(self.get_pantry_items()))
+        recipe_ingredients = set(recipe_meta.get('ner', []))
+
+        available = list(pantry_items & recipe_ingredients)
+        missing = list(recipe_ingredients - pantry_items)
+
+        return {
+            "feasible": len(missing) <= allow_missing,
+            "available": available,
+            "missing": missing,
+            "num_available": len(available),
+            "num_missing": len(missing)
+        }
 
     def normalize_ingredients(self, items: Iterable[str]) -> List[str]:
         """Normalize ingredient names"""
@@ -188,19 +254,19 @@ class RecipeKnowledgeAgent:
     def pantry_candidates(self, pantry_items: Iterable[str], allow_missing: int = 0, top_k: int = 200) -> List[Tuple[int, float, int, List[str]]]:
         """
         LEFTOVR MODE: Find recipes that use the MOST of your pantry items
-        
+
         Philosophy: Using MORE leftovers = BETTER (not just coverage %)
-        
+
         COMPLEMENTARY SIGNALS:
         • Exact match: "This recipe uses exactly these ingredients"
         • Semantic: "This recipe is similar to what you want"
         • Hybrid: "This recipe does BOTH!" (gets bonus points)
-        
+
         Args:
             pantry_items: Your available ingredients/leftovers
             allow_missing: 0 = only recipes you can make now, 1-2 = willing to shop
             top_k: Maximum results
-            
+
         Returns:
             List of (recipe_id, score, num_pantry_used, missing_ingredients)
         """
@@ -219,59 +285,59 @@ class RecipeKnowledgeAgent:
             meta = self.metadata.get(rid)
             if not meta:
                 continue
-            
+
             recipe_ingredients = set(meta.get('ner', []))
             if not recipe_ingredients:
                 continue
-            
+
             # Calculate how many UNIQUE pantry items this recipe uses
             num_pantry_used = len(pantry & recipe_ingredients)
-            
+
             # Calculate missing ingredients
             missing = recipe_ingredients - pantry
             num_missing = len(missing)
-            
+
             # Filter: only include if missing ingredients <= allowed
             if num_missing <= allow_missing:
                 # LEFTOVR SCORING: Number of UNIQUE pantry items used (more = better)
                 # Bonus for recipes you can make now (0 missing)
                 score = num_pantry_used * 100 + (1000 if num_missing == 0 else 0) - len(recipe_ingredients)
                 results.append((rid, float(score), num_pantry_used, list(missing)))
-        
+
         # Sort by score (descending)
         results.sort(key=lambda x: x[1], reverse=True)
         return results[:top_k]
 
     def semantic_search(
-        self, 
+        self,
         query: Optional[str] = None,
         pantry_items: Optional[List[str]] = None,
-        k: int = 10, 
+        k: int = 10,
         filter_ingredients: Optional[List[str]] = None
     ) -> List[Tuple[int, float]]:
         """
         Semantic search using Qdrant with all-MiniLM-L6-v2 embeddings
-        
+
         Model: all-MiniLM-L6-v2 (384 dimensions)
         - Understands semantic meaning of text
         - Can match ingredient combinations that work well together
-        
+
         Args:
             query: Text description (e.g., "easy Italian pasta dinner")
             pantry_items: Your ingredient list (e.g., ['chicken', 'garlic', 'lemon'])
             k: Number of results
             filter_ingredients: Optional list of required ingredients
-            
+
         Note: You can provide query, pantry_items, or both!
               - query only: Find recipes matching description
               - pantry_items only: Find recipes with similar ingredients
               - both: Find recipes matching description AND similar ingredients
-            
+
         Returns list of (recipe_id, similarity_score)
         """
         if self.qdrant_client is None or self.embed_model is None:
             return []
-        
+
         # Build query text from provided inputs
         query_parts = []
         if query:
@@ -279,16 +345,16 @@ class RecipeKnowledgeAgent:
         if pantry_items:
             # Format like recipe embeddings: "Ingredients: chicken, garlic, lemon"
             query_parts.append(f"Ingredients: {', '.join(pantry_items)}")
-        
+
         if not query_parts:
             print("⚠️  No query or pantry_items provided for semantic search")
             return []
-        
+
         query_text = ". ".join(query_parts)
-        
+
         # Encode query using the same model (all-MiniLM-L6-v2)
         query_vector = self.embed_model.encode(query_text, normalize_embeddings=True).tolist()
-        
+
         # Build filter if ingredients specified
         search_filter = None
         if filter_ingredients:
@@ -300,7 +366,7 @@ class RecipeKnowledgeAgent:
                     )
                 ]
             )
-        
+
         # Search
         results = self.qdrant_client.search(
             collection_name=self.collection_name,
@@ -308,11 +374,11 @@ class RecipeKnowledgeAgent:
             limit=k,
             query_filter=search_filter
         )
-        
+
         return [(hit.id, hit.score) for hit in results]
     def hybrid_query(
-        self, 
-        pantry_items: Iterable[str], 
+        self,
+        pantry_items: Optional[Iterable[str]] = None,
         query_text: Optional[str] = None,
         top_k: int = 20,
         allow_missing: int = 0,
@@ -320,44 +386,53 @@ class RecipeKnowledgeAgent:
     ) -> List[Tuple[dict, float, int, List[str]]]:
         """
         LEFTOVR HYBRID: Find recipes using semantic search + LEFTOVR scoring
-        
+
         Uses all-MiniLM-L6-v2 to find recipes semantically similar to:
         - Your ingredients (pantry_items)
         - Your preferences (query_text) - optional!
-        
+
         Args:
-            pantry_items: Your available ingredients (leftovers)
+            pantry_items: Your available ingredients (leftovers). If None, auto-pulls from PantryAgent
             query_text: What you feel like eating (e.g., "quick dinner", "Italian")
                        Optional - can search with just ingredients!
             top_k: Number of results to return
             allow_missing: How many ingredients you're willing to buy (0=none, 1-2=flexible)
             use_semantic: Whether to boost with semantic similarity
-        
+
         Returns:
             List of (recipe_metadata, combined_score, num_pantry_used, missing_ingredients)
-            
+
             recipe_metadata includes:
             - 'id': Recipe ID
             - 'title': Recipe name
             - 'ner': List of ingredients
-            - 'directions': List of cooking steps 
+            - 'directions': List of cooking steps
             - 'link': Source URL
             - 'source': Recipe source
-            
+
         Philosophy:
             1. Prioritize using MORE leftovers (3 items > 1 item)
             2. Prefer recipes you can make NOW (zero shopping)
             3. Boost recipes semantically similar to your ingredients + preferences
         """
+        # Auto-pull from pantry if not provided
+        if pantry_items is None:
+            if self.pantry_agent:
+                print("📦 Recipe Knowledge Agent: Auto-loading pantry items...")
+                pantry_items = self.get_pantry_items()
+            else:
+                print("⚠️ Recipe Knowledge Agent: No pantry items provided and no pantry agent connected")
+                pantry_items = []
+
         pantry_list = list(pantry_items)
-        
+
         # Get leftover-optimized candidates
         pantry_cands = self.pantry_candidates(
-            pantry_list, 
+            pantry_list,
             allow_missing=allow_missing,
             top_k=500
         )
-        
+
         # Get semantic matches if enabled
         sem_cands = []
         if use_semantic and self.qdrant_client and self.embed_model:
@@ -371,11 +446,11 @@ class RecipeKnowledgeAgent:
 
         # Build combined scores
         score_map: Dict[int, Tuple[float, int, List[str]]] = {}  # rid -> (score, num_used, missing)
-        
+
         # Start with leftover scores (already optimized)
         for rid, leftover_score, num_used, missing in pantry_cands:
             score_map[rid] = (leftover_score, num_used, missing)
-        
+
         # Boost with semantic similarity if available
         if sem_cands:
             for rid, sem_score in sem_cands:
@@ -385,11 +460,11 @@ class RecipeKnowledgeAgent:
                     # Max semantic boost: ~50 points (less than using 1 extra ingredient = 100 points)
                     boosted_score = current_score + (sem_score * 50)
                     score_map[rid] = (boosted_score, num_used, missing)
-        
+
         # Sort and return
         ranked = sorted(score_map.items(), key=lambda x: x[1][0], reverse=True)[:top_k]
         return [
-            (self.metadata.get(rid, {}), float(score), num_used, missing) 
+            (self.metadata.get(rid, {}), float(score), num_used, missing)
             for rid, (score, num_used, missing) in ranked
         ]
 
