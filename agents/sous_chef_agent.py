@@ -467,6 +467,7 @@ class SousChefAgent:
                         "id": metadata.get("id"),
                         "title": metadata.get("title"),
                         "ingredients": metadata.get("ner", []),
+                        "directions": metadata.get("directions", []),  # Include original directions
                         "link": metadata.get("link"),
                         "source": metadata.get("source"),
                         "score": float(score),
@@ -543,6 +544,19 @@ class SousChefAgent:
             if not recommendations and recipe_results:
                 recommendations = self.build_fallback_recommendations(recipe_results, user_preferences)
                 print("⚠️  Using fallback recommendations due to parsing issues")
+
+            # Merge full recipe data (including directions) into recommendations
+            for rec in recommendations:
+                recipe_id = rec.get("recipe_id")
+                # Find matching recipe from results
+                for recipe in recipe_results:
+                    if recipe.get("id") == recipe_id or recipe.get("title") == rec.get("title"):
+                        # Merge in fields that LLM doesn't return (like directions, ner, link, source)
+                        rec["ner"] = recipe.get("ner", rec.get("ner", []))
+                        rec["directions"] = recipe.get("directions", rec.get("directions", []))
+                        rec["link"] = recipe.get("link", rec.get("link"))
+                        rec["source"] = recipe.get("source", rec.get("source"))
+                        break
 
             self.current_recommendations = recommendations
 
@@ -696,34 +710,48 @@ class SousChefAgent:
         instruction = """
         Adapt this recipe to meet the user's dietary requirements and preferences.
 
-        USER PREFERENCES TO CHECK:
-        - allergies: Remove ALL ingredients the user is allergic to
-        - restrictions: Honor dietary restrictions (e.g., no pork for halal)
-        - diet: Adapt to diet type (vegan, vegetarian, pescatarian, etc.)
+        CRITICAL: The recipe includes ORIGINAL DIRECTIONS with specific quantities, temperatures, and techniques.
+        You MUST preserve these details from the original directions. ONLY modify where ingredient substitutions require it.
+
+        CRITICAL: ONLY make adaptations based on what's in user_preferences. 
+        DO NOT adapt for vegan/vegetarian/allergies unless the user explicitly has those in their preferences.
+        If user_preferences is empty or has no relevant restrictions, return the original recipe unchanged.
+
+        USER PREFERENCES TO CHECK (from the context):
+        - allergies: Remove ONLY ingredients the user is actually allergic to (if any)
+        - restrictions: Honor ONLY the restrictions user specified (if any)
+        - diet: Adapt ONLY if user has a specific diet (vegan, vegetarian, pescatarian, etc.)
         - cuisines: Consider preferred cuisines if doing substitutions
         - skill: Simplify steps for beginners, add detail for advanced
 
-        CRITICAL SAFETY CHECKS:
-        1. Remove ALL ingredients matching user's allergies
-        2. Ensure recipe complies with dietary restrictions (vegan, halal, kosher, etc.)
+        CRITICAL SAFETY CHECKS (only if user has these restrictions):
+        1. Remove ALL ingredients matching user's ACTUAL allergies (if they have any)
+        2. Ensure recipe complies with user's ACTUAL dietary restrictions (if they have any)
         3. Provide safe substitutions for removed ingredients
-        4. Double-check final recipe has NO allergens
-        5. If diet is vegan: remove all animal products (meat, dairy, eggs, honey)
-        6. If diet is vegetarian: remove all meat and seafood (keep dairy/eggs)
+        4. Double-check final recipe has NO allergens (if user has allergies)
+        5. If user's diet is vegan: remove all animal products (meat, dairy, eggs, honey)
+        6. If user's diet is vegetarian: remove all meat and seafood (keep dairy/eggs)
+        7. If user has NO restrictions, return original recipe ingredients and directions unchanged
 
         Adaptation Steps:
-        1. Identify ingredients that violate dietary requirements
-        2. Find appropriate substitutions (e.g., tofu for meat in vegan, coconut milk for dairy)
-        3. Adjust cooking instructions if needed
-        4. Simplify/enhance based on skill level
-        5. Provide shopping list for missing items
-        6. Add helpful cooking tips for beginners
+        1. Read the original "directions" field carefully - it contains quantities and specific techniques
+        2. Identify ingredients that violate dietary requirements
+        3. Find appropriate substitutions (e.g., tofu for meat in vegan, coconut milk for dairy)
+        4. Update the steps to replace ingredient names where you made substitutions
+        5. PRESERVE all quantities, temperatures, times, and techniques from original directions
+        6. Provide shopping list for missing items
+        7. Add helpful cooking tips for beginners if needed
+
+        EXAMPLE: If original says "In a heavy 2-quart saucepan, mix brown sugar, nuts, evaporated milk and butter",
+        and user IS vegan (diet: "vegan" in preferences), output: "In a heavy 2-quart saucepan, mix brown sugar, cashews, coconut milk and vegan butter"
+        If user has NO dietary restrictions, output: "In a heavy 2-quart saucepan, mix brown sugar, nuts, evaporated milk and butter" (UNCHANGED)
+        DO NOT simplify to "Mix ingredients in a pot" - keep the specifics!
 
         Return ONLY valid JSON in this format:
         {
             "original_title": "Original Recipe Name",
-            "adapted_title": "Adapted Recipe Name",
-            "adaptations_made": [
+            "adapted_title": "Adapted Recipe Name",  // Keep same as original if no diet changes
+            "adaptations_made": [  // Leave EMPTY if no adaptations needed
                 "Replaced chicken with tofu for vegan diet",
                 "Removed peanuts due to allergy"
             ],
@@ -768,11 +796,12 @@ class SousChefAgent:
             "waste_reduction_note": "This recipe uses [expiring ingredients]"
         }
 
-        EXAMPLES:
-        - User is vegan → Replace chicken with tofu, milk with almond milk, butter with olive oil
-        - User is allergic to peanuts → Remove peanuts, substitute with cashews or sunflower seeds
-        - User is vegetarian → Replace beef with mushrooms or plant-based meat alternative
-        - User is halal → Ensure no pork, alcohol, or non-halal meat
+        EXAMPLES (ONLY adapt if user has these preferences):
+        - IF user_preferences has diet="vegan" → Replace chicken with tofu, milk with almond milk, butter with olive oil
+        - IF user_preferences has allergies=["peanuts"] → Remove peanuts, substitute with cashews or sunflower seeds
+        - IF user_preferences has diet="vegetarian" → Replace beef with mushrooms or plant-based meat alternative
+        - IF user_preferences has restrictions=["halal"] → Ensure no pork, alcohol, or non-halal meat
+        - IF user_preferences is {} or has no relevant restrictions → Return original recipe UNCHANGED with empty adaptations_made list
         """
 
         context = {

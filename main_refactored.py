@@ -438,20 +438,38 @@ class LeftovrWorkflow:
         
         for i, recipe in enumerate(top_3, 1):
             response += f"**{i}. {recipe.get('title', 'Unknown Recipe')}**\n"
-            response += f"   ⏱️ {recipe.get('readyInMinutes', 'N/A')} min | "
-            response += f"👥 {recipe.get('servings', 'N/A')} servings\n"
+            
+            # Show ingredient count
+            ingredients = recipe.get('ner', []) or recipe.get('ingredients', [])
+            if ingredients:
+                response += f"   🥘 {len(ingredients)} ingredients\n"
+            
+            # Show timing and servings
+            ready_time = recipe.get('readyInMinutes', 'N/A')
+            servings = recipe.get('servings', 'N/A')
+            if ready_time != 'N/A' or servings != 'N/A':
+                response += f"   ⏱️ {ready_time} min | 👥 {servings} servings\n"
             
             # Show match percentage if available
             match_pct = recipe.get("match_percentage", recipe.get("score", 0))
             if match_pct:
                 response += f"   🎯 {match_pct}% ingredient match\n"
             
+            # Show recipe link
+            link = recipe.get('link', '')
+            if link:
+                # Make sure link has protocol
+                if not link.startswith('http'):
+                    link = f"https://{link}"
+                response += f"   🔗 [View Recipe]({link})\n"
+            
             # Show why recommended
             reason = recipe.get("recommendation_reason", recipe.get("reasoning", "Great recipe!"))
             response += f"   💡 {reason}\n\n"
         
         if expiring:
-            response += f"\n⚠️  Using expiring items: {', '.join([item['name'] for item in expiring[:3]])}"
+            expiring_names = [item.get('ingredient_name') or item.get('name', '') for item in expiring[:3]]
+            response += f"\n⚠️  Using expiring items: {', '.join(expiring_names)}"
         
         response += "\n\n✨ **Which recipe would you like to try?** (Reply with 1, 2, or 3)"
         
