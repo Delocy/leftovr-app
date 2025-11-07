@@ -141,10 +141,20 @@ def render_recipe_card(recipe: Dict, index: int):
                 if len(ingredients) > 5:
                     st.caption(f"...and {len(ingredients) - 5} more")
             
-            # Show source
+            # Show source and link
             source = recipe.get('source')
-            if source:
-                st.caption(f"📚 Source: {source}")
+            link = recipe.get('link', '')
+            
+            if source or link:
+                source_text = f"📚 Source: {source}" if source else ""
+                if link:
+                    # Make sure link has protocol
+                    if not link.startswith('http'):
+                        link = f"https://{link}"
+                    link_text = f"[🔗 View Full Recipe]({link})"
+                    st.caption(f"{source_text}  |  {link_text}" if source_text else link_text)
+                elif source:
+                    st.caption(source_text)
             
             # Show directions preview
             directions = recipe.get('directions', [])
