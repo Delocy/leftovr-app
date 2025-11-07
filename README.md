@@ -54,17 +54,29 @@ pip freeze > requirements.txt
 
 ## Running the Application
 
-### Run the Main Agent System
+### Streamlit Web Interface (Recommended)
+
+The primary way to use Leftovr is through the Streamlit web interface:
+
+```bash
+# Activate virtual environment
+source .venv/bin/activate  # macOS/Linux
+
+# Run Streamlit app
+streamlit run streamlit_app.py
+```
+
+The app will open in your browser at `http://localhost:8501`
+
+### Testing (CLI Mode)
+
+For development and testing, you can run the CLI version:
 
 ```bash
 python main.py
 ```
 
-### Run the Streamlit App
-
-```bash
-streamlit run streamlit_app.py
-```
+**Note**: The CLI mode runs a test conversation. For production use, always use the Streamlit interface.
 
 ## Project Structure
 

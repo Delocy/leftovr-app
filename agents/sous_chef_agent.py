@@ -687,21 +687,33 @@ class SousChefAgent:
             Adapted recipe with modifications
         """
         print(f"\n🔧 {self.name}: Adapting recipe to meet dietary requirements...")
+        print(f"   Recipe: {recipe.get('title', 'Unknown')}")
+        print(f"   User Preferences: {user_preferences}")
+        print(f"   Pantry Items: {len(pantry_inventory)}")
 
         system_prompt = self.build_system_prompt()
 
         instruction = """
         Adapt this recipe to meet the user's dietary requirements and preferences.
 
+        USER PREFERENCES TO CHECK:
+        - allergies: Remove ALL ingredients the user is allergic to
+        - restrictions: Honor dietary restrictions (e.g., no pork for halal)
+        - diet: Adapt to diet type (vegan, vegetarian, pescatarian, etc.)
+        - cuisines: Consider preferred cuisines if doing substitutions
+        - skill: Simplify steps for beginners, add detail for advanced
+
         CRITICAL SAFETY CHECKS:
         1. Remove ALL ingredients matching user's allergies
-        2. Ensure recipe complies with dietary restrictions (vegan, halal, etc.)
+        2. Ensure recipe complies with dietary restrictions (vegan, halal, kosher, etc.)
         3. Provide safe substitutions for removed ingredients
         4. Double-check final recipe has NO allergens
+        5. If diet is vegan: remove all animal products (meat, dairy, eggs, honey)
+        6. If diet is vegetarian: remove all meat and seafood (keep dairy/eggs)
 
         Adaptation Steps:
         1. Identify ingredients that violate dietary requirements
-        2. Find appropriate substitutions
+        2. Find appropriate substitutions (e.g., tofu for meat in vegan, coconut milk for dairy)
         3. Adjust cooking instructions if needed
         4. Simplify/enhance based on skill level
         5. Provide shopping list for missing items
@@ -755,6 +767,12 @@ class SousChefAgent:
             ],
             "waste_reduction_note": "This recipe uses [expiring ingredients]"
         }
+
+        EXAMPLES:
+        - User is vegan → Replace chicken with tofu, milk with almond milk, butter with olive oil
+        - User is allergic to peanuts → Remove peanuts, substitute with cashews or sunflower seeds
+        - User is vegetarian → Replace beef with mushrooms or plant-based meat alternative
+        - User is halal → Ensure no pork, alcohol, or non-halal meat
         """
 
         context = {
@@ -910,24 +928,80 @@ class SousChefAgent:
             output += "## Ingredients:\n"
             for ing in ingredients:
                 mark = "✅" if ing.get("available_in_pantry") else "🛒"
-                output += f"{mark} {ing.get('quantity')} {ing.get('unit', '')} {ing.get('item')}\n"
+                quantity = ing.get('quantity', '')
+                unit = ing.get('unit', '')
+                item = ing.get('item', '')
+                form = ing.get('form', '')
+                
+                # Format: ✅ 2 cups flour, sifted
+                line = f"{mark} {quantity} {unit} {item}"
+                if form:
+                    line += f", {form}"
+                output += f"{line}\n"
             output += "\n"
 
         steps = adapted_recipe.get("steps", [])
         if steps:
             output += "## Instructions:\n"
             for step in steps:
-                output += f"{step.get('id')}. {step.get('text')} ({step.get('time_minutes')}min)\n"
+                step_id = step.get('id', '')
+                text = step.get('text', '')
+                time_min = step.get('time_minutes', 0)
+                skill_note = step.get('skill_note', '')
+                
+                # Format: 1. Preheat oven... (10min)
+                line = f"{step_id}. {text}"
+                if time_min:
+                    line += f" ({time_min}min)"
+                output += f"{line}\n"
+                
+                # Add skill notes as indented tips
+                if skill_note:
+                    output += f"   💡 Tip: {skill_note}\n"
             output += "\n"
 
         cooking_time = adapted_recipe.get("cooking_time", {})
-        output += f"⏱️ Total Time: {cooking_time.get('total', '?')} minutes\n"
+        if cooking_time:
+            prep = cooking_time.get('prep', 0)
+            cook = cooking_time.get('cook', 0)
+            total = cooking_time.get('total', prep + cook)
+            output += f"⏱️ **Time:** Prep {prep}min + Cook {cook}min = {total}min total\n"
+        
+        servings = adapted_recipe.get("servings")
+        difficulty = adapted_recipe.get("difficulty_level")
+        if servings or difficulty:
+            output += f"👥 Servings: {servings or 'N/A'}"
+            if difficulty:
+                output += f" | 📊 Difficulty: {difficulty.title()}"
+            output += "\n"
+        
+        # Show shopping list for missing items
+        shopping_list = adapted_recipe.get("shopping_list", [])
+        if shopping_list:
+            output += "\n## 🛒 Shopping List (Missing Items):\n"
+            for item in shopping_list:
+                name = item.get('item', '')
+                qty = item.get('quantity', '')
+                cost = item.get('estimated_cost', '')
+                where = item.get('where_to_buy', '')
+                
+                line = f"- {qty} {name}"
+                if cost:
+                    line += f" (${cost})"
+                if where:
+                    line += f" - {where}"
+                output += f"{line}\n"
+            output += "\n"
 
         safety_notes = adapted_recipe.get("safety_notes", [])
         if safety_notes:
-            output += "\n## Safety Notes:\n"
+            output += "\n## ⚠️ Safety Notes:\n"
             for note in safety_notes:
                 output += f"✓ {note}\n"
+        
+        waste_note = adapted_recipe.get("waste_reduction_note")
+        if waste_note:
+            output += f"\n♻️ **Sustainability:** {waste_note}\n"
 
         return output
 
