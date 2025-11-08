@@ -467,6 +467,7 @@ class SousChefAgent:
                         "id": metadata.get("id"),
                         "title": metadata.get("title"),
                         "ingredients": metadata.get("ner", []),
+                        "directions": metadata.get("directions", []),  # Include original directions
                         "link": metadata.get("link"),
                         "source": metadata.get("source"),
                         "score": float(score),
@@ -543,6 +544,19 @@ class SousChefAgent:
             if not recommendations and recipe_results:
                 recommendations = self.build_fallback_recommendations(recipe_results, user_preferences)
                 print("⚠️  Using fallback recommendations due to parsing issues")
+
+            # Merge full recipe data (including directions) into recommendations
+            for rec in recommendations:
+                recipe_id = rec.get("recipe_id")
+                # Find matching recipe from results
+                for recipe in recipe_results:
+                    if recipe.get("id") == recipe_id or recipe.get("title") == rec.get("title"):
+                        # Merge in fields that LLM doesn't return (like directions, ner, link, source)
+                        rec["ner"] = recipe.get("ner", rec.get("ner", []))
+                        rec["directions"] = recipe.get("directions", rec.get("directions", []))
+                        rec["link"] = recipe.get("link", rec.get("link"))
+                        rec["source"] = recipe.get("source", rec.get("source"))
+                        break
 
             self.current_recommendations = recommendations
 
@@ -687,31 +701,57 @@ class SousChefAgent:
             Adapted recipe with modifications
         """
         print(f"\n🔧 {self.name}: Adapting recipe to meet dietary requirements...")
+        print(f"   Recipe: {recipe.get('title', 'Unknown')}")
+        print(f"   User Preferences: {user_preferences}")
+        print(f"   Pantry Items: {len(pantry_inventory)}")
 
         system_prompt = self.build_system_prompt()
 
         instruction = """
         Adapt this recipe to meet the user's dietary requirements and preferences.
 
-        CRITICAL SAFETY CHECKS:
-        1. Remove ALL ingredients matching user's allergies
-        2. Ensure recipe complies with dietary restrictions (vegan, halal, etc.)
+        CRITICAL: The recipe includes ORIGINAL DIRECTIONS with specific quantities, temperatures, and techniques.
+        You MUST preserve these details from the original directions. ONLY modify where ingredient substitutions require it.
+
+        CRITICAL: ONLY make adaptations based on what's in user_preferences. 
+        DO NOT adapt for vegan/vegetarian/allergies unless the user explicitly has those in their preferences.
+        If user_preferences is empty or has no relevant restrictions, return the original recipe unchanged.
+
+        USER PREFERENCES TO CHECK (from the context):
+        - allergies: Remove ONLY ingredients the user is actually allergic to (if any)
+        - restrictions: Honor ONLY the restrictions user specified (if any)
+        - diet: Adapt ONLY if user has a specific diet (vegan, vegetarian, pescatarian, etc.)
+        - cuisines: Consider preferred cuisines if doing substitutions
+        - skill: Simplify steps for beginners, add detail for advanced
+
+        CRITICAL SAFETY CHECKS (only if user has these restrictions):
+        1. Remove ALL ingredients matching user's ACTUAL allergies (if they have any)
+        2. Ensure recipe complies with user's ACTUAL dietary restrictions (if they have any)
         3. Provide safe substitutions for removed ingredients
-        4. Double-check final recipe has NO allergens
+        4. Double-check final recipe has NO allergens (if user has allergies)
+        5. If user's diet is vegan: remove all animal products (meat, dairy, eggs, honey)
+        6. If user's diet is vegetarian: remove all meat and seafood (keep dairy/eggs)
+        7. If user has NO restrictions, return original recipe ingredients and directions unchanged
 
         Adaptation Steps:
-        1. Identify ingredients that violate dietary requirements
-        2. Find appropriate substitutions
-        3. Adjust cooking instructions if needed
-        4. Simplify/enhance based on skill level
-        5. Provide shopping list for missing items
-        6. Add helpful cooking tips for beginners
+        1. Read the original "directions" field carefully - it contains quantities and specific techniques
+        2. Identify ingredients that violate dietary requirements
+        3. Find appropriate substitutions (e.g., tofu for meat in vegan, coconut milk for dairy)
+        4. Update the steps to replace ingredient names where you made substitutions
+        5. PRESERVE all quantities, temperatures, times, and techniques from original directions
+        6. Provide shopping list for missing items
+        7. Add helpful cooking tips for beginners if needed
+
+        EXAMPLE: If original says "In a heavy 2-quart saucepan, mix brown sugar, nuts, evaporated milk and butter",
+        and user IS vegan (diet: "vegan" in preferences), output: "In a heavy 2-quart saucepan, mix brown sugar, cashews, coconut milk and vegan butter"
+        If user has NO dietary restrictions, output: "In a heavy 2-quart saucepan, mix brown sugar, nuts, evaporated milk and butter" (UNCHANGED)
+        DO NOT simplify to "Mix ingredients in a pot" - keep the specifics!
 
         Return ONLY valid JSON in this format:
         {
             "original_title": "Original Recipe Name",
-            "adapted_title": "Adapted Recipe Name",
-            "adaptations_made": [
+            "adapted_title": "Adapted Recipe Name",  // Keep same as original if no diet changes
+            "adaptations_made": [  // Leave EMPTY if no adaptations needed
                 "Replaced chicken with tofu for vegan diet",
                 "Removed peanuts due to allergy"
             ],
@@ -755,6 +795,13 @@ class SousChefAgent:
             ],
             "waste_reduction_note": "This recipe uses [expiring ingredients]"
         }
+
+        EXAMPLES (ONLY adapt if user has these preferences):
+        - IF user_preferences has diet="vegan" → Replace chicken with tofu, milk with almond milk, butter with olive oil
+        - IF user_preferences has allergies=["peanuts"] → Remove peanuts, substitute with cashews or sunflower seeds
+        - IF user_preferences has diet="vegetarian" → Replace beef with mushrooms or plant-based meat alternative
+        - IF user_preferences has restrictions=["halal"] → Ensure no pork, alcohol, or non-halal meat
+        - IF user_preferences is {} or has no relevant restrictions → Return original recipe UNCHANGED with empty adaptations_made list
         """
 
         context = {
@@ -910,24 +957,80 @@ class SousChefAgent:
             output += "## Ingredients:\n"
             for ing in ingredients:
                 mark = "✅" if ing.get("available_in_pantry") else "🛒"
-                output += f"{mark} {ing.get('quantity')} {ing.get('unit', '')} {ing.get('item')}\n"
+                quantity = ing.get('quantity', '')
+                unit = ing.get('unit', '')
+                item = ing.get('item', '')
+                form = ing.get('form', '')
+                
+                # Format: ✅ 2 cups flour, sifted
+                line = f"{mark} {quantity} {unit} {item}"
+                if form:
+                    line += f", {form}"
+                output += f"{line}\n"
             output += "\n"
 
         steps = adapted_recipe.get("steps", [])
         if steps:
             output += "## Instructions:\n"
             for step in steps:
-                output += f"{step.get('id')}. {step.get('text')} ({step.get('time_minutes')}min)\n"
+                step_id = step.get('id', '')
+                text = step.get('text', '')
+                time_min = step.get('time_minutes', 0)
+                skill_note = step.get('skill_note', '')
+                
+                # Format: 1. Preheat oven... (10min)
+                line = f"{step_id}. {text}"
+                if time_min:
+                    line += f" ({time_min}min)"
+                output += f"{line}\n"
+                
+                # Add skill notes as indented tips
+                if skill_note:
+                    output += f"   💡 Tip: {skill_note}\n"
             output += "\n"
 
         cooking_time = adapted_recipe.get("cooking_time", {})
-        output += f"⏱️ Total Time: {cooking_time.get('total', '?')} minutes\n"
+        if cooking_time:
+            prep = cooking_time.get('prep', 0)
+            cook = cooking_time.get('cook', 0)
+            total = cooking_time.get('total', prep + cook)
+            output += f"⏱️ **Time:** Prep {prep}min + Cook {cook}min = {total}min total\n"
+        
+        servings = adapted_recipe.get("servings")
+        difficulty = adapted_recipe.get("difficulty_level")
+        if servings or difficulty:
+            output += f"👥 Servings: {servings or 'N/A'}"
+            if difficulty:
+                output += f" | 📊 Difficulty: {difficulty.title()}"
+            output += "\n"
+        
+        # Show shopping list for missing items
+        shopping_list = adapted_recipe.get("shopping_list", [])
+        if shopping_list:
+            output += "\n## 🛒 Shopping List (Missing Items):\n"
+            for item in shopping_list:
+                name = item.get('item', '')
+                qty = item.get('quantity', '')
+                cost = item.get('estimated_cost', '')
+                where = item.get('where_to_buy', '')
+                
+                line = f"- {qty} {name}"
+                if cost:
+                    line += f" (${cost})"
+                if where:
+                    line += f" - {where}"
+                output += f"{line}\n"
+            output += "\n"
 
         safety_notes = adapted_recipe.get("safety_notes", [])
         if safety_notes:
-            output += "\n## Safety Notes:\n"
+            output += "\n## ⚠️ Safety Notes:\n"
             for note in safety_notes:
                 output += f"✓ {note}\n"
+        
+        waste_note = adapted_recipe.get("waste_reduction_note")
+        if waste_note:
+            output += f"\n♻️ **Sustainability:** {waste_note}\n"
 
         return output
 
