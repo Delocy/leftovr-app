@@ -14,3 +14,5 @@ qdrant_data/
 # Environment
 .env
 .DS_Store
+
+deprecated/
