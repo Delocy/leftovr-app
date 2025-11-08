@@ -803,10 +803,64 @@ class ExecutiveChefAgent:
         ])
         return response.content
 
+    def extract_ingredients(self, llm, user_message: str) -> dict:
+        """
+        Extract ingredients from user message for pantry operations.
+
+        Args:
+            llm: Language model
+            user_message: User's message about ingredients
+
+        Returns:
+            Dict with 'ingredients' list containing {name, quantity, unit} objects
+        """
+        schema_instruction = (
+            "Return ONLY valid JSON matching this schema (no extra text):\n"
+            "{\n"
+            "  \"ingredients\": [\n"
+            "    {\"name\": \"ingredient_name\", \"quantity\": number, \"unit\": \"unit_string\"},\n"
+            "    ...\n"
+            "  ]\n"
+            "}\n\n"
+            "Examples:\n"
+            "- 'I have 3 apples' → {\"ingredients\": [{\"name\": \"apple\", \"quantity\": 3, \"unit\": \"pieces\"}]}\n"
+            "- 'I got 2 lbs of chicken and 1 cup of rice' → {\"ingredients\": [{\"name\": \"chicken\", \"quantity\": 2, \"unit\": \"lbs\"}, {\"name\": \"rice\", \"quantity\": 1, \"unit\": \"cup\"}]}\n"
+        )
+
+        sys = (
+            "You extract ingredients from user messages into structured JSON. "
+            "Parse ingredient names, quantities, and units. "
+            "If no unit is specified, use 'pieces'. "
+            "If no quantity is specified, use 1. "
+            "Normalize ingredient names to lowercase singular forms."
+        )
+
+        resp = llm.invoke([
+            SystemMessage(content=sys),
+            HumanMessage(content=f"{schema_instruction}\n\nUser message:\n{user_message}")
+        ])
+
+        try:
+            # Handle JSON wrapped in code blocks
+            content = resp.content.strip()
+            if content.startswith("```"):
+                parts = content.split("```")
+                if len(parts) >= 2:
+                    content = parts[1]
+                    if content.startswith("json"):
+                        content = content[4:]
+                content = content.strip()
+
+            data = json.loads(content)
+            return {"ingredients": data.get("ingredients", [])}
+        except Exception as e:
+            print(f"⚠️ extract_ingredients parse failed: {e}")
+            return {"ingredients": []}
+
     def extract_preferences(self, llm, messages: list) -> dict:
         """
         Parse messages into structured preferences.
-        Returns dict with keys: allergies, restrictions.
+        Returns dict with keys: allergies, restrictions, cuisines, diet, skill.
 
         Args:
             llm: Language model
@@ -817,12 +871,15 @@ class ExecutiveChefAgent:
             "{\n"
             "  \"allergies\": string[] | [],\n"
             "  \"restrictions\": string[] | [],\n"
+            "  \"cuisines\": string[] | [],\n"
+            "  \"diet\": string | null,\n"
+            "  \"skill\": string | null\n"
             "}"
         )
         sys = (
             "You extract user food preferences from a conversation history into a strict JSON object. "
             "Look for mentions of allergies, dietary restrictions (vegan, vegetarian, halal, kosher, etc.), "
-            "and any food-related preferences."
+            "preferred cuisines, diet type, and cooking skill level."
         )
 
         # Normalize messages to text format
@@ -845,7 +902,7 @@ class ExecutiveChefAgent:
         try:
             data = json.loads(resp.content)
         except Exception:
-            return {"allergies": [], "restrictions": []}
+            return {"allergies": [], "restrictions": [], "cuisines": [], "diet": None, "skill": None}
 
         # Normalize types
         def to_list(v):
@@ -858,6 +915,9 @@ class ExecutiveChefAgent:
         return {
             "allergies": to_list(data.get("allergies")),
             "restrictions": to_list(data.get("restrictions")),
+            "cuisines": to_list(data.get("cuisines")),
+            "diet": data.get("diet"),
+            "skill": data.get("skill")
         }
 
     def classify_query(self, llm, messages: list) -> dict:
