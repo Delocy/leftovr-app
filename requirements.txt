@@ -23,6 +23,7 @@ httpx==0.28.1
 huggingface-hub==0.36.0
 hyperframe==6.1.0
 idna==3.11
+inflect==7.0.0
 Jinja2==3.1.6
 jiter==0.11.1
 joblib==1.5.2

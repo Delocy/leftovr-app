@@ -78,11 +78,46 @@ python main.py
 
 **Note**: The CLI mode runs a test conversation. For production use, always use the Streamlit interface.
 
+## Pantry Database Validation
+
+The app uses a persistent SQLite database to store your pantry inventory. The database is located at `~/.leftovr/pantry.db`.
+
+### Validate Database Contents
+
+```bash
+python3 validate_pantry.py
+```
+
+This will show:
+- Current inventory items
+- Quantities and expiration dates
+- Items expiring soon
+
+### Test Database Operations
+
+```bash
+# Run comprehensive CRUD tests
+python3 test_pantry_operations.py
+
+# Clean up test data
+python3 cleanup_test_data.py
+```
+
+For detailed documentation, see:
+- [docs/CRUD_OPTIMIZATION_SUMMARY.md](docs/CRUD_OPTIMIZATION_SUMMARY.md) - CRUD optimization details
+- [docs/CRUD_USAGE_GUIDE.md](docs/CRUD_USAGE_GUIDE.md) - Quick usage reference
+
 ## Project Structure
 
-- `agents/` - Agent implementations (Waiter Agent, etc.)
-- `main.py` - Main multi-agent orchestration system
+- `agents/` - Agent implementations (Executive Chef, Pantry Agent, etc.)
+- `database/` - Database layer (SQLite operations)
+- `mcp/` - Model Context Protocol server
+- `data/` - Recipe data and metadata
+- `main.py` - LangGraph workflow orchestration
 - `streamlit_app.py` - Streamlit web interface
+- `validate_pantry.py` - Database validation script
+- `test_pantry_operations.py` - CRUD testing script
+- `cleanup_test_data.py` - Test data cleanup
 - `requirements.txt` - Python dependencies
 - `.env` - Environment variables (not committed to git)
 
