@@ -15,7 +15,7 @@ class PantryDatabase:
 
         self.db_path = db_path
         self._initialize()
-        
+
         print(f"Connected to pantry database at: {self.db_path}")
 
 
@@ -110,4 +110,5 @@ class PantryDatabase:
         with self.get_connection() as conn:
             conn.execute("DELETE FROM food_items WHERE id = ?", (id,))
             conn.commit()
+
 
