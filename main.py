@@ -116,6 +116,25 @@ class LeftovrWorkflow:
         self.exec_chef = ExecutiveChefAgent(name="Maison D'Être")
         self.pantry = PantryAgent(name="Pantry Manager")
 
+        # Connect pantry agent to MCP server
+        import asyncio
+        try:
+            # Try to connect synchronously
+            try:
+                loop = asyncio.get_running_loop()
+            except RuntimeError:
+                # No running loop - safe to use asyncio.run()
+                asyncio.run(self.pantry.ensure_connected())
+            else:
+                # Already in a loop - use run_in_executor with a new thread
+                import concurrent.futures
+                with concurrent.futures.ThreadPoolExecutor() as executor:
+                    future = executor.submit(asyncio.run, self.pantry.ensure_connected())
+                    future.result()
+        except Exception as e:
+            print(f"⚠️  Warning: Could not connect to MCP server: {e}")
+            print("   Make sure mcp/server.py is available")
+
         # Initialize Recipe Knowledge Agent
         self.recipe_agent = RecipeKnowledgeAgent(data_dir='data')
         try:
@@ -136,6 +155,23 @@ class LeftovrWorkflow:
 
         # Build workflow graph
         self.graph = self._build_graph()
+
+    def __del__(self):
+        """Cleanup: disconnect from MCP server when workflow is destroyed"""
+        try:
+            if hasattr(self, 'pantry') and self.pantry._connected:
+                import asyncio
+                try:
+                    loop = asyncio.get_running_loop()
+                except RuntimeError:
+                    asyncio.run(self.pantry.disconnect())
+                else:
+                    import concurrent.futures
+                    with concurrent.futures.ThreadPoolExecutor() as executor:
+                        future = executor.submit(asyncio.run, self.pantry.disconnect())
+                        future.result()
+        except Exception as e:
+            print(f"Warning during cleanup: {e}")
 
     def _build_graph(self) -> StateGraph:
         """Build the simplified LangGraph workflow"""
@@ -283,36 +319,23 @@ class LeftovrWorkflow:
     def _pantry_node(self, state: RecipeWorkflowState) -> Dict[str, Any]:
         """
         Handle pantry operations: add/update/remove ingredients.
+        Uses PantryAgent's natural language handler for intelligent operation detection.
         """
         print("\n🥬 [PANTRY] Processing inventory operation...")
 
         user_msg = state.get("user_message", "")
 
-        # Use Executive Chef to extract ingredients using classifier LLM
-        extracted = self.exec_chef.extract_ingredients(llm_classifier, user_msg)
-        ingredients = extracted.get("ingredients", [])
-
-        # Add each ingredient to pantry using Pantry Agent
-        added_items = []
-        for ing in ingredients:
-            name = ing.get("name", "")
-            quantity = ing.get("quantity", 1)
-            unit = ing.get("unit", "pieces")
-
-            if name:
-                self.pantry.add_or_update_ingredient(
-                    ingredient_name=name,
-                    quantity=quantity,
-                    unit=unit
-                )
-                added_items.append(f"{quantity} {unit} {name}")
+        # Use PantryAgent's handle_query for intelligent operation detection
+        # This handles add, remove, update automatically
+        import asyncio
+        result = asyncio.run(self.pantry.handle_query(user_msg))
 
         # Get updated inventory
         inventory = self.pantry.get_inventory()
         expiring = self.pantry.get_expiring_soon(days_threshold=3)
 
-        # Create response
-        response = self._format_pantry_response(added_items, inventory, expiring)
+        # Create response based on operations performed
+        response = self._format_pantry_response_smart(result, inventory, expiring, user_msg)
 
         print(f"✅ [PANTRY] Updated inventory: {len(inventory)} items")
 
@@ -321,11 +344,97 @@ class LeftovrWorkflow:
             "expiring_items": expiring,
             "response": response,
             "current_stage": "pantry_complete",
-            "coordination_log": [f"Pantry updated: added {len(added_items)} items"]
+            "coordination_log": [f"Pantry updated via natural language"]
         }
 
+    def _format_pantry_response_smart(self, result, inventory: List, expiring: List, user_msg: str) -> str:
+        """
+        Format pantry operation result intelligently based on what operations were performed.
+
+        Args:
+            result: PantryItemsResponse from handle_query()
+            inventory: Current inventory
+            expiring: Expiring items
+            user_msg: Original user message
+
+        Returns:
+            Formatted response string
+        """
+        response = ""
+
+        # Detect operation type from user message
+        user_msg_lower = user_msg.lower()
+
+        if result and hasattr(result, 'items') and result.items:
+            affected_items = result.items
+
+            # Determine what operation was done
+            # Check for clear/empty pantry first (deletes all items)
+            if any(word in user_msg_lower for word in ["clear", "empty", "delete all", "remove all"]):
+                item_count = len(affected_items)
+                if item_count > 0:
+                    response = f"✅ I've cleared your pantry and removed {item_count} items.\n\n"
+                else:
+                    response = "✅ Your pantry is now empty.\n\n"
+
+            # Check for removal with quantity (e.g., "remove 1 garlic")
+            elif any(word in user_msg_lower for word in ["remove", "take out", "use"]) and any(char.isdigit() for char in user_msg):
+                # This is a quantity adjustment (delta)
+                items_desc = [f"{item.name}" for item in affected_items]
+                if items_desc:
+                    response = f"✅ I've removed some {', '.join(items_desc)} from your pantry.\n\n"
+                else:
+                    response = "✅ I've updated your pantry.\n\n"
+
+            # Check for complete removal (e.g., "remove garlic" - no quantity)
+            elif any(word in user_msg_lower for word in ["remove", "delete", "don't have", "gone", "throw away", "get rid of"]):
+                item_names = [item.name for item in affected_items]
+                if item_names:
+                    response = f"✅ I've completely removed {', '.join(item_names)} from your pantry.\n\n"
+                else:
+                    response = "✅ I've updated your pantry.\n\n"
+
+            elif any(word in user_msg_lower for word in ["ate", "consumed", "cooked with"]):
+                # Consumption operation (delta update)
+                item_names = [item.name for item in affected_items]
+                if item_names:
+                    response = f"✅ I've updated your inventory after using {', '.join(item_names)}.\n\n"
+                else:
+                    response = "✅ I've updated your pantry.\n\n"
+
+            elif any(word in user_msg_lower for word in ["set to", "update to", "change to", "now have"]):
+                # Set operation (absolute update)
+                items_desc = [f"{item.quantity} {item.name}" for item in affected_items]
+                if items_desc:
+                    response = f"✅ I've updated your pantry to {', '.join(items_desc)}.\n\n"
+                else:
+                    response = "✅ I've updated your pantry.\n\n"
+
+            else:
+                # Default to add operation
+                items_desc = [f"{item.quantity} {item.name}" for item in affected_items]
+                if items_desc:
+                    response = f"✅ I've added {', '.join(items_desc)} to your pantry.\n\n"
+                else:
+                    response = "✅ I've updated your pantry.\n\n"
+        else:
+            response = "✅ I've updated your pantry.\n\n"
+
+        # Add inventory summary
+        if len(inventory) == 0:
+            response += f"📦 **Your pantry is now empty.**"
+        else:
+            response += f"📦 **Your pantry now has {len(inventory)} items.**"
+
+        # Add expiring items warning
+        if expiring:
+            response += f"\n⚠️  {len(expiring)} items expiring soon: "
+            response += ", ".join([item.get("ingredient_name", item.get("name", "")) for item in expiring[:3]])
+
+        return response
+
     def _format_pantry_response(self, added_items: List[str], inventory: List, expiring: List) -> str:
-        """Format pantry operation result for user"""
+        """Format pantry operation result for user (legacy)"""
         response = ""
 
         if added_items:
