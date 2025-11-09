@@ -288,16 +288,16 @@ def main():
                 })
 
                 # Update session state from result
-                if result.get("pantry_inventory"):
+                if "pantry_inventory" in result:
                     st.session_state.pantry_inventory = result["pantry_inventory"]
 
-                if result.get("user_preferences"):
+                if "user_preferences" in result:
                     st.session_state.user_preferences = result["user_preferences"]
 
-                if result.get("top_3_recommendations"):
+                if "top_3_recommendations" in result:
                     st.session_state.top_3_recommendations = result["top_3_recommendations"]
 
-                if result.get("messages"):
+                if "messages" in result:
                     st.session_state.messages = result["messages"]
 
                 st.session_state.current_stage = result.get("current_stage", "idle")
