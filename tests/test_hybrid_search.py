@@ -58,13 +58,23 @@ def main():
     # Initialize agent
     print("⚙️  Initializing RecipeKnowledgeAgent...")
     agent = RecipeKnowledgeAgent()
-    agent.load_metadata()
-    agent.load_ingredient_index()
-    agent.setup_qdrant()
-    
-    print(f"✅ Ready! Loaded {len(agent.metadata):,} recipes")
-    print(f"✅ Qdrant vector search available")
-    print(f"✅ Ingredient index loaded\n")
+    agent.setup_milvus()  # Connect to Milvus cloud - primary data source
+
+    # Optional: Load directions from local file
+    try:
+        agent.load_directions()
+        print(f"✅ Directions loaded for enhanced recipe details")
+    except Exception:
+        print(f"ℹ️  Directions not available (optional)")
+
+    if agent.milvus_client:
+        stats = agent.milvus_client.get_collection_stats(agent.collection_name)
+        recipe_count = stats.get('row_count', 'unknown')
+        print(f"✅ Ready! Connected to Milvus with {recipe_count} recipes")
+        print(f"✅ Vector search + ingredient filtering enabled\n")
+    else:
+        print("❌ Failed to connect to Milvus. Please check your configuration.")
+        return
     
     # ============================================================================
     # TEST 1: Basic Usage - Minimal Leftovers, No Preferences
@@ -296,10 +306,12 @@ Parameters:
   • use_semantic: Enable semantic boosting (default: True)
 
 How It Works:
-  1. 📊 Exact Match: Finds recipes with your exact ingredients (all 2.2M recipes)
-  2. 🧠 Semantic Search: Finds similar recipes (100k embedded recipes)
+  1. 📊 Exact Match: Finds recipes with your exact ingredients (via Milvus array filtering)
+  2. 🧠 Semantic Search: Finds similar recipes (via Milvus vector search)
   3. 💯 LEFTOVR Scoring: Prioritizes using MORE leftovers
   4. ✨ Boost: Recipes in BOTH get +50 semantic bonus
+
+  All data is stored in Zilliz Cloud (Milvus) - NO local files needed!
 
 Scoring Formula:
   Base Score = (num_used × 100) + 1000 - total_ingredients
@@ -352,8 +364,8 @@ Return Format:
     num_used = 5
     missing = ['white wine']
 
-💡 NOTE: Directions are NOT in embeddings (keeping them lightweight),
-         but ARE in metadata and returned with every recipe!
+💡 NOTE: Directions are NOT in Milvus (to keep vectors lightweight),
+         but CAN be loaded from local file using agent.load_directions()
 
 🚀 This is your production-ready method!
 """)
@@ -362,8 +374,8 @@ Return Format:
     # BONUS: Show Full Recipe Details with Directions
     # ============================================================================
     print_separator("🍳 BONUS: Full Recipe Details with Directions")
-    print("Demonstrating that directions are available in metadata")
-    print("even though they're NOT included in embeddings\n")
+    print("Demonstrating that directions can be loaded from local file")
+    print("even though they're NOT stored in Milvus (keeps vectors lightweight)\n")
     
     pantry = ["chicken", "garlic", "lemon"]
     print(f"🥘 Pantry: {', '.join(pantry)}")

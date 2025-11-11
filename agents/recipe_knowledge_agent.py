@@ -1,14 +1,13 @@
 """Recipe Knowledge Agent with Zilliz Cloud (Milvus) Vector Database
 
-Uses Zilliz Cloud (managed Milvus) for vector search with better stability and features.
+Uses Zilliz Cloud (managed Milvus) as the primary data source for all recipe data.
+All metadata (id, title, ingredients, source, link) and embeddings are stored in the cloud.
 
 Installation:
     pip install pymilvus sentence-transformers
 
 Usage:
-    agent = RecipeKnowledgeAgent(data_dir='data')
-    agent.load_metadata()
-    agent.load_ingredient_index()
+    agent = RecipeKnowledgeAgent()
     agent.setup_milvus()
 """
 from __future__ import annotations
@@ -43,43 +42,42 @@ def _normalize_token(tok: str) -> str:
 class RecipeKnowledgeAgent:
     def __init__(self, data_dir: str = 'data') -> None:
         self.data_dir = data_dir
-        self.metadata: Dict[int, dict] = {}
-        self.ingredient_index: Dict[str, List[int]] = {}
+        self.directions_cache: Dict[int, List[str]] = {}
         self.milvus_client = None
         self.embed_model = None
         self.embed_dim = None
         self.collection_name = "recipes"
         self.pantry_agent = None  # Injected PantryAgent for inventory access
 
-    def load_metadata(self, path: Optional[str] = None) -> None:
-        """Load recipe metadata from JSONL file"""
+    def load_directions(self, path: Optional[str] = None) -> None:
+        """
+        OPTIONAL: Load recipe directions from local JSONL file.
+        Only needed if you want cooking instructions (not stored in Milvus).
+
+        Args:
+            path: Path to recipe_metadata.jsonl file
+        """
         path = path or os.path.join(self.data_dir, 'recipe_metadata.jsonl')
         if not os.path.exists(path):
-            raise FileNotFoundError(f"Metadata file not found: {path}")
-        self.metadata = {}
+            print(f"⚠️  Directions file not found: {path}")
+            return
+
+        self.directions_cache = {}
         with open(path, 'r', encoding='utf8') as fh:
             for line in fh:
                 if not line.strip():
                     continue
                 obj = json.loads(line)
-                self.metadata[int(obj['id'])] = obj
-        print(f"✅ Loaded {len(self.metadata):,} recipes")
+                rid = int(obj['id'])
+                directions = obj.get('directions', [])
+                if directions:
+                    self.directions_cache[rid] = directions
 
-    def load_ingredient_index(self, path: Optional[str] = None) -> None:
-        """Load ingredient inverted index"""
-        path = path or os.path.join(self.data_dir, 'ingredient_index.json')
-        if not os.path.exists(path):
-            raise FileNotFoundError(f"Ingredient index not found: {path}")
-        with open(path, 'r', encoding='utf8') as fh:
-            self.ingredient_index = json.load(fh)
-        self.ingredient_index = {k: [int(x) for x in v] for k, v in self.ingredient_index.items()}
-        print(f"✅ Loaded {len(self.ingredient_index):,} ingredients")
+        print(f"✅ Loaded directions for {len(self.directions_cache):,} recipes")
 
     def setup_milvus(self, embed_model_name: str = 'all-MiniLM-L6-v2') -> None:
         """
-        Initialize Zilliz Cloud (Milvus) client and connect to existing collection
-
-        Note: Collection must be created via ingest_recipes_milvus.py script first
+        Initialize Zilliz Cloud (Milvus) client and connect to existing collection.
 
         Args:
             embed_model_name: SentenceTransformer model name
@@ -89,10 +87,9 @@ class RecipeKnowledgeAgent:
             return
 
         try:
-            # Get Zilliz Cloud credentials from environment
             ZILLIZ_CLUSTER_ENDPOINT = os.environ.get('ZILLIZ_CLUSTER_ENDPOINT')
             ZILLIZ_TOKEN = os.environ.get('ZILLIZ_TOKEN')
-            
+
             if not ZILLIZ_CLUSTER_ENDPOINT or not ZILLIZ_TOKEN:
                 print("❌ Error: ZILLIZ_CLUSTER_ENDPOINT and ZILLIZ_TOKEN env variables not set.")
                 print("   Please set them before running with Milvus enabled")
@@ -112,10 +109,10 @@ class RecipeKnowledgeAgent:
             collection_exists = self.collection_name in collections
 
             if collection_exists:
-                print(f"✅ Connected to collection '{self.collection_name}'")
+                print(f"✅ Connected to Milvus collection '{self.collection_name}'")
                 # Get collection info
                 stats = self.milvus_client.get_collection_stats(self.collection_name)
-                print(f"   Vectors: {stats.get('row_count', 'unknown')}")
+                print(f"   📊 Total recipes in cloud: {stats.get('row_count', 'unknown')}")
             else:
                 print(f"❌ Collection '{self.collection_name}' not found!")
                 print(f"   Please run: python scripts/ingest_recipes_milvus.py --input assets/full_dataset.csv --outdir data --build-milvus")
@@ -124,6 +121,84 @@ class RecipeKnowledgeAgent:
         except Exception as e:
             print(f"❌ Zilliz Cloud setup failed: {e}")
             self.milvus_client = None
+
+    def get_recipe_by_id(self, recipe_id: int) -> Optional[Dict[str, Any]]:
+        """
+        Fetch a single recipe from Milvus by ID.
+
+        Args:
+            recipe_id: Recipe ID
+
+        Returns:
+            Recipe dict with {id, title, ingredients, source, link, directions (if cached)}
+            or None if not found
+        """
+        if not self.milvus_client:
+            print("⚠️  Milvus not connected")
+            return None
+
+        try:
+            results = self.milvus_client.query(
+                collection_name=self.collection_name,
+                filter=f"id == {recipe_id}",
+                output_fields=["id", "title", "ingredients", "source", "link"]
+            )
+
+            if results and len(results) > 0:
+                recipe = results[0]
+                if recipe_id in self.directions_cache:
+                    recipe['directions'] = self.directions_cache[recipe_id]
+                # Use 'ingredients' field (already normalized) as 'ner' for compatibility
+                recipe['ner'] = recipe.get('ingredients', [])
+                return recipe
+
+            return None
+        except Exception as e:
+            print(f"❌ Error fetching recipe {recipe_id}: {e}")
+            return None
+
+    def get_recipes_by_ids(self, recipe_ids: List[int]) -> Dict[int, Dict[str, Any]]:
+        """
+        Batch fetch multiple recipes from Milvus.
+
+        Args:
+            recipe_ids: List of recipe IDs
+
+        Returns:
+            Dict mapping recipe_id -> recipe_dict
+        """
+        if not self.milvus_client:
+            return {}
+
+        if not recipe_ids:
+            return {}
+
+        try:
+            # Build filter expression for multiple IDs
+            id_filter = " or ".join([f"id == {rid}" for rid in recipe_ids])
+
+            results = self.milvus_client.query(
+                collection_name=self.collection_name,
+                filter=id_filter,
+                output_fields=["id", "title", "ingredients", "source", "link"],
+                limit=len(recipe_ids)
+            )
+
+            # Build result map
+            recipe_map = {}
+            for recipe in results:
+                rid = recipe['id']
+                # Add directions from cache if available
+                if rid in self.directions_cache:
+                    recipe['directions'] = self.directions_cache[rid]
+                # Use 'ingredients' field as 'ner' for compatibility
+                recipe['ner'] = recipe.get('ingredients', [])
+                recipe_map[rid] = recipe
+
+            return recipe_map
+        except Exception as e:
+            print(f"❌ Error batch fetching recipes: {e}")
+            return {}
 
     def set_pantry_agent(self, pantry_agent) -> None:
         """
@@ -160,7 +235,7 @@ class RecipeKnowledgeAgent:
         Check recipe feasibility using live pantry data.
 
         Args:
-            recipe_meta: Recipe metadata with 'ner' field (ingredients)
+            recipe_meta: Recipe metadata with 'ner' or 'ingredients' field
             allow_missing: How many ingredients can be missing
 
         Returns:
@@ -168,16 +243,17 @@ class RecipeKnowledgeAgent:
              num_available: int, num_missing: int}
         """
         if not self.pantry_agent:
+            recipe_ingredients = recipe_meta.get('ner', recipe_meta.get('ingredients', []))
             return {
                 "feasible": False,
                 "available": [],
-                "missing": recipe_meta.get('ner', []),
+                "missing": recipe_ingredients,
                 "num_available": 0,
-                "num_missing": len(recipe_meta.get('ner', []))
+                "num_missing": len(recipe_ingredients)
             }
 
         pantry_items = set(self.normalize_ingredients(self.get_pantry_items()))
-        recipe_ingredients = set(recipe_meta.get('ner', []))
+        recipe_ingredients = set(recipe_meta.get('ner', recipe_meta.get('ingredients', [])))
 
         available = list(pantry_items & recipe_ingredients)
         missing = list(recipe_ingredients - pantry_items)
@@ -196,14 +272,10 @@ class RecipeKnowledgeAgent:
 
     def pantry_candidates(self, pantry_items: Iterable[str], allow_missing: int = 0, top_k: int = 200) -> List[Tuple[int, float, int, List[str]]]:
         """
-        LEFTOVR MODE: Find recipes that use the MOST of your pantry items
+        LEFTOVR MODE: Find recipes using Milvus array filtering (cloud-based search)
 
+        Uses 'array_contains_any' to find recipes with matching ingredients.
         Philosophy: Using MORE leftovers = BETTER (not just coverage %)
-
-        COMPLEMENTARY SIGNALS:
-        • Exact match: "This recipe uses exactly these ingredients"
-        • Semantic: "This recipe is similar to what you want"
-        • Hybrid: "This recipe does BOTH!" (gets bonus points)
 
         Args:
             pantry_items: Your available ingredients/leftovers
@@ -213,43 +285,62 @@ class RecipeKnowledgeAgent:
         Returns:
             List of (recipe_id, score, num_pantry_used, missing_ingredients)
         """
+        if not self.milvus_client:
+            print("⚠️  Milvus not connected, cannot search recipes")
+            return []
+
         pantry = set(self.normalize_ingredients(pantry_items))
         if not pantry:
             return []
 
-        # Find recipes that contain any pantry ingredients
-        candidate_recipes: Set[int] = set()
-        for ing in pantry:
-            ids = self.ingredient_index.get(ing) or []
-            candidate_recipes.update(ids)
+        try:
+            # Query Milvus for recipes containing ANY of the pantry ingredients
+            # Use array_contains_any to find matching recipes
+            pantry_list = list(pantry)
 
-        results = []
-        for rid in candidate_recipes:
-            meta = self.metadata.get(rid)
-            if not meta:
-                continue
+            # Build filter: ingredients array contains any pantry item
+            filter_expr = " or ".join([f'array_contains(ingredients, "{ing}")' for ing in pantry_list[:50]])  # Limit to prevent huge query
 
-            recipe_ingredients = set(meta.get('ner', []))
-            if not recipe_ingredients:
-                continue
+            # Fetch candidates from Milvus
+            results = self.milvus_client.query(
+                collection_name=self.collection_name,
+                filter=filter_expr,
+                output_fields=["id", "title", "ingredients", "source", "link"],
+                limit=1000  # Get more candidates for scoring
+            )
 
-            # Calculate how many UNIQUE pantry items this recipe uses
-            num_pantry_used = len(pantry & recipe_ingredients)
+            # Score and filter results
+            scored_results = []
+            for recipe in results:
+                rid = recipe['id']
+                recipe_ingredients = set(recipe.get('ingredients', []))
 
-            # Calculate missing ingredients
-            missing = recipe_ingredients - pantry
-            num_missing = len(missing)
+                if not recipe_ingredients:
+                    continue
 
-            # Filter: only include if missing ingredients <= allowed
-            if num_missing <= allow_missing:
-                # LEFTOVR SCORING: Number of UNIQUE pantry items used (more = better)
-                # Bonus for recipes you can make now (0 missing)
-                score = num_pantry_used * 100 + (1000 if num_missing == 0 else 0) - len(recipe_ingredients)
-                results.append((rid, float(score), num_pantry_used, list(missing)))
+                # Calculate how many UNIQUE pantry items this recipe uses
+                num_pantry_used = len(pantry & recipe_ingredients)
 
-        # Sort by score (descending)
-        results.sort(key=lambda x: x[1], reverse=True)
-        return results[:top_k]
+                # Calculate missing ingredients
+                missing = recipe_ingredients - pantry
+                num_missing = len(missing)
+
+                # Filter: only include if missing ingredients <= allowed
+                if num_missing <= allow_missing:
+                    # LEFTOVR SCORING: Number of UNIQUE pantry items used (more = better)
+                    # Bonus for recipes you can make now (0 missing)
+                    score = num_pantry_used * 100 + (1000 if num_missing == 0 else 0) - len(recipe_ingredients)
+                    scored_results.append((rid, float(score), num_pantry_used, list(missing)))
+
+            # Sort by score (descending)
+            scored_results.sort(key=lambda x: x[1], reverse=True)
+            return scored_results[:top_k]
+
+        except Exception as e:
+            print(f"❌ Error in pantry_candidates: {e}")
+            import traceback
+            traceback.print_exc()
+            return []
 
     def semantic_search(
         self,
@@ -299,7 +390,6 @@ class RecipeKnowledgeAgent:
         query_vector = self.embed_model.encode(query_text, normalize_embeddings=True).tolist()
 
         # Search using MilvusClient
-        # Note: filter_ingredients filtering not yet implemented in simplified API
         results = self.milvus_client.search(
             collection_name=self.collection_name,
             data=[query_vector],
@@ -311,6 +401,7 @@ class RecipeKnowledgeAgent:
         if results and len(results) > 0:
             return [(hit['id'], hit['distance']) for hit in results[0]]
         return []
+
     def hybrid_query(
         self,
         pantry_items: Optional[Iterable[str]] = None,
@@ -320,18 +411,17 @@ class RecipeKnowledgeAgent:
         use_semantic: bool = True
     ) -> List[Tuple[dict, float, int, List[str]]]:
         """
-        LEFTOVR HYBRID: Find recipes using semantic search + LEFTOVR scoring
+        LEFTOVR HYBRID: Cloud-based recipe search using Milvus
 
-        Uses all-MiniLM-L6-v2 to find recipes semantically similar to:
-        - Your ingredients (pantry_items)
-        - Your preferences (query_text) - optional!
+        Combines:
+        1. Exact ingredient matching (via Milvus array filtering)
+        2. Semantic similarity (via Milvus vector search)
 
         Args:
-            pantry_items: Your available ingredients (leftovers). If None, auto-pulls from PantryAgent
-            query_text: What you feel like eating (e.g., "quick dinner", "Italian")
-                       Optional - can search with just ingredients!
+            pantry_items: Your available ingredients. If None, auto-pulls from PantryAgent
+            query_text: What you feel like eating (optional)
             top_k: Number of results to return
-            allow_missing: How many ingredients you're willing to buy (0=none, 1-2=flexible)
+            allow_missing: How many ingredients you're willing to buy
             use_semantic: Whether to boost with semantic similarity
 
         Returns:
@@ -340,15 +430,15 @@ class RecipeKnowledgeAgent:
             recipe_metadata includes:
             - 'id': Recipe ID
             - 'title': Recipe name
-            - 'ner': List of ingredients
-            - 'directions': List of cooking steps
+            - 'ner' / 'ingredients': List of normalized ingredients
+            - 'directions': List of cooking steps (if loaded)
             - 'link': Source URL
             - 'source': Recipe source
 
         Philosophy:
             1. Prioritize using MORE leftovers (3 items > 1 item)
             2. Prefer recipes you can make NOW (zero shopping)
-            3. Boost recipes semantically similar to your ingredients + preferences
+            3. Boost recipes semantically similar to your query + ingredients
         """
         # Auto-pull from pantry if not provided
         if pantry_items is None:
@@ -361,7 +451,7 @@ class RecipeKnowledgeAgent:
 
         pantry_list = list(pantry_items)
 
-        # Get leftover-optimized candidates
+        # Get leftover-optimized candidates from Milvus
         pantry_cands = self.pantry_candidates(
             pantry_list,
             allow_missing=allow_missing,
@@ -371,8 +461,7 @@ class RecipeKnowledgeAgent:
         # Get semantic matches if enabled
         sem_cands = []
         if use_semantic and self.milvus_client and self.embed_model:
-            # Pass BOTH query text AND pantry items to semantic search!
-            # The model finds recipes similar to your ingredients + preferences
+            # Pass BOTH query text AND pantry items to semantic search
             sem_cands = self.semantic_search(
                 query=query_text,
                 pantry_items=pantry_list,
@@ -392,14 +481,17 @@ class RecipeKnowledgeAgent:
                 if rid in score_map:
                     current_score, num_used, missing = score_map[rid]
                     # Add semantic bonus (scaled to be meaningful but not dominant)
-                    # Max semantic boost: ~50 points (less than using 1 extra ingredient = 100 points)
                     boosted_score = current_score + (sem_score * 50)
                     score_map[rid] = (boosted_score, num_used, missing)
 
-        # Sort and return
+        # Fetch recipe metadata from Milvus for top results
         ranked = sorted(score_map.items(), key=lambda x: x[1][0], reverse=True)[:top_k]
+        recipe_ids = [rid for rid, _ in ranked]
+        recipe_map = self.get_recipes_by_ids(recipe_ids)
+
+        # Return results with full metadata
         return [
-            (self.metadata.get(rid, {}), float(score), num_used, missing)
+            (recipe_map.get(rid, {'id': rid, 'title': 'Unknown', 'ner': []}), float(score), num_used, missing)
             for rid, (score, num_used, missing) in ranked
         ]
 
@@ -412,7 +504,6 @@ if __name__ == '__main__':
     print('')
     print('  # 2. Then use the agent for search:')
     print('  agent = RecipeKnowledgeAgent()')
-    print('  agent.load_metadata()')
-    print('  agent.load_ingredient_index()')
-    print('  agent.setup_milvus()')
+    print('  agent.setup_milvus()  # This is all you need!')
+    print('  # Optional: agent.load_directions()  # Only if you need cooking steps')
     print('  # Now you can use semantic_search() and hybrid_query()')
