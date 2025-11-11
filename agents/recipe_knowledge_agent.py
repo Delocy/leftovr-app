@@ -1,24 +1,23 @@
-"""Recipe Knowledge Agent with Qdrant Vector Database
+"""Recipe Knowledge Agent with Zilliz Cloud (Milvus) Vector Database
 
-Uses Qdrant for vector search with better stability and features.
+Uses Zilliz Cloud (managed Milvus) for vector search with better stability and features.
 
 Installation:
-    pip install qdrant-client sentence-transformers
+    pip install pymilvus sentence-transformers
 
 Usage:
     agent = RecipeKnowledgeAgent(data_dir='data')
     agent.load_metadata()
     agent.load_ingredient_index()
-    agent.setup_qdrant()
+    agent.setup_milvus()
 """
 from __future__ import annotations
 
 import json
 import os
 import re
-from typing import List, Dict, Tuple, Optional, Iterable, Set
-from qdrant_client import QdrantClient
-from qdrant_client.models import Distance, VectorParams, PointStruct, Filter, FieldCondition, MatchAny
+from typing import List, Dict, Tuple, Optional, Iterable, Set, Any
+from pymilvus import MilvusClient, DataType
 
 try:
     from sentence_transformers import SentenceTransformer
@@ -42,12 +41,11 @@ def _normalize_token(tok: str) -> str:
 
 
 class RecipeKnowledgeAgent:
-    def __init__(self, data_dir: str = 'data', qdrant_path: str = './qdrant_data') -> None:
+    def __init__(self, data_dir: str = 'data') -> None:
         self.data_dir = data_dir
-        self.qdrant_path = qdrant_path
         self.metadata: Dict[int, dict] = {}
         self.ingredient_index: Dict[str, List[int]] = {}
-        self.qdrant_client = None
+        self.milvus_client = None
         self.embed_model = None
         self.embed_dim = None
         self.collection_name = "recipes"
@@ -77,22 +75,32 @@ class RecipeKnowledgeAgent:
         self.ingredient_index = {k: [int(x) for x in v] for k, v in self.ingredient_index.items()}
         print(f"✅ Loaded {len(self.ingredient_index):,} ingredients")
 
-    def setup_qdrant(self, embed_model_name: str = 'all-MiniLM-L6-v2', force_recreate: bool = False) -> None:
+    def setup_milvus(self, embed_model_name: str = 'all-MiniLM-L6-v2') -> None:
         """
-        Initialize Qdrant client and create collection
+        Initialize Zilliz Cloud (Milvus) client and connect to existing collection
+
+        Note: Collection must be created via ingest_recipes_milvus.py script first
 
         Args:
             embed_model_name: SentenceTransformer model name
-            force_recreate: If True, delete and recreate collection
         """
         if SentenceTransformer is None:
             print("⚠️  sentence-transformers not available, semantic search disabled")
             return
 
         try:
-            # Initialize client (embedded mode - no Docker needed!)
-            print(f"🔧 Initializing Qdrant (embedded mode)...")
-            self.qdrant_client = QdrantClient(path=self.qdrant_path)
+            # Get Zilliz Cloud credentials from environment
+            ZILLIZ_CLUSTER_ENDPOINT = os.environ.get('ZILLIZ_CLUSTER_ENDPOINT')
+            ZILLIZ_TOKEN = os.environ.get('ZILLIZ_TOKEN')
+            
+            if not ZILLIZ_CLUSTER_ENDPOINT or not ZILLIZ_TOKEN:
+                print("❌ Error: ZILLIZ_CLUSTER_ENDPOINT and ZILLIZ_TOKEN env variables not set.")
+                print("   Please set them before running with Milvus enabled")
+                return
+
+            # Initialize Zilliz Cloud client
+            print(f"🔧 Connecting to Zilliz Cloud...")
+            self.milvus_client = MilvusClient(uri=ZILLIZ_CLUSTER_ENDPOINT, token=ZILLIZ_TOKEN)
 
             # Load embedding model
             print(f"📦 Loading embedding model: {embed_model_name}...")
@@ -100,87 +108,22 @@ class RecipeKnowledgeAgent:
             self.embed_dim = self.embed_model.get_sentence_embedding_dimension()
 
             # Check if collection exists
-            collections = self.qdrant_client.get_collections().collections
-            collection_exists = any(c.name == self.collection_name for c in collections)
+            collections = self.milvus_client.list_collections()
+            collection_exists = self.collection_name in collections
 
-            if collection_exists and not force_recreate:
-                print(f"✅ Collection '{self.collection_name}' already exists")
+            if collection_exists:
+                print(f"✅ Connected to collection '{self.collection_name}'")
                 # Get collection info
-                info = self.qdrant_client.get_collection(self.collection_name)
-                print(f"   Vectors: {info.points_count:,}")
+                stats = self.milvus_client.get_collection_stats(self.collection_name)
+                print(f"   Vectors: {stats.get('row_count', 'unknown')}")
             else:
-                if collection_exists and force_recreate:
-                    print(f"🗑️  Deleting existing collection...")
-                    self.qdrant_client.delete_collection(self.collection_name)
-
-                # Create new collection
-                print(f"📝 Creating collection '{self.collection_name}'...")
-                self.qdrant_client.create_collection(
-                    collection_name=self.collection_name,
-                    vectors_config=VectorParams(
-                        size=self.embed_dim,
-                        distance=Distance.COSINE  # or Distance.DOT for normalized vectors
-                    )
-                )
-                print(f"✅ Collection created (ready to ingest recipes)")
+                print(f"❌ Collection '{self.collection_name}' not found!")
+                print(f"   Please run: python scripts/ingest_recipes_milvus.py --input assets/full_dataset.csv --outdir data --build-milvus")
+                self.milvus_client = None
 
         except Exception as e:
-            print(f"❌ Qdrant setup failed: {e}")
-            self.qdrant_client = None
-
-    def ingest_recipes_to_qdrant(self, recipe_ids: Optional[List[int]] = None, batch_size: int = 100) -> None:
-        """
-        Ingest recipes into Qdrant
-
-        Args:
-            recipe_ids: List of recipe IDs to ingest (None = all recipes)
-            batch_size: Number of recipes to process at once
-        """
-        if self.qdrant_client is None or self.embed_model is None:
-            print("❌ Qdrant not initialized. Call setup_qdrant() first")
-            return
-
-        if recipe_ids is None:
-            recipe_ids = list(self.metadata.keys())
-
-        print(f"\n🔄 Ingesting {len(recipe_ids):,} recipes to Qdrant...")
-
-        points = []
-        for i, rid in enumerate(recipe_ids):
-            recipe = self.metadata.get(rid)
-            if not recipe:
-                continue
-
-            # Build text for embedding (same as FAISS version)
-            text = f"{recipe['title']}. Ingredients: {', '.join(recipe['ner'])}"
-
-            # Create embedding
-            embedding = self.embed_model.encode(text, normalize_embeddings=True).tolist()
-
-            # Create point with metadata (payload)
-            point = PointStruct(
-                id=rid,
-                vector=embedding,
-                payload={
-                    "title": recipe['title'],
-                    "ingredients": recipe['ner'],
-                    "source": recipe.get('source', ''),
-                    "link": recipe.get('link', ''),
-                }
-            )
-            points.append(point)
-
-            # Upload in batches
-            if len(points) >= batch_size or i == len(recipe_ids) - 1:
-                self.qdrant_client.upsert(
-                    collection_name=self.collection_name,
-                    points=points
-                )
-                points = []
-                if (i + 1) % 1000 == 0:
-                    print(f"   Ingested {i+1:,} / {len(recipe_ids):,} recipes...")
-
-        print(f"✅ Ingestion complete!")
+            print(f"❌ Zilliz Cloud setup failed: {e}")
+            self.milvus_client = None
 
     def set_pantry_agent(self, pantry_agent) -> None:
         """
@@ -316,7 +259,7 @@ class RecipeKnowledgeAgent:
         filter_ingredients: Optional[List[str]] = None
     ) -> List[Tuple[int, float]]:
         """
-        Semantic search using Qdrant with all-MiniLM-L6-v2 embeddings
+        Semantic search using Zilliz Cloud (Milvus) with all-MiniLM-L6-v2 embeddings
 
         Model: all-MiniLM-L6-v2 (384 dimensions)
         - Understands semantic meaning of text
@@ -326,7 +269,7 @@ class RecipeKnowledgeAgent:
             query: Text description (e.g., "easy Italian pasta dinner")
             pantry_items: Your ingredient list (e.g., ['chicken', 'garlic', 'lemon'])
             k: Number of results
-            filter_ingredients: Optional list of required ingredients
+            filter_ingredients: Optional list of required ingredients (not yet supported)
 
         Note: You can provide query, pantry_items, or both!
               - query only: Find recipes matching description
@@ -335,7 +278,7 @@ class RecipeKnowledgeAgent:
 
         Returns list of (recipe_id, similarity_score)
         """
-        if self.qdrant_client is None or self.embed_model is None:
+        if self.milvus_client is None or self.embed_model is None:
             return []
 
         # Build query text from provided inputs
@@ -355,27 +298,19 @@ class RecipeKnowledgeAgent:
         # Encode query using the same model (all-MiniLM-L6-v2)
         query_vector = self.embed_model.encode(query_text, normalize_embeddings=True).tolist()
 
-        # Build filter if ingredients specified
-        search_filter = None
-        if filter_ingredients:
-            search_filter = Filter(
-                must=[
-                    FieldCondition(
-                        key="ingredients",
-                        match=MatchAny(any=filter_ingredients)
-                    )
-                ]
-            )
-
-        # Search
-        results = self.qdrant_client.search(
+        # Search using MilvusClient
+        # Note: filter_ingredients filtering not yet implemented in simplified API
+        results = self.milvus_client.search(
             collection_name=self.collection_name,
-            query_vector=query_vector,
+            data=[query_vector],
             limit=k,
-            query_filter=search_filter
+            output_fields=["id"]
         )
 
-        return [(hit.id, hit.score) for hit in results]
+        # Extract results (MilvusClient returns list of lists)
+        if results and len(results) > 0:
+            return [(hit['id'], hit['distance']) for hit in results[0]]
+        return []
     def hybrid_query(
         self,
         pantry_items: Optional[Iterable[str]] = None,
@@ -435,7 +370,7 @@ class RecipeKnowledgeAgent:
 
         # Get semantic matches if enabled
         sem_cands = []
-        if use_semantic and self.qdrant_client and self.embed_model:
+        if use_semantic and self.milvus_client and self.embed_model:
             # Pass BOTH query text AND pantry items to semantic search!
             # The model finds recipes similar to your ingredients + preferences
             sem_cands = self.semantic_search(
@@ -470,10 +405,14 @@ class RecipeKnowledgeAgent:
 
 
 if __name__ == '__main__':
-    print('RecipeKnowledgeAgent - Qdrant-based recipe retrieval')
+    print('RecipeKnowledgeAgent - Zilliz Cloud (Milvus) based recipe retrieval')
     print('\nQuick start:')
+    print('  # 1. First, ingest recipes using the dedicated script:')
+    print('  #    python scripts/ingest_recipes_milvus.py --input assets/full_dataset.csv --outdir data --build-milvus')
+    print('')
+    print('  # 2. Then use the agent for search:')
     print('  agent = RecipeKnowledgeAgent()')
     print('  agent.load_metadata()')
     print('  agent.load_ingredient_index()')
-    print('  agent.setup_qdrant()')
-    print('  agent.ingest_recipes_to_qdrant(list(agent.metadata.keys())[:10000])  # Ingest 10k recipes')
+    print('  agent.setup_milvus()')
+    print('  # Now you can use semantic_search() and hybrid_query()')

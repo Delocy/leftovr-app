@@ -140,11 +140,11 @@ class LeftovrWorkflow:
         try:
             self.recipe_agent.load_metadata()
             self.recipe_agent.load_ingredient_index()
-            self.recipe_agent.setup_qdrant()
+            self.recipe_agent.setup_milvus()
             print("✅ Recipe Knowledge Agent initialized with hybrid search")
         except FileNotFoundError as e:
             print(f"⚠️  Warning: {e}")
-            print("   Run the ingestion script first: python scripts/ingest_recipes_qdrant.py")
+            print("   Run the ingestion script first: python scripts/ingest_recipes_milvus.py")
             self.recipe_agent = None
 
         # Wire pantry to recipe agent
