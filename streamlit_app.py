@@ -203,6 +203,15 @@ def main():
             st.stop()
         st.session_state.workflow = workflow
 
+        # Load initial pantry inventory from MCP database
+        try:
+            initial_inventory = workflow.get_current_inventory()
+            if initial_inventory:
+                st.session_state.pantry_inventory = initial_inventory
+                print(f"✅ Loaded {len(initial_inventory)} items from pantry database")
+        except Exception as e:
+            print(f"⚠️  Could not load initial pantry inventory: {e}")
+
     workflow = st.session_state.workflow
 
     # Render sidebar

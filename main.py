@@ -693,6 +693,20 @@ class LeftovrWorkflow:
     # PUBLIC INTERFACE
     # ============================================
 
+    def get_current_inventory(self) -> List[Dict[str, Any]]:
+        """
+        Get current pantry inventory from MCP database.
+        Used for initialization and UI updates.
+
+        Returns:
+            List of dicts with keys: id, name, quantity, expire_date
+        """
+        try:
+            return self.pantry.get_inventory()
+        except Exception as e:
+            print(f"⚠️  Warning: Could not fetch pantry inventory: {e}")
+            return []
+
     async def ainvoke(self, input_state: Dict[str, Any]) -> Dict[str, Any]:
         """
         Async invoke the workflow.
