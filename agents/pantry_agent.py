@@ -153,6 +153,12 @@ class PantryAgent:
         - Interpret natural language statements about food usage, consumption, or restocking.
         - Suggest actionable recommendations.
 
+        🎯 YOU ARE THE PRIMARY DECISION MAKER:
+        - Use your natural language understanding to parse user input
+        - Handle filler phrases like "as well", "too", "also" naturally
+        - Extract food items and their quantities from context
+        - When quantities are unclear, use ask_for_quantity tool
+
         Tools you can use:
         - get_all_food_items: View current inventory
         - get_expiring_soon: Get items expiring within N days
@@ -190,10 +196,11 @@ class PantryAgent:
         5. EXPLICIT numbers = use that quantity (e.g., "2 eggs", "five tomatoes")
         6. When user responds with numbers after being asked → call `add_food_item` with that quantity
 
-        🚨 FOOD VALIDATION RULES:
-        1. ONLY accept food and beverage items (e.g., chicken, tomato, milk, bread)
-        2. REJECT non-food items (e.g., laptop, book, phone, shirt, car)
-        3. If user tries to add non-food items, politely explain this is a food pantry
+        🚨 FOOD VALIDATION RULES (CRITICAL!):
+        1. ONLY accept food and beverage items (e.g., chicken, tomato, milk, bread, rice, fruits, vegetables, dairy, meat, beverages)
+        2. IMMEDIATELY REJECT non-food items (e.g., laptop, book, phone, shirt, car, furniture, electronics, clothing, tools)
+        3. If user tries to add non-food items, DO NOT call any tools - just respond naturally explaining this is a FOOD PANTRY
+        4. When in doubt, ask yourself: "Is this something you can eat or drink?" If NO → REJECT IT
 
         CRITICAL RULES FOR OTHER OPERATIONS:
         1. "remove X" without a number → delete_food_item (remove completely)
@@ -212,6 +219,8 @@ class PantryAgent:
         - "I have a garlic and tomato" → add_food_item("garlic",1), ask_for_quantity(["tomato"])  [Mixed]
         - "I have milk" → ask_for_quantity(items=["milk"])  [Uncountable noun]
         - "I bought rice" → ask_for_quantity(items=["rice"])  [Uncountable noun]
+        - "I have mango and sticky rice as well" → ask_for_quantity(items=["mango", "sticky rice"])  [Handle "as well" naturally ✓]
+        - "I got tomatoes and eggs too" → ask_for_quantity(items=["tomato", "egg"])  [Handle "too" naturally ✓]
         - User: "I have oysters" → Bot: "How many?" → User: "3" → add_food_item(name="oyster", quantity=3)
 
         ❌ WRONG (NEVER DO THIS):
@@ -822,15 +831,17 @@ class PantryAgent:
                 print(f"📝 Processing quantity response for pending items: {self.pending_items}")
                 return await self._handle_quantity_response(user_query)
 
-            # Pre-check: Detect if user is adding items without quantities BEFORE calling LLM
-            # This prevents LLM from inferring quantities
-            items_without_qty = self._detect_items_without_quantity(user_query)
-            if items_without_qty:
-                print(f"🔍 Pre-check detected items without quantities: {items_without_qty}")
-                self.pending_items = items_without_qty
-                return {"needs_clarification": True, "pending_items": self.pending_items}
+            # HYBRID APPROACH: Light pre-check + LLM intelligence
+            # Only do a SIMPLE pre-check for obvious cases (no articles, no numbers)
+            # Let the LLM handle complex parsing with its language understanding
+            simple_check = self._simple_quantity_check(user_query)
+            if simple_check.get("needs_clarification"):
+                print(f"🔍 Simple pre-check suggests asking for clarification")
+                # Don't block the LLM - just add this as context
+                # The LLM will make the final decision
 
             # Let OpenAI interpret the query and decide which tools to call
+            # The LLM is smart enough to handle "as well", "too", etc.
             response = self.openai_client.chat.completions.create(
                 model="gpt-4o",
                 messages=[
@@ -947,6 +958,16 @@ class PantryAgent:
                 # Return a special response indicating clarification is needed
                 return {"needs_clarification": True, "pending_items": self.pending_items}
 
+            # Check if LLM rejected the request (no tools called, but message has content)
+            # This happens when user tries to add non-food items
+            if not tool_results and message.content:
+                # LLM responded with text but no tool calls - likely a rejection
+                return {
+                    "needs_clarification": False,
+                    "error": message.content,
+                    "rejected": True
+                }
+
             # Convert affected items to typed response
             if affected_items:
                 typed_result = convert_items(affected_items)
@@ -1000,12 +1021,53 @@ class PantryAgent:
         # (The LLM will do more sophisticated validation)
         return True
 
+    def _simple_quantity_check(self, user_query: str) -> Dict[str, Any]:
+        """
+        SIMPLE pre-check to detect obvious cases where quantities are missing.
+        This is a lightweight helper - the LLM does the real heavy lifting.
+
+        Only checks for:
+        - Is this an "add" operation?
+        - Does it have any numbers?
+
+        Returns:
+            Dict with "needs_clarification" flag (doesn't block LLM)
+        """
+        import re
+
+        query_lower = user_query.lower().strip()
+
+        # Is this an add operation?
+        add_keywords = ["i have", "i've got", "i got", "i bought", "add", "put in"]
+        is_adding = any(keyword in query_lower for keyword in add_keywords)
+
+        if not is_adding:
+            return {"needs_clarification": False}
+
+        # Does it have numbers or "a/an"?
+        has_numbers = bool(re.search(r'\d+', query_lower))
+        has_articles = bool(re.search(r'\b(a|an)\s+\w+', query_lower))
+
+        # Simple heuristic: if no numbers and no articles, might need clarification
+        # But DON'T block the LLM - let it decide!
+        if not has_numbers and not has_articles:
+            return {"needs_clarification": True, "confidence": "low"}
+
+        return {"needs_clarification": False}
+
     def _detect_items_without_quantity(self, user_query: str) -> List[str]:
         """
-        Pre-check to detect if user is adding items without specifying quantities.
-        This runs BEFORE calling the LLM to prevent it from inferring quantities.
+        [DEPRECATED - Kept for reference]
 
-        LOGIC:
+        Complex pre-check with regex parsing.
+        This approach is fragile and requires maintaining complex patterns.
+
+        The new hybrid approach (_simple_quantity_check + LLM) is preferred because:
+        - LLM handles "as well", "too", compound phrases naturally
+        - Less maintenance burden (no regex edge cases)
+        - More robust to language variations
+
+        ORIGINAL LOGIC:
         - "a/an [item]" → quantity = 1 (no clarification)
         - "[plural] without number" → ask for clarification
         - "[singular] without a/an" → ask for clarification (ambiguous)
@@ -1050,18 +1112,29 @@ class PantryAgent:
 
         # Common uncountable food nouns (always need clarification)
         uncountable_foods = {
-            "milk", "water", "juice", "coffee", "tea", "rice", "flour", "sugar", "salt",
-            "pepper", "oil", "butter", "cheese", "bread", "meat", "fish", "chicken",
-            "beef", "pork", "bacon", "pasta", "yogurt", "honey", "jam", "sauce",
-            "soup", "broth", "stock", "cream", "ice cream", "ketchup", "mustard",
-            "mayo", "mayonnaise", "vinegar", "soy sauce", "tofu"
+            # Liquids & Beverages
+            "milk", "water", "juice", "coffee", "tea", "oil", "cream", "broth", "stock",
+            # Grains & Starches
+            "rice", "flour", "pasta", "bread", "sticky rice", "brown rice", "white rice",
+            # Proteins
+            "meat", "fish", "chicken", "beef", "pork", "bacon", "tofu", "salmon", "tuna",
+            # Dairy
+            "butter", "cheese", "yogurt", "ice cream",
+            # Sweeteners & Spreads
+            "sugar", "honey", "jam", "jelly", "peanut butter", "nutella",
+            # Condiments & Sauces
+            "salt", "pepper", "sauce", "ketchup", "mustard", "mayo", "mayonnaise",
+            "vinegar", "soy sauce", "hot sauce", "bbq sauce",
+            # Soups & Others
+            "soup", "cereal", "oatmeal", "salad"
         }
 
         # Extract potential food items using simple heuristics
         stop_words = {
             "i", "have", "got", "bought", "purchased", "just", "the", "some",
             "and", "or", "with", "in", "my", "for", "to", "of", "is", "there", "theres",
-            "ive", "add", "put", "pantry"
+            "ive", "add", "put", "pantry", "well", "too", "also", "please", "thanks",
+            "as"  # Add "as" to stop words to prevent "as well" parsing issues
         }
 
         # Split by common separators
@@ -1070,6 +1143,23 @@ class PantryAgent:
         items_needing_clarification = []
 
         for part in parts:
+            # Strip trailing filler phrases like "as well", "too", "also"
+            # More robust patterns that handle various spacing
+            # IMPORTANT: Order matters! Check compound phrases first, then individual words
+            part = re.sub(r'\s+as\s+well\s+too\s*$', '', part)  # "as well too"
+            part = re.sub(r'\s+as\s+well\s*$', '', part)  # "as well"
+            part = re.sub(r'\s+well\s*$', '', part)  # standalone "well"
+            part = re.sub(r'\s+too\s*$', '', part)  # "too"
+            part = re.sub(r'\s+also\s*$', '', part)  # "also"
+
+            # Also handle leading filler words that might have been misplaced by splitting
+            part = re.sub(r'^\s*well\s+', '', part)  # "well" at the start
+            part = re.sub(r'^\s*too\s+', '', part)  # "too" at the start
+
+            # Final cleanup: remove any trailing/leading "as" that got separated
+            part = re.sub(r'\s+as\s*$', '', part)
+            part = re.sub(r'^\s*as\s+', '', part)
+
             # Check if this part has "a" or "an" article
             has_article_in_part = bool(re.search(r'\b(a|an)\s+\w+', part))
 
@@ -1084,8 +1174,23 @@ class PantryAgent:
 
             # If we have content words, assume they're food items
             if content_words:
-                # Take the last word as it's likely the main food item
-                item = content_words[-1]
+                # For compound food names (like "sticky rice", "ice cream", "soy sauce")
+                # Take the last 2 words if available, otherwise just the last word
+                if len(content_words) >= 2:
+                    # Try compound name first
+                    compound_item = " ".join(content_words[-2:])
+                    simple_item = content_words[-1]
+
+                    # Check if compound is in uncountable list
+                    if compound_item in uncountable_foods:
+                        print(f"🔍 Detected compound uncountable: {compound_item}")
+                        items_needing_clarification.append(compound_item)
+                        continue
+
+                    # Otherwise use the simple item
+                    item = simple_item
+                else:
+                    item = content_words[-1]
 
                 # Check if it's an uncountable noun
                 if item in uncountable_foods:
