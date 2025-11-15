@@ -827,6 +827,9 @@ class SousChefAgent:
 
             adapted_recipe = json.loads(response_text)
 
+            adapted_recipe["original_link"] = recipe.get("link")
+            adapted_recipe["original_source"] = recipe.get("source")
+
             self.adaptation_log.append({
                 "timestamp": datetime.now().isoformat(),
                 "action": "adapt_recipe",
@@ -944,6 +947,21 @@ class SousChefAgent:
 
         title = adapted_recipe.get("adapted_title", "Adapted Recipe")
         output = f"# {title}\n\n"
+
+        # Add source and link credit
+        original_source = adapted_recipe.get("original_source")
+        original_link = adapted_recipe.get("original_link")
+
+        if original_source or original_link:
+            output += "---\n"
+            if original_source:
+                output += f"#### **Original Recipe Credit:** {original_source}\n"
+            if original_link:
+                link = original_link
+                if not link.startswith('http'):
+                    link = f"https://{link}"
+                output += f"#### **View Original Recipe:** [Click here]({link})\n"
+            output += "---\n\n"
 
         adaptations = adapted_recipe.get("adaptations_made", [])
         if adaptations:
