@@ -171,8 +171,10 @@ class PantryAgent:
         Semantic guidance:
         - "I have X" / "I bought X" / "add X" / "got X":
           * WITH explicit number (e.g., "I have 2 chickens", "I bought 5 tomatoes") → call `add_food_item` with quantity
-          * WITH singular article (e.g., "I have a tomato", "I got an oyster") → call `add_food_item` with quantity=1
-          * PLURAL without number (e.g., "I have oysters", "I got tomatoes", "I bought eggs") → call `ask_for_quantity`
+          * WITH "a/an" article (e.g., "I have a tomato", "I got an oyster") → call `add_food_item` with quantity=1
+          * PLURAL without number (e.g., "I have oysters", "I got tomatoes") → call `ask_for_quantity`
+          * SINGULAR without "a/an" (e.g., "I have tomato", "I have garlic") → call `ask_for_quantity` (ambiguous)
+          * UNCOUNTABLE nouns (e.g., "milk", "rice", "flour", "water") → call `ask_for_quantity`
         - "Update to have X" / "Set to X" / "Change to X" → call `set_food_quantity` with exact quantity
         - "I ate X" / "I used X" / "consumed X" / "cooked with X" → call `adjust_food_quantity` with negative quantity
         - "Remove X" (NO quantity) / "Delete X" / "Get rid of X" / "Throw away X" / "I don't have X anymore" → call `delete_food_item`
@@ -181,10 +183,12 @@ class PantryAgent:
         - Viewing inventory → call `get_all_food_items`
 
         🚨 CRITICAL RULES FOR QUANTITY CLARIFICATION:
-        1. SINGULAR forms with "a" or "an" = quantity 1 (e.g., "a tomato" = 1, "an oyster" = 1)
-        2. PLURAL forms WITHOUT numbers = ask for clarification (e.g., "oysters", "tomatoes", "eggs")
-        3. EXPLICIT numbers = use that quantity (e.g., "2 eggs", "five tomatoes")
-        4. When user responds with numbers after being asked → call `add_food_item` with that quantity
+        1. ONLY "a/an [item]" = quantity 1 (e.g., "a tomato" = 1, "an oyster" = 1)
+        2. PLURAL without numbers = ask (e.g., "oysters", "tomatoes", "eggs")
+        3. SINGULAR without "a/an" = ask (e.g., "tomato", "garlic", "chicken" - ambiguous!)
+        4. UNCOUNTABLE nouns = ask (e.g., "milk", "rice", "flour", "water", "cheese")
+        5. EXPLICIT numbers = use that quantity (e.g., "2 eggs", "five tomatoes")
+        6. When user responds with numbers after being asked → call `add_food_item` with that quantity
 
         🚨 FOOD VALIDATION RULES:
         1. ONLY accept food and beverage items (e.g., chicken, tomato, milk, bread)
@@ -199,18 +203,22 @@ class PantryAgent:
 
         Examples (PAY CLOSE ATTENTION):
         ✅ CORRECT:
-        - "I have 2 eggs" → add_food_item(name="egg", quantity=2)  [Explicit number]
-        - "I have a tomato" → add_food_item(name="tomato", quantity=1)  [Singular with "a"]
-        - "I have an oyster" → add_food_item(name="oyster", quantity=1)  [Singular with "an"]
-        - "I have oysters" → ask_for_quantity(items=["oyster"])  [Plural, no number]
-        - "I got tomatoes" → ask_for_quantity(items=["tomato"])  [Plural, no number]
-        - "I bought eggs and onions" → ask_for_quantity(items=["egg", "onion"])  [Both plural, no numbers]
+        - "I have 2 eggs" → add_food_item(name="egg", quantity=2)  [Explicit number ✓]
+        - "I have a tomato" → add_food_item(name="tomato", quantity=1)  [Has "a" ✓]
+        - "I have an oyster" → add_food_item(name="oyster", quantity=1)  [Has "an" ✓]
+        - "I have oysters" → ask_for_quantity(items=["oyster"])  [Plural without number]
+        - "I have tomato" → ask_for_quantity(items=["tomato"])  [Singular without "a/an"]
+        - "I have garlic and tomato" → ask_for_quantity(items=["garlic", "tomato"])  [Both singular without "a/an"]
+        - "I have a garlic and tomato" → add_food_item("garlic",1), ask_for_quantity(["tomato"])  [Mixed]
+        - "I have milk" → ask_for_quantity(items=["milk"])  [Uncountable noun]
+        - "I bought rice" → ask_for_quantity(items=["rice"])  [Uncountable noun]
         - User: "I have oysters" → Bot: "How many?" → User: "3" → add_food_item(name="oyster", quantity=3)
 
         ❌ WRONG (NEVER DO THIS):
+        - "I have tomato" → add_food_item(name="tomato", quantity=1)  [BAD! No "a/an", ambiguous]
+        - "I have milk" → add_food_item(name="milk", quantity=1)  [BAD! Uncountable, needs clarification]
         - "I have oysters" → add_food_item(name="oyster", quantity=1)  [BAD! Plural needs clarification]
         - "I have a laptop" → add_food_item(name="laptop", quantity=1)  [BAD! Not food]
-        - "I have books" → add_food_item(name="book", quantity=1)  [BAD! Not food]
 
         Always respond with structured tool calls when users want to modify inventory.
         Only accept food and beverage items in the pantry.
@@ -699,14 +707,14 @@ class PantryAgent:
                 "type": "function",
                 "function": {
                     "name": "ask_for_quantity",
-                    "description": "Ask the user to clarify quantity when they use PLURAL forms WITHOUT numbers. ONLY use for plural forms (e.g., 'oysters', 'tomatoes', 'eggs'). DO NOT use for singular forms with 'a/an' (e.g., 'a tomato' = 1, 'an oyster' = 1). Examples: 'I have oysters' → ask_for_quantity, 'I got eggs' → ask_for_quantity, but 'I have an oyster' → add_food_item(quantity=1).",
+                    "description": "Ask user for quantity when: (1) PLURAL without numbers ('oysters', 'eggs'), (2) SINGULAR without 'a/an' article ('tomato', 'garlic' - ambiguous), (3) UNCOUNTABLE nouns ('milk', 'rice', 'flour'). DO NOT use for items with 'a/an' (e.g., 'a tomato' = 1). Examples: 'I have oysters' → ask, 'I have milk' → ask, 'I have tomato' → ask, but 'I have a tomato' → add_food_item(quantity=1).",
                     "parameters": {
                         "type": "object",
                         "properties": {
                             "items": {
                                 "type": "array",
                                 "items": {"type": "string"},
-                                "description": "List of PLURAL item names that need quantity clarification (use singular form)"
+                                "description": "List of item names needing quantity clarification (use singular form)"
                             }
                         },
                         "required": ["items"]
@@ -994,11 +1002,14 @@ class PantryAgent:
 
     def _detect_items_without_quantity(self, user_query: str) -> List[str]:
         """
-        Pre-check to detect if user is adding PLURAL items without specifying quantities.
+        Pre-check to detect if user is adding items without specifying quantities.
         This runs BEFORE calling the LLM to prevent it from inferring quantities.
 
-        IMPORTANT: Only asks for clarification on PLURAL forms without numbers.
-        Singular forms (e.g., "I have a tomato", "I have an oyster") are assumed to be 1 item.
+        LOGIC:
+        - "a/an [item]" → quantity = 1 (no clarification)
+        - "[plural] without number" → ask for clarification
+        - "[singular] without a/an" → ask for clarification (ambiguous)
+        - "uncountable noun" → ask for clarification (e.g., milk, rice, flour)
 
         Args:
             user_query: User's message
@@ -1037,20 +1048,18 @@ class PantryAgent:
         if has_numbers or has_number_words:
             return []
 
-        # Check for singular articles ("a", "an") which indicate quantity = 1
-        # Pattern: "a/an [adjective]* [food item]"
-        # Examples: "a tomato", "an oyster", "a red bell pepper"
-        has_singular_article = bool(re.search(r'\b(a|an)\s+\w+', query_lower))
-
-        if has_singular_article:
-            # Singular form detected - LLM should add quantity=1, no clarification needed
-            print(f"✓ Detected singular form with 'a/an' - will add quantity=1")
-            return []
+        # Common uncountable food nouns (always need clarification)
+        uncountable_foods = {
+            "milk", "water", "juice", "coffee", "tea", "rice", "flour", "sugar", "salt",
+            "pepper", "oil", "butter", "cheese", "bread", "meat", "fish", "chicken",
+            "beef", "pork", "bacon", "pasta", "yogurt", "honey", "jam", "sauce",
+            "soup", "broth", "stock", "cream", "ice cream", "ketchup", "mustard",
+            "mayo", "mayonnaise", "vinegar", "soy sauce", "tofu"
+        }
 
         # Extract potential food items using simple heuristics
-        # Remove common words and extract likely food items
         stop_words = {
-            "i", "have", "got", "bought", "purchased", "just", "the", "a", "an", "some",
+            "i", "have", "got", "bought", "purchased", "just", "the", "some",
             "and", "or", "with", "in", "my", "for", "to", "of", "is", "there", "theres",
             "ive", "add", "put", "pantry"
         }
@@ -1058,8 +1067,17 @@ class PantryAgent:
         # Split by common separators
         parts = re.split(r'[,;]|\band\b|\bor\b', query_lower)
 
-        plural_items = []
+        items_needing_clarification = []
+
         for part in parts:
+            # Check if this part has "a" or "an" article
+            has_article_in_part = bool(re.search(r'\b(a|an)\s+\w+', part))
+
+            if has_article_in_part:
+                # This part has "a/an", so quantity = 1, skip clarification
+                print(f"✓ Detected 'a/an' in: {part.strip()}")
+                continue
+
             words = part.strip().split()
             # Filter out stop words
             content_words = [w for w in words if w not in stop_words and len(w) > 2]
@@ -1067,19 +1085,31 @@ class PantryAgent:
             # If we have content words, assume they're food items
             if content_words:
                 # Take the last word as it's likely the main food item
-                # e.g., "red bell peppers" -> "peppers", "cherry tomatoes" -> "tomatoes"
                 item = content_words[-1]
+
+                # Check if it's an uncountable noun
+                if item in uncountable_foods:
+                    # Uncountable noun - needs clarification
+                    print(f"🔍 Detected uncountable noun: {item}")
+                    items_needing_clarification.append(item)
+                    continue
 
                 # Check if this word is plural
                 singular = p.singular_noun(item)
                 if singular:
                     # It's plural! Need to ask for quantity
-                    plural_items.append(singular)
-                # else: it's already singular or an uncountable noun, let LLM handle
+                    print(f"🔍 Detected plural: {item} -> {singular}")
+                    items_needing_clarification.append(singular)
+                else:
+                    # It's singular (or inflect doesn't recognize it)
+                    # BUT no "a/an" article, so it's ambiguous
+                    # Example: "I have tomato" (could be 1 or multiple)
+                    print(f"🔍 Detected singular without article: {item}")
+                    items_needing_clarification.append(item)
 
-        if plural_items:
-            print(f"🔍 Detected PLURAL items without quantity: {plural_items}")
-            return plural_items
+        if items_needing_clarification:
+            print(f"📝 Items needing clarification: {items_needing_clarification}")
+            return items_needing_clarification
 
         return []
 
