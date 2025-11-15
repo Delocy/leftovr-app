@@ -233,6 +233,18 @@ class LeftovrWorkflow:
 
         user_msg = state.get("user_message", "")
         messages = state.get("messages", [])
+        current_stage = state.get("current_stage", "initial")
+
+        # CRITICAL: Check if we're in the middle of a multi-turn conversation
+        # If awaiting clarification, route back to pantry without classification
+        if current_stage == "awaiting_quantity_clarification":
+            print("🔄 [ORCHESTRATOR] Continuing quantity clarification flow -> routing to pantry")
+            return {
+                "query_type": "pantry",
+                "user_preferences": state.get("user_preferences", {}),
+                "current_stage": "continuing_clarification",
+                "coordination_log": ["Continuing quantity clarification conversation"]
+            }
 
         # Build message list for classification
         if user_msg:
@@ -341,6 +353,36 @@ class LeftovrWorkflow:
         import asyncio
         result = asyncio.run(self.pantry.handle_query(user_msg))
 
+        # Check if there's an error (e.g., non-food item)
+        if isinstance(result, dict) and result.get("error") and not result.get("needs_clarification"):
+            error_msg = result.get("error")
+            print(f"❌ [PANTRY] Error: {error_msg}")
+            return {
+                "response": error_msg,
+                "current_stage": "error",
+                "coordination_log": [f"Error: {error_msg}"]
+            }
+
+        # Check if clarification is needed
+        if isinstance(result, dict) and result.get("needs_clarification"):
+            pending_items = result.get("pending_items", [])
+            error_msg = result.get("error")
+
+            if error_msg:
+                # Re-ask with error message
+                response = f"❓ {error_msg}"
+            else:
+                # Generate clarification question
+                response = self._generate_quantity_question(pending_items)
+
+            print(f"❓ [PANTRY] Asking for clarification: {pending_items}")
+
+            return {
+                "response": response,
+                "current_stage": "awaiting_quantity_clarification",
+                "coordination_log": [f"Awaiting quantity for: {', '.join(pending_items)}"]
+            }
+
         # Get updated inventory
         inventory = self.pantry.get_inventory()
         expiring = self.pantry.get_expiring_soon(days_threshold=3)
@@ -357,6 +399,31 @@ class LeftovrWorkflow:
             "current_stage": "pantry_complete",
             "coordination_log": [f"Pantry updated via natural language"]
         }
+
+    def _generate_quantity_question(self, items: List[str]) -> str:
+        """
+        Generate a natural question asking for quantities of items.
+
+        Args:
+            items: List of item names
+
+        Returns:
+            Question string
+        """
+        if not items:
+            return "❓ How many items do you have?"
+
+        if len(items) == 1:
+            return f"❓ How many {items[0]}{'s' if not items[0].endswith('s') else ''} do you have?"
+
+        elif len(items) == 2:
+            items_str = f"{items[0]} and {items[1]}"
+            return f"❓ How many {items_str} do you have?"
+
+        else:
+            # More than 2 items
+            items_str = ", ".join(items[:-1]) + f", and {items[-1]}"
+            return f"❓ How many of each do you have? ({items_str})"
 
     def _format_pantry_response_smart(self, result, inventory: List, expiring: List, user_msg: str) -> str:
         """
