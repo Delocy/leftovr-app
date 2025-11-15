@@ -22,6 +22,7 @@ A sophisticated multi-agent food concierge system that helps you discover delici
 - [Quick Start](#-quick-start)
 - [Setup Instructions](#-setup-instructions)
 - [Usage](#-usage)
+- [Deployment to Streamlit Cloud](#-deployment-to-streamlit-cloud)
 - [Project Structure](#-project-structure)
 - [Database Management](#-database-management)
 - [Development](#-development)
@@ -123,42 +124,102 @@ A sophisticated multi-agent food concierge system that helps you discover delici
 
 ## 🚀 Quick Start
 
+Get Leftovr running locally in 5 minutes!
+
 ### Prerequisites
 
-- Python 3.8+
-- OpenAI API key
-- (Optional) Zilliz Cloud or Milvus cluster for vector search
+| Requirement          | Where to Get                                                | Required?                        |
+| -------------------- | ----------------------------------------------------------- | -------------------------------- |
+| Python 3.8+          | [python.org](https://www.python.org/downloads/)             | ✅ Required                      |
+| OpenAI API Key       | [platform.openai.com](https://platform.openai.com/api-keys) | ✅ Required                      |
+| Zilliz Cloud Account | [cloud.zilliz.com](https://cloud.zilliz.com/)               | ⚠️ Recommended for recipe search |
 
-### Installation
+### Local Installation (5 Steps)
+
+**1. Clone the Repository**
 
 ```bash
-# Clone the repository
-git clone <your-repo-url>
+git clone https://github.com/your-username/leftovr-app.git
 cd leftovr-app
-
-# Create virtual environment
-python3 -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Set up environment variables
-cp .env.example .env  # Create .env file
-# Edit .env and add your API keys
 ```
 
-### Launch the App
+**2. Create Virtual Environment**
 
 ```bash
-# Activate virtual environment (if not already active)
-source .venv/bin/activate
+# Create virtual environment
+python3 -m venv .venv
 
-# Run Streamlit interface
+# Activate it
+source .venv/bin/activate  # macOS/Linux
+# OR
+.venv\Scripts\activate  # Windows
+```
+
+**3. Install Dependencies**
+
+```bash
+pip install -r requirements.txt
+```
+
+**4. Configure Environment Variables**
+
+```bash
+# Copy example file
+cp .env.example .env
+
+# Edit .env with your favorite editor
+nano .env
+# OR
+code .env  # VS Code
+```
+
+Add your credentials:
+
+```env
+# Required
+OPENAI_API_KEY=sk-proj-your-key-here
+
+# Recommended (for recipe search)
+ZILLIZ_CLUSTER_ENDPOINT=https://your-cluster.api.gcp-us-west1.zillizcloud.com
+ZILLIZ_TOKEN=your-token-here
+```
+
+**5. Launch the App**
+
+```bash
 streamlit run streamlit_app.py
 ```
 
-The app will open at `http://localhost:8501` 🎉
+The app will open automatically at `http://localhost:8501` 🎉
+
+### First Time Setup: Ingest Recipes
+
+For recipe search to work, you need to ingest the recipe database:
+
+```bash
+# Make sure environment variables are set
+source .env  # or set them in your terminal
+
+# Ingest recipes to Zilliz Cloud (recommended)
+python scripts/ingest_recipes_milvus.py \
+  --input assets/full_dataset.csv \
+  --outdir data \
+  --build-milvus
+
+# This takes ~10-15 minutes for ~13,000 recipes
+```
+
+**Alternative:** Skip this step and deploy to Streamlit Cloud instead (see [Deployment](#-deployment-to-streamlit-cloud))
+
+### Quick Test
+
+Once running, try these commands:
+
+```
+👋 "Hi, what can you do?"
+📦 "I have chicken, tomatoes, and pasta"
+🔍 "Find me a recipe with chicken"
+```
 
 ---
 
@@ -295,6 +356,253 @@ python scripts/ingest_recipes_qdrant.py
 
 ---
 
+## 🚀 Deployment to Streamlit Cloud
+
+Deploy Leftovr to Streamlit Cloud for free with a cloud vector database!
+
+### Prerequisites for Deployment
+
+Before deploying, you'll need:
+
+1. ✅ **GitHub Account** - Fork/clone this repository
+2. ✅ **Streamlit Cloud Account** - Sign up at [share.streamlit.io](https://share.streamlit.io/)
+3. ✅ **OpenAI API Key** - Get from [platform.openai.com](https://platform.openai.com/)
+4. ✅ **Zilliz Cloud Account** (Recommended) - Sign up at [cloud.zilliz.com](https://cloud.zilliz.com/)
+
+### Step 1: Set Up Zilliz Cloud (Vector Database)
+
+Zilliz Cloud provides managed Milvus for fast recipe search:
+
+1. **Create Account**
+
+   - Go to [cloud.zilliz.com](https://cloud.zilliz.com/)
+   - Sign up (free tier available)
+
+2. **Create a Cluster**
+
+   ```
+   - Cluster Name: leftovr-recipes
+   - Cloud Provider: AWS/GCP/Azure (any)
+   - Region: Choose closest to your users
+   - Cluster Type: Starter (free tier) or Standard
+   ```
+
+3. **Get Connection Details**
+
+   - After cluster is created, click "Connect"
+   - Copy the **Public Endpoint** (looks like: `https://in03-xxx.api.gcp-us-west1.zillizcloud.com`)
+   - Copy the **API Key/Token**
+
+4. **Ingest Recipe Data**
+
+   Run this locally before deploying:
+
+   ```bash
+   # Set environment variables
+   export ZILLIZ_CLUSTER_ENDPOINT="your_endpoint_here"
+   export ZILLIZ_TOKEN="your_token_here"
+   export OPENAI_API_KEY="your_openai_key"
+
+   # Ingest recipes to Zilliz Cloud
+   python scripts/ingest_recipes_milvus.py \
+     --input assets/full_dataset.csv \
+     --outdir data \
+     --build-milvus
+   ```
+
+   This will:
+
+   - ✅ Create embeddings for ~13,000 recipes
+   - ✅ Upload to your Zilliz Cloud cluster
+   - ✅ Generate metadata files in `data/`
+
+### Step 2: Prepare Your Repository
+
+1. **Fork or Push to GitHub**
+
+   ```bash
+   # If not already on GitHub
+   git init
+   git add .
+   git commit -m "Initial commit"
+   git remote add origin https://github.com/your-username/leftovr-app.git
+   git push -u origin main
+   ```
+
+2. **Commit Required Files**
+
+   Ensure these files are in your repo:
+
+   ```
+   ✅ streamlit_app.py
+   ✅ main.py
+   ✅ requirements.txt
+   ✅ agents/
+   ✅ database/
+   ✅ mcp/
+   ✅ data/ingredient_index.json
+   ✅ data/recipe_metadata.jsonl
+   ```
+
+3. **Update requirements.txt**
+
+   Make sure `requirements.txt` includes:
+
+   ```txt
+   streamlit>=1.28.0
+   openai>=1.0.0
+   langchain>=0.1.0
+   langgraph>=0.0.20
+   pymilvus>=2.3.0
+   qdrant-client>=1.7.0
+   sentence-transformers>=2.2.0
+   python-dotenv>=1.0.0
+   inflect>=7.0.0
+   pydantic>=2.0.0
+   ```
+
+### Step 3: Deploy to Streamlit Cloud
+
+1. **Go to Streamlit Cloud**
+
+   - Visit [share.streamlit.io](https://share.streamlit.io/)
+   - Sign in with GitHub
+
+2. **Create New App**
+
+   - Click **"New app"**
+   - Select your repository: `your-username/leftovr-app`
+   - Branch: `main`
+   - Main file path: `streamlit_app.py`
+   - App URL (optional): `leftovr` or custom name
+
+3. **Configure Secrets**
+
+   Click **"Advanced settings"** → **"Secrets"**
+
+   Add your secrets in TOML format:
+
+   ```toml
+   # Secrets for Leftovr App
+
+   # OpenAI API Key (REQUIRED)
+   OPENAI_API_KEY = "sk-proj-xxxxxxxxxxxxxxxxxxxxx"
+
+   # Zilliz Cloud Credentials (REQUIRED for recipe search)
+   ZILLIZ_CLUSTER_ENDPOINT = "https://in03-xxx.api.gcp-us-west1.zillizcloud.com"
+   ZILLIZ_TOKEN = "your_zilliz_token_here"
+
+   # Optional: LangSmith for debugging
+   LANGCHAIN_TRACING_V2 = "true"
+   LANGCHAIN_API_KEY = "ls__xxxxxxxxxxxxxxxx"
+   LANGCHAIN_PROJECT = "leftovr-production"
+   ```
+
+4. **Deploy!**
+   - Click **"Deploy"**
+   - Wait 2-3 minutes for initial build
+   - Your app will be live at `https://your-app-name.streamlit.app` 🎉
+
+### Step 4: Accessing Secrets in Code
+
+Streamlit Cloud secrets are automatically available via `st.secrets`:
+
+```python
+import streamlit as st
+import os
+
+# Access secrets (already implemented in streamlit_app.py)
+os.environ["OPENAI_API_KEY"] = st.secrets.get("OPENAI_API_KEY", "")
+os.environ["ZILLIZ_CLUSTER_ENDPOINT"] = st.secrets.get("ZILLIZ_CLUSTER_ENDPOINT", "")
+os.environ["ZILLIZ_TOKEN"] = st.secrets.get("ZILLIZ_TOKEN", "")
+```
+
+### Step 5: Verify Deployment
+
+Once deployed, test these features:
+
+1. ✅ **Pantry Management**
+
+   ```
+   "I have 2 chicken breasts, tomatoes, and pasta"
+   ```
+
+2. ✅ **Recipe Search**
+
+   ```
+   "Find recipes with chicken"
+   ```
+
+3. ✅ **View Inventory**
+   ```
+   "What's in my pantry?"
+   ```
+
+### Deployment Checklist
+
+- [ ] Zilliz Cloud cluster created
+- [ ] Recipe data ingested to Zilliz
+- [ ] Repository pushed to GitHub
+- [ ] Streamlit Cloud app created
+- [ ] Secrets configured (OPENAI_API_KEY, ZILLIZ credentials)
+- [ ] App deployed successfully
+- [ ] Test all features
+
+### Production Considerations
+
+#### Performance
+
+- **Vector DB**: Use Zilliz Cloud (managed Milvus) for best performance
+- **Caching**: Streamlit automatically caches recipe searches
+- **Rate Limits**: Be aware of OpenAI API rate limits
+
+#### Cost Management
+
+- **Zilliz Cloud**: Free tier available (1M vectors, 1 cluster)
+- **OpenAI**: Pay-per-use (GPT-4o: ~$0.01-0.03 per conversation)
+- **Streamlit Cloud**: Free tier includes unlimited public apps
+
+#### Security
+
+- ✅ Secrets stored securely in Streamlit Cloud
+- ✅ Never commit `.env` or API keys to GitHub
+- ✅ Use environment-specific secrets for dev/prod
+
+#### Monitoring
+
+Enable LangSmith for production monitoring:
+
+```toml
+# In Streamlit secrets
+LANGCHAIN_TRACING_V2 = "true"
+LANGCHAIN_API_KEY = "your_langsmith_key"
+LANGCHAIN_PROJECT = "leftovr-production"
+```
+
+View traces, errors, and usage at [smith.langchain.com](https://smith.langchain.com/)
+
+### Updating Your Deployment
+
+```bash
+# Make changes locally
+git add .
+git commit -m "Update feature X"
+git push origin main
+
+# Streamlit Cloud automatically redeploys!
+```
+
+### Custom Domain (Optional)
+
+Streamlit Cloud supports custom domains on paid plans:
+
+1. Go to app settings
+2. Click "Custom domain"
+3. Add your domain (e.g., `leftovr.yourdomain.com`)
+4. Follow DNS configuration instructions
+
+---
+
 ## 📁 Project Structure
 
 ```
@@ -318,7 +626,8 @@ leftovr-app/
 │   └── clear_pantry.py              # Reset pantry database
 │
 ├── tests/                           # Test suite
-│   └── test_hybrid_search.py        # Hybrid search tests
+│   ├── test_pantry_agent_comprehensive.py  # Full pantry agent test suite (26 tests)
+│   └── test_hybrid_search.py               # Hybrid search tests
 │
 ├── data/                            # Recipe metadata
 │   ├── ingredient_index.json        # Ingredient mappings
@@ -391,13 +700,38 @@ sqlite3 ~/.leftovr/pantry.db
 
 ### Running Tests
 
+We have a comprehensive test suite covering all features:
+
 ```bash
+# Run comprehensive pantry agent tests (26 tests)
+python tests/test_pantry_agent_comprehensive.py
+
+# Expected output:
+# Total Tests: 26
+# ✅ Passed: 26
+# ❌ Failed: 0
+# Success Rate: 100.0%
+# 🎉 ALL TESTS PASSED! 🎉
+
 # Test hybrid search
 python tests/test_hybrid_search.py
 
-# Test pantry operations
+# Validate pantry database
 python scripts/validate_pantry.py
 ```
+
+#### What's Tested
+
+The comprehensive test suite covers:
+
+- ✅ **Basic Operations** (6 tests): Add, remove, update inventory
+- ✅ **Natural Language** (5 tests): Query interpretation
+- ✅ **Edge Cases** (5 tests): "as well", "too", "also", compound names
+- ✅ **Food Validation** (2 tests): Accept food, reject non-food items
+- ✅ **Multi-Item Operations** (2 tests): Batch operations
+- ✅ **Clarification Flow** (1 test): Multi-turn conversations
+- ✅ **Expiring Items** (1 test): Date-based filtering
+- ✅ **Operations** (4 tests): Consumption, deletion, viewing
 
 ### CLI Testing Mode
 
@@ -459,7 +793,7 @@ python scripts/ingest_recipes_milvus.py --input assets/full_dataset.csv --outdir
 
 **Solution:**
 
-1. Verify `OPENAI_API_KEY` in `.env`
+1. Verify `OPENAI_API_KEY` in `.env` (local) or Streamlit secrets (cloud)
 2. Check API key is valid at [platform.openai.com](https://platform.openai.com/)
 3. Ensure you have credits/billing enabled
 
@@ -470,8 +804,61 @@ python scripts/ingest_recipes_milvus.py --input assets/full_dataset.csv --outdir
 **Solution:** Set up Zilliz Cloud for faster semantic search:
 
 - Sign up at [cloud.zilliz.com](https://cloud.zilliz.com/)
-- Add credentials to `.env`
+- Add credentials to `.env` (local) or Streamlit secrets (cloud)
 - Re-run ingestion script
+
+### Deployment-Specific Issues
+
+#### Streamlit Cloud: "ModuleNotFoundError"
+
+**Cause:** Missing dependencies in `requirements.txt`
+
+**Solution:**
+
+1. Check `requirements.txt` includes all packages
+2. Push updated `requirements.txt` to GitHub
+3. Reboot app in Streamlit Cloud
+
+#### Streamlit Cloud: "Secrets not found"
+
+**Cause:** Secrets not configured in Streamlit Cloud
+
+**Solution:**
+
+1. Go to app settings → Secrets
+2. Add all required secrets in TOML format
+3. Reboot app
+
+#### Streamlit Cloud: App takes too long to load
+
+**Cause:** Heavy dependencies or large data files
+
+**Solution:**
+
+- Use `@st.cache_data` for expensive operations (already implemented)
+- Ensure recipe metadata files are committed to repo
+- Consider upgrading to Streamlit Cloud paid tier for more resources
+
+#### "Permission denied" on pantry database
+
+**Cause:** Multiple instances trying to access SQLite
+
+**Solution:**
+
+- Streamlit Cloud: Each user gets their own session (should work)
+- Local: Close other running instances
+- Check file permissions on `~/.leftovr/pantry.db`
+
+#### Zilliz Cloud connection timeout
+
+**Cause:** Network issues or wrong endpoint
+
+**Solution:**
+
+1. Verify `ZILLIZ_CLUSTER_ENDPOINT` is correct
+2. Check cluster is running in Zilliz dashboard
+3. Verify token hasn't expired
+4. Try regenerating token in Zilliz dashboard
 
 ---
 
