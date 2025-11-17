@@ -622,6 +622,7 @@ leftovr-app/
 ├── scripts/                         # Utility scripts
 │   ├── ingest_recipes_milvus.py     # Ingest recipes to Milvus
 │   ├── ingest_recipes_qdrant.py     # Ingest recipes to Qdrant
+│   ├── evaluate_rag.py              # Offline RAG evaluation & metrics
 │   ├── validate_pantry.py           # Database validation
 │   └── clear_pantry.py              # Reset pantry database
 │
@@ -732,6 +733,92 @@ The comprehensive test suite covers:
 - ✅ **Clarification Flow** (1 test): Multi-turn conversations
 - ✅ **Expiring Items** (1 test): Date-based filtering
 - ✅ **Operations** (4 tests): Consumption, deletion, viewing
+
+### RAG Evaluation
+
+Evaluate the quality of recipe search and retrieval using `scripts/evaluate_rag.py`:
+
+```bash
+# Run evaluation with default settings (20 samples, top-10 results)
+python scripts/evaluate_rag.py
+
+# Custom evaluation (50 samples, top-5 results)
+python scripts/evaluate_rag.py --sample 50 --k 5
+
+# Save results to custom output file
+python scripts/evaluate_rag.py --output my_evaluation.json
+```
+
+#### What It Measures
+
+The evaluation script uses **graded relevance** (0-2 scale) instead of binary matching:
+
+- **Grade 2 (Highly Relevant)**: Exact recipe match OR ≥80% ingredient overlap
+- **Grade 1 (Relevant)**: 50-80% ingredient overlap
+- **Grade 0 (Not Relevant)**: <50% ingredient overlap
+
+#### Key Metrics
+
+**User-Centric Metrics** (Most Important):
+
+- **Success@K**: Percentage of queries where user finds ANY usable recipe in top-K results
+  - ✅ Excellent: ≥90%
+  - ✓ Good: 70-89%
+  - ⚠️ Fair: 50-69%
+  - ❌ Poor: <50%
+- **Best Relevance MRR**: Mean Reciprocal Rank of first highly relevant result
+- **Avg Best Rank**: Average position of first grade-2 result
+
+**Quality Metrics**:
+
+- **nDCG (graded)**: Normalized Discounted Cumulative Gain with 0-2 relevance scale
+- **Avg Relevance**: Mean relevance grade across top-K results (scale: 0.0-2.0)
+- **Avg Ingredient Match**: Percentage of query ingredients used by retrieved recipes
+- **Precision@K**: Proportion of relevant results (grade ≥1) in top-K
+
+**Traditional Metrics** (For Comparison):
+
+- **Exact Match MRR**: Mean Reciprocal Rank of the exact original recipe
+- **Found in Top-K %**: Percentage of queries where exact recipe appears in top-K
+
+#### Sample Output
+
+```
+📊 EVALUATION SUMMARY (V3 - Advanced Metrics)
+====================================================================
+
+📌 Traditional Metrics (Exact Match Only):
+   Found exact recipe in top-10: 85.0%
+   MRR (exact): 0.456
+   Avg Rank (exact): 3.2
+   Median Rank (exact): 2
+
+✨ User-Centric Metrics (Graded Relevance):
+   Success@10: 95.0% ⭐
+      → User finds ANY usable recipe in top-10
+   Best Relevance MRR: 0.712
+   Avg Best Rank: 1.8
+      → Position of first highly relevant result
+
+📈 Result Quality:
+   nDCG (graded): 0.823
+   Avg Relevance: 1.45 / 2.0
+   Avg Ingredient Match: 68.5%
+   Precision@10 (relevant): 72.0%
+
+💡 Interpretation:
+   ✅ EXCELLENT: Users find usable recipes 95% of the time
+```
+
+#### Why This Matters
+
+Traditional RAG evaluation often measures **exact match only** (e.g., "did we retrieve the exact recipe?"), but for cooking:
+
+- **Multiple recipes can satisfy a query**: If you have chicken and tomatoes, many different chicken-tomato recipes work
+- **Ingredient overlap matters more**: A recipe using 8/10 of your ingredients is highly useful even if it's not the "original" recipe
+- **User success is what counts**: Finding ANY good recipe is success, not just finding one specific recipe
+
+The graded relevance approach better reflects real-world usage patterns.
 
 ### CLI Testing Mode
 
