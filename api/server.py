@@ -14,6 +14,18 @@ from typing import Optional, List, Dict, Any
 from datetime import datetime
 import os
 import sys
+import logging
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler(sys.stdout),
+        logging.FileHandler('logs/api_server.log')
+    ]
+)
+logger = logging.getLogger(__name__)
 
 # Add parent directory to path to import agents
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -30,6 +42,8 @@ app = FastAPI(
     description="AI-powered recipe recommendations and pantry management",
     version="1.0.0"
 )
+
+logger.info("🚀 Initializing Leftovr API...")
 
 # Configure CORS for React frontend
 app.add_middleware(
@@ -84,7 +98,9 @@ def get_workflow():
     """Get or create workflow instance"""
     global _workflow
     if _workflow is None:
+        logger.info("Initializing LeftovrWorkflow...")
         _workflow = LeftovrWorkflow()
+        logger.info("✓ LeftovrWorkflow initialized successfully")
     return _workflow
 
 
@@ -110,8 +126,8 @@ async def health_check():
         "status": "healthy",
         "timestamp": datetime.now().isoformat(),
         "agents": {
-            "executive_chef": workflow.executive_chef is not None,
-            "pantry": workflow.pantry_agent is not None,
+            "executive_chef": workflow.exec_chef is not None,
+            "pantry": workflow.pantry is not None,
             "sous_chef": workflow.sous_chef is not None,
             "recipe_knowledge": workflow.recipe_agent is not None,
         }
@@ -133,27 +149,47 @@ async def chat(request: ChatRequest):
     - General cooking questions
     """
     try:
+        logger.info(f"Processing chat message: {request.user_message[:50]}...")
         workflow = get_workflow()
         
-        # Prepare input state
+        # Prepare input state for the workflow
         input_state = {
             "user_message": request.user_message,
-            "user_preferences": request.user_preferences,
-            "pantry_inventory": request.pantry_inventory,
+            "user_preferences": request.user_preferences or {},
+            "pantry_inventory": request.pantry_inventory or [],
+            "coordination_log": [],
+            "current_stage": "initial"
         }
         
-        # Process through workflow
+        # Process through workflow (using sync invoke for FastAPI)
         result = workflow.invoke(input_state)
         
-        # Return response
+        # Extract the response from messages
+        response_text = ""
+        if "messages" in result and result["messages"]:
+            # Get the last AI message
+            for msg in reversed(result["messages"]):
+                if hasattr(msg, 'content') and msg.content:
+                    response_text = msg.content
+                    break
+        
+        # Fallback to response field if available
+        if not response_text:
+            response_text = result.get("response", "I'm sorry, I couldn't process that request.")
+        
+        # Return response with proper data formatting
+        logger.info(f"Chat response generated: {response_text[:100]}...")
         return ChatResponse(
-            response=result.get("response", "I'm sorry, I couldn't process that request."),
+            response=response_text,
             current_stage=result.get("current_stage"),
             top_3_recommendations=result.get("top_3_recommendations"),
             pantry_inventory=result.get("pantry_inventory"),
             expiring_items=result.get("expiring_items"),
         )
     except Exception as e:
+        logger.error(f"Error processing chat: {str(e)}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Error processing chat: {str(e)}")
 
 
@@ -182,12 +218,15 @@ async def add_pantry_item(item: PantryItem):
     try:
         workflow = get_workflow()
         
+        # Convert quantity to int if it's a float
+        quantity_int = int(item.quantity)
+        
         # Use pantry agent to add item
-        result = await workflow.pantry_agent.add_ingredient(
+        result = workflow.pantry.add_or_update_ingredient(
             ingredient_name=item.ingredient_name,
-            quantity=item.quantity,
+            quantity=quantity_int,
             unit=item.unit,
-            expiration_date=item.expiration_date
+            expire_date=item.expiration_date
         )
         
         return {
@@ -196,6 +235,8 @@ async def add_pantry_item(item: PantryItem):
             "item": result
         }
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Error adding item: {str(e)}")
 
 @app.put("/pantry/update/{item_name}")
@@ -204,12 +245,15 @@ async def update_pantry_item(item_name: str, item: PantryItem):
     try:
         workflow = get_workflow()
         
-        # Use pantry agent to update item
-        result = await workflow.pantry_agent.update_ingredient(
-            ingredient_name=item_name,
-            quantity=item.quantity,
+        # Convert quantity to int if it's a float
+        quantity_int = int(item.quantity)
+        
+        # Use pantry agent to add/update (MCP handles both)
+        result = workflow.pantry.add_or_update_ingredient(
+            ingredient_name=item.ingredient_name,
+            quantity=quantity_int,
             unit=item.unit,
-            expiration_date=item.expiration_date
+            expire_date=item.expiration_date
         )
         
         return {
@@ -218,6 +262,8 @@ async def update_pantry_item(item_name: str, item: PantryItem):
             "item": result
         }
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Error updating item: {str(e)}")
 
 @app.delete("/pantry/delete/{item_name}")
@@ -226,14 +272,17 @@ async def delete_pantry_item(item_name: str):
     try:
         workflow = get_workflow()
         
-        # Use pantry agent to delete item
-        await workflow.pantry_agent.remove_ingredient(ingredient_name=item_name)
+        # Use pantry agent to delete item (remove_ingredient takes ingredient_id)
+        result = workflow.pantry.remove_ingredient(ingredient_id=item_name)
         
         return {
             "status": "success",
-            "message": f"Deleted {item_name} from pantry"
+            "message": f"Deleted {item_name} from pantry",
+            "result": result
         }
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Error deleting item: {str(e)}")
 
 
