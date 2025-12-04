@@ -84,7 +84,7 @@ const PantryManagement = () => {
       await fetchInventory();
       handleCloseDialog();
     } catch (err) {
-      setError(`Failed to ${editMode ? 'update' : 'add'} item`);
+      console.error(`Failed to ${editMode ? 'update' : 'add'} item:`, err);
     }
   };
 
@@ -94,7 +94,7 @@ const PantryManagement = () => {
         await deletePantryItem(itemName);
         await fetchInventory();
       } catch (err) {
-        setError('Failed to delete item');
+        console.error('Failed to delete item:', err);
       }
     }
   };
