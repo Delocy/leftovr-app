@@ -1,11 +1,11 @@
 """Ingestion script for recipe dataset with Pinecone support
 
 Usage:
-  # 1. Set your Pinecone API key as environment variable:
-  #    export PINECONE_API_KEY="your-api-key"
+  # 1. Set your Pinecone API key in .env file:
+  #    PINECONE_API_KEY="your-api-key"
   #
   # 2. Install dependencies:
-  #    pip install pinecone-client sentence-transformers
+  #    pip install pinecone sentence-transformers python-dotenv
   #
   # 3. Run the script:
 
@@ -31,6 +31,13 @@ import time
 from collections import defaultdict
 from itertools import islice
 from typing import List, Optional
+
+# Load environment variables from .env file
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass  # dotenv not installed, will use system environment variables
 
 try:
     from sentence_transformers import SentenceTransformer
