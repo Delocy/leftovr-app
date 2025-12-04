@@ -135,11 +135,11 @@ class LeftovrWorkflow:
             print(f"⚠️  Warning: Could not connect to MCP server: {e}")
             print("   Make sure mcp/server.py is available")
 
-        # Initialize Recipe Knowledge Agent (Milvus/Zilliz Cloud as primary data source)
+        # Initialize Recipe Knowledge Agent (Pinecone as primary data source)
         self.recipe_agent = RecipeKnowledgeAgent(data_dir='data')
         try:
-            # Connect to Milvus - this is the primary data source
-            self.recipe_agent.setup_milvus()
+            # Connect to Pinecone - this is the primary data source
+            self.recipe_agent.setup_pinecone()
 
             # Optional: Load directions from local file (only if needed)
             try:
@@ -147,7 +147,7 @@ class LeftovrWorkflow:
             except Exception as e:
                 print(f"   ℹ️  Directions not loaded (optional): {e}")
 
-            if self.recipe_agent.milvus_client:
+            if self.recipe_agent.pinecone_index:
                 print("✅ Recipe Knowledge Agent initialized with Milvus cloud search")
             else:
                 print("⚠️  Recipe Knowledge Agent: Milvus connection failed")

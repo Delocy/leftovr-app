@@ -58,6 +58,7 @@ pyasn1_modules==0.4.2
 pydantic==2.12.3
 pydantic_core==2.41.4
 pydeck==0.9.1
+pinecone==8.0.0
 pymilvus==2.6.3
 pyparsing==3.2.5
 python-dateutil==2.9.0.post0
