@@ -1,0 +1,33 @@
+INFO:     Will watch for changes in these directories: ['/Users/SG4111/Desktop/me/leftovr-app']
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [1058] using StatReload
+Using OpenAI API Key: set
+ℹ️  LangSmith tracing disabled (set LANGCHAIN_TRACING_V2=true to enable)
+2025-12-05 12:01:58,323 - api.server - INFO - 🚀 Initializing Leftovr API...
+INFO:     Started server process [1102]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     127.0.0.1:0 - "GET /manifest.json HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:0 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+2025-12-05 12:02:06,029 - api.server - INFO - Initializing LeftovrWorkflow...
+Connected to pantry database at: /Users/SG4111/.leftovr/pantry.db
+✅ Pantry Agent initialized (Direct DB mode)
+🔧 Connecting to Pinecone...
+❌ Index 'recipes' not found!
+   Please run: python scripts/ingest_recipes_pinecone.py --input assets/full_dataset.csv --outdir data
+✅ Loaded directions for 10,000 recipes
+⚠️  Recipe Knowledge Agent: Pinecone connection failed
+   Run the ingestion script: python scripts/ingest_recipes_pinecone.py --input assets/full_dataset.csv --outdir data
+2025-12-05 12:02:07,463 - api.server - INFO - ✓ LeftovrWorkflow initialized successfully
+INFO:     127.0.0.1:62515 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62524 - "OPTIONS /chat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62524 - "POST /chat HTTP/1.1" 422 Unprocessable Entity
+INFO:     127.0.0.1:0 - "GET /manifest.json HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:62795 - "GET /pantry/inventory HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62795 - "GET /pantry/inventory HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63337 - "GET /pantry/inventory HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63337 - "GET /pantry/inventory HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63408 - "GET /pantry/inventory HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63408 - "GET /pantry/inventory HTTP/1.1" 200 OK
+INFO:     127.0.0.1:0 - "GET /manifest.json HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:0 - "GET /manifest.json HTTP/1.1" 404 Not Found

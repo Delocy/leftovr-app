@@ -1,0 +1,2797 @@
+
+> leftovr-frontend@0.1.0 start
+> react-scripts start
+
+(node:1274) [DEP_WEBPACK_DEV_SERVER_ON_AFTER_SETUP_MIDDLEWARE] DeprecationWarning: 'onAfterSetupMiddleware' option is deprecated. Please use the 'setupMiddlewares' option.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:1274) [DEP_WEBPACK_DEV_SERVER_ON_BEFORE_SETUP_MIDDLEWARE] DeprecationWarning: 'onBeforeSetupMiddleware' option is deprecated. Please use the 'setupMiddlewares' option.
+Starting the development server...
+
+Compiled with warnings.
+
+[eslint] 
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+webpack compiled with 1 warning
+(node:1274) [DEP0060] DeprecationWarning: The `util._extend` API is deprecated. Please use Object.assign() instead.
+Compiling...
+Failed to compile.
+
+Module not found: Error: Can't resolve './components/Sidebar' in '/Users/SG4111/Desktop/me/leftovr-app/frontend/src'
+WARNING in [eslint] 
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+ERROR in ./src/App.js 9:0-43
+Module not found: Error: Can't resolve './components/Sidebar' in '/Users/SG4111/Desktop/me/leftovr-app/frontend/src'
+
+webpack compiled with 1 error and 1 warning
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+webpack compiled with 1 warning
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+webpack compiled with 1 warning
+Compiling...
+Failed to compile.
+
+[eslint] 
+src/pages/ChatInterface.js
+  Line 45:5:    'setError' is not defined  no-undef
+  Line 65:7:    'setError' is not defined  no-undef
+  Line 94:8:    'error' is not defined     no-undef
+  Line 94:18:   'Alert' is not defined     react/jsx-no-undef
+  Line 94:57:   'error' is not defined     no-undef
+  Line 106:10:  'List' is not defined      react/jsx-no-undef
+  Line 108:14:  'ListItem' is not defined  react/jsx-no-undef
+  Line 150:14:  'ListItem' is not defined  react/jsx-no-undef
+
+Search for the keywords to learn more about each error.
+WARNING in [eslint] 
+src/pages/ChatInterface.js
+  Line 8:3:   'IconButton' is defined but never used  no-unused-vars
+  Line 11:3:  'Tooltip' is defined but never used     no-unused-vars
+  Line 16:8:  'MenuIcon' is defined but never used    no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+ERROR in [eslint] 
+src/pages/ChatInterface.js
+  Line 45:5:    'setError' is not defined  no-undef
+  Line 65:7:    'setError' is not defined  no-undef
+  Line 94:8:    'error' is not defined     no-undef
+  Line 94:18:   'Alert' is not defined     react/jsx-no-undef
+  Line 94:57:   'error' is not defined     no-undef
+  Line 106:10:  'List' is not defined      react/jsx-no-undef
+  Line 108:14:  'ListItem' is not defined  react/jsx-no-undef
+  Line 150:14:  'ListItem' is not defined  react/jsx-no-undef
+
+Search for the keywords to learn more about each error.
+
+webpack compiled with 1 error and 1 warning
+Compiling...
+Failed to compile.
+
+[eslint] 
+src/pages/ChatInterface.js
+  Line 92:8:    'error' is not defined     no-undef
+  Line 92:18:   'Alert' is not defined     react/jsx-no-undef
+  Line 92:57:   'error' is not defined     no-undef
+  Line 104:10:  'List' is not defined      react/jsx-no-undef
+  Line 106:14:  'ListItem' is not defined  react/jsx-no-undef
+  Line 148:14:  'ListItem' is not defined  react/jsx-no-undef
+
+Search for the keywords to learn more about each error.
+WARNING in [eslint] 
+src/pages/ChatInterface.js
+  Line 8:3:   'IconButton' is defined but never used  no-unused-vars
+  Line 11:3:  'Tooltip' is defined but never used     no-unused-vars
+  Line 16:8:  'MenuIcon' is defined but never used    no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+ERROR in [eslint] 
+src/pages/ChatInterface.js
+  Line 92:8:    'error' is not defined     no-undef
+  Line 92:18:   'Alert' is not defined     react/jsx-no-undef
+  Line 92:57:   'error' is not defined     no-undef
+  Line 104:10:  'List' is not defined      react/jsx-no-undef
+  Line 106:14:  'ListItem' is not defined  react/jsx-no-undef
+  Line 148:14:  'ListItem' is not defined  react/jsx-no-undef
+
+Search for the keywords to learn more about each error.
+
+webpack compiled with 1 error and 1 warning
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/pages/ChatInterface.js
+  Line 4:3:  'Paper' is defined but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/pages/ChatInterface.js
+  Line 4:3:  'Paper' is defined but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+webpack compiled with 1 warning
+Compiling...
+Failed to compile.
+
+[eslint] 
+src/pages/RecipeSearch.js
+  Line 72:8:  'Paper' is not defined  react/jsx-no-undef
+
+Search for the keywords to learn more about each error.
+WARNING in [eslint] 
+src/pages/ChatInterface.js
+  Line 4:3:  'Paper' is defined but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+src/pages/RecipeSearch.js
+  Line 12:3:  'IconButton' is defined but never used          no-unused-vars
+  Line 13:3:  'Tooltip' is defined but never used             no-unused-vars
+  Line 18:8:  'MenuIcon' is defined but never used            no-unused-vars
+  Line 19:8:  'RestaurantMenuIcon' is defined but never used  no-unused-vars
+
+ERROR in [eslint] 
+src/pages/RecipeSearch.js
+  Line 72:8:  'Paper' is not defined  react/jsx-no-undef
+
+Search for the keywords to learn more about each error.
+
+webpack compiled with 1 error and 1 warning
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/pages/ChatInterface.js
+  Line 4:3:  'Paper' is defined but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/pages/ChatInterface.js
+  Line 4:3:  'Paper' is defined but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+webpack compiled with 1 warning
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/pages/ChatInterface.js
+  Line 4:3:  'Paper' is defined but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/pages/ChatInterface.js
+  Line 4:3:  'Paper' is defined but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+webpack compiled with 1 warning
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/pages/ChatInterface.js
+  Line 4:3:  'Paper' is defined but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/pages/ChatInterface.js
+  Line 4:3:  'Paper' is defined but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+webpack compiled with 1 warning
+Failed to compile.
+
+Module not found: Error: Can't resolve './components/Sidebar' in '/Users/SG4111/Desktop/me/leftovr-app/frontend/src'
+WARNING in [eslint] 
+src/pages/ChatInterface.js
+  Line 4:3:  'Paper' is defined but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+ERROR in ./src/App.js 9:0-43
+Module not found: Error: Can't resolve './components/Sidebar' in '/Users/SG4111/Desktop/me/leftovr-app/frontend/src'
+
+webpack compiled with 1 error and 1 warning
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/pages/ChatInterface.js
+  Line 4:3:  'Paper' is defined but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/pages/ChatInterface.js
+  Line 4:3:  'Paper' is defined but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+webpack compiled with 1 warning
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/components/Sidebar.js
+  Line 88:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+src/pages/ChatInterface.js
+  Line 4:3:  'Paper' is defined but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/Sidebar.js
+  Line 88:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+src/pages/ChatInterface.js
+  Line 4:3:  'Paper' is defined but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+webpack compiled with 1 warning
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/components/Sidebar.js
+  Line 88:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+src/pages/ChatInterface.js
+  Line 4:3:  'Paper' is defined but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/Sidebar.js
+  Line 88:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+src/pages/ChatInterface.js
+  Line 4:3:  'Paper' is defined but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+webpack compiled with 1 warning
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/components/Sidebar.js
+  Line 88:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+src/pages/ChatInterface.js
+  Line 4:3:  'Paper' is defined but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/Sidebar.js
+  Line 88:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+src/pages/ChatInterface.js
+  Line 4:3:  'Paper' is defined but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+webpack compiled with 1 warning
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/components/Sidebar.js
+  Line 88:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+src/pages/ChatInterface.js
+  Line 4:3:  'Paper' is defined but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/Sidebar.js
+  Line 88:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+src/pages/ChatInterface.js
+  Line 4:3:  'Paper' is defined but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+webpack compiled with 1 warning
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/components/Sidebar.js
+  Line 88:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+src/pages/ChatInterface.js
+  Line 4:3:  'Paper' is defined but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/Sidebar.js
+  Line 88:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+src/pages/ChatInterface.js
+  Line 4:3:  'Paper' is defined but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+webpack compiled with 1 warning
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/components/Sidebar.js
+  Line 88:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+src/pages/ChatInterface.js
+  Line 4:3:  'Paper' is defined but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/Sidebar.js
+  Line 88:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+src/pages/ChatInterface.js
+  Line 4:3:  'Paper' is defined but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+webpack compiled with 1 warning
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/App.js
+  Line 5:8:  'Navbar' is defined but never used  no-unused-vars
+
+src/components/Sidebar.js
+  Line 88:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+src/pages/ChatInterface.js
+  Line 4:3:  'Paper' is defined but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/App.js
+  Line 5:8:  'Navbar' is defined but never used  no-unused-vars
+
+src/components/Sidebar.js
+  Line 88:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+src/pages/ChatInterface.js
+  Line 4:3:  'Paper' is defined but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+webpack compiled with 1 warning
+Compiling...
+Failed to compile.
+
+[eslint] 
+src/App.js
+Syntax error: Expected corresponding JSX closing tag for <Box>. (160:6) (160:6)
+WARNING in [eslint] 
+src/components/Sidebar.js
+  Line 88:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+src/pages/ChatInterface.js
+  Line 4:3:  'Paper' is defined but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+ERROR in ./src/App.js
+Module build failed (from ./node_modules/babel-loader/lib/index.js):
+SyntaxError: /Users/SG4111/Desktop/me/leftovr-app/frontend/src/App.js: Expected corresponding JSX closing tag for <Box>. (160:6)
+
+  158 |           </Box>
+  159 |         </Box>
+> 160 |       </Router>
+      |       ^
+  161 |     </ThemeProvider>
+  162 |   );
+  163 | }
+    at constructor (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:367:19)
+    at FlowParserMixin.raise (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:6624:19)
+    at FlowParserMixin.jsxParseElementAt (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:4756:16)
+    at FlowParserMixin.jsxParseElementAt (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:4727:32)
+    at FlowParserMixin.jsxParseElementAt (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:4727:32)
+    at FlowParserMixin.jsxParseElement (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:4778:17)
+    at FlowParserMixin.parseExprAtom (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:4788:19)
+    at FlowParserMixin.parseExprSubscripts (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:11145:23)
+    at FlowParserMixin.parseUpdate (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:11130:21)
+    at FlowParserMixin.parseMaybeUnary (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:11110:23)
+    at FlowParserMixin.parseMaybeUnaryOrPrivate (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:10963:61)
+    at FlowParserMixin.parseExprOps (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:10968:23)
+    at FlowParserMixin.parseMaybeConditional (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:10945:23)
+    at FlowParserMixin.parseMaybeAssign (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:10895:21)
+    at /Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:3527:39
+    at FlowParserMixin.tryParse (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:6932:20)
+    at FlowParserMixin.parseMaybeAssign (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:3527:18)
+    at /Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:10864:39
+    at FlowParserMixin.allowInAnd (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:12500:12)
+    at FlowParserMixin.parseMaybeAssignAllowIn (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:10864:17)
+    at FlowParserMixin.parseMaybeAssignAllowInOrVoidPattern (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:12567:17)
+    at FlowParserMixin.parseParenAndDistinguishExpression (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:11747:28)
+    at FlowParserMixin.parseParenAndDistinguishExpression (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:3620:18)
+    at FlowParserMixin.parseExprAtom (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:11395:23)
+    at FlowParserMixin.parseExprAtom (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:4793:20)
+    at FlowParserMixin.parseExprSubscripts (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:11145:23)
+    at FlowParserMixin.parseUpdate (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:11130:21)
+    at FlowParserMixin.parseMaybeUnary (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:11110:23)
+    at FlowParserMixin.parseMaybeUnaryOrPrivate (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:10963:61)
+    at FlowParserMixin.parseExprOps (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:10968:23)
+    at FlowParserMixin.parseMaybeConditional (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:10945:23)
+    at FlowParserMixin.parseMaybeAssign (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:10895:21)
+    at FlowParserMixin.parseMaybeAssign (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:3578:18)
+    at FlowParserMixin.parseExpressionBase (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:10848:23)
+    at /Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:10844:39
+    at FlowParserMixin.allowInAnd (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:12495:16)
+    at FlowParserMixin.parseExpression (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:10844:17)
+    at FlowParserMixin.parseReturnStatement (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:13218:28)
+    at FlowParserMixin.parseStatementContent (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:12874:21)
+    at FlowParserMixin.parseStatementLike (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:12843:17)
+    at FlowParserMixin.parseStatementLike (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:2945:24)
+    at FlowParserMixin.parseStatementListItem (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:12823:17)
+    at FlowParserMixin.parseBlockOrModuleBlockBody (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:13392:61)
+    at FlowParserMixin.parseBlockBody (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:13385:10)
+    at FlowParserMixin.parseBlock (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:13373:10)
+    at FlowParserMixin.parseFunctionBody (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:12174:24)
+    at FlowParserMixin.parseFunctionBody (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:2922:11)
+    at FlowParserMixin.parseFunctionBodyAndFinish (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:12160:10)
+    at FlowParserMixin.parseFunctionBodyAndFinish (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:2930:18)
+    at /Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:13521:12
+
+ERROR in [eslint] 
+src/App.js
+  Line 160:6:  Parsing error: Expected corresponding JSX closing tag for <Box>. (160:6)
+
+webpack compiled with 2 errors and 1 warning
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/components/Sidebar.js
+  Line 88:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+src/pages/ChatInterface.js
+  Line 4:3:  'Paper' is defined but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/Sidebar.js
+  Line 88:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+src/pages/ChatInterface.js
+  Line 4:3:  'Paper' is defined but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+webpack compiled with 1 warning
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/components/Sidebar.js
+  Line 88:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+src/pages/ChatInterface.js
+  Line 4:3:   'Paper' is defined but never used       no-unused-vars
+  Line 8:3:   'IconButton' is defined but never used  no-unused-vars
+  Line 11:3:  'Tooltip' is defined but never used     no-unused-vars
+  Line 16:8:  'MenuIcon' is defined but never used    no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/Sidebar.js
+  Line 88:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+src/pages/ChatInterface.js
+  Line 4:3:   'Paper' is defined but never used       no-unused-vars
+  Line 8:3:   'IconButton' is defined but never used  no-unused-vars
+  Line 11:3:  'Tooltip' is defined but never used     no-unused-vars
+  Line 16:8:  'MenuIcon' is defined but never used    no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+webpack compiled with 1 warning
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/components/Sidebar.js
+  Line 88:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+src/pages/ChatInterface.js
+  Line 4:3:   'Paper' is defined but never used       no-unused-vars
+  Line 8:3:   'IconButton' is defined but never used  no-unused-vars
+  Line 11:3:  'Tooltip' is defined but never used     no-unused-vars
+  Line 16:8:  'MenuIcon' is defined but never used    no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+src/pages/RecipeSearch.js
+  Line 12:3:  'IconButton' is defined but never used  no-unused-vars
+  Line 13:3:  'Tooltip' is defined but never used     no-unused-vars
+  Line 18:8:  'MenuIcon' is defined but never used    no-unused-vars
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/Sidebar.js
+  Line 88:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+src/pages/ChatInterface.js
+  Line 4:3:   'Paper' is defined but never used       no-unused-vars
+  Line 8:3:   'IconButton' is defined but never used  no-unused-vars
+  Line 11:3:  'Tooltip' is defined but never used     no-unused-vars
+  Line 16:8:  'MenuIcon' is defined but never used    no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+src/pages/RecipeSearch.js
+  Line 12:3:  'IconButton' is defined but never used  no-unused-vars
+  Line 13:3:  'Tooltip' is defined but never used     no-unused-vars
+  Line 18:8:  'MenuIcon' is defined but never used    no-unused-vars
+
+webpack compiled with 1 warning
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/components/Sidebar.js
+  Line 88:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+src/pages/ChatInterface.js
+  Line 4:3:   'Paper' is defined but never used       no-unused-vars
+  Line 8:3:   'IconButton' is defined but never used  no-unused-vars
+  Line 11:3:  'Tooltip' is defined but never used     no-unused-vars
+  Line 16:8:  'MenuIcon' is defined but never used    no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+src/pages/RecipeSearch.js
+  Line 12:3:  'IconButton' is defined but never used  no-unused-vars
+  Line 13:3:  'Tooltip' is defined but never used     no-unused-vars
+  Line 18:8:  'MenuIcon' is defined but never used    no-unused-vars
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/Sidebar.js
+  Line 88:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+src/pages/ChatInterface.js
+  Line 4:3:   'Paper' is defined but never used       no-unused-vars
+  Line 8:3:   'IconButton' is defined but never used  no-unused-vars
+  Line 11:3:  'Tooltip' is defined but never used     no-unused-vars
+  Line 16:8:  'MenuIcon' is defined but never used    no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+src/pages/RecipeSearch.js
+  Line 12:3:  'IconButton' is defined but never used  no-unused-vars
+  Line 13:3:  'Tooltip' is defined but never used     no-unused-vars
+  Line 18:8:  'MenuIcon' is defined but never used    no-unused-vars
+
+webpack compiled with 1 warning
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/components/Sidebar.js
+  Line 88:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+src/pages/RecipeSearch.js
+  Line 12:3:  'IconButton' is defined but never used  no-unused-vars
+  Line 13:3:  'Tooltip' is defined but never used     no-unused-vars
+  Line 18:8:  'MenuIcon' is defined but never used    no-unused-vars
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/Sidebar.js
+  Line 88:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+src/pages/RecipeSearch.js
+  Line 12:3:  'IconButton' is defined but never used  no-unused-vars
+  Line 13:3:  'Tooltip' is defined but never used     no-unused-vars
+  Line 18:8:  'MenuIcon' is defined but never used    no-unused-vars
+
+webpack compiled with 1 warning
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/components/Sidebar.js
+  Line 88:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/Sidebar.js
+  Line 88:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+webpack compiled with 1 warning
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/components/Navbar.js
+  Line 3:18:  'RouterLink' is defined but never used  no-unused-vars
+
+src/components/Sidebar.js
+  Line 88:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/Navbar.js
+  Line 3:18:  'RouterLink' is defined but never used  no-unused-vars
+
+src/components/Sidebar.js
+  Line 88:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+webpack compiled with 1 warning
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/App.js
+  Line 8:8:  'PantryPage' is defined but never used  no-unused-vars
+
+src/components/Navbar.js
+  Line 3:18:  'RouterLink' is defined but never used  no-unused-vars
+
+src/components/Sidebar.js
+  Line 88:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+src/pages/PantryPage.js
+  Line 25:8:  'EditIcon' is defined but never used                                                                                 no-unused-vars
+  Line 28:8:  'CheckCircleIcon' is defined but never used                                                                          no-unused-vars
+  Line 46:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/App.js
+  Line 8:8:  'PantryPage' is defined but never used  no-unused-vars
+
+src/components/Navbar.js
+  Line 3:18:  'RouterLink' is defined but never used  no-unused-vars
+
+src/components/Sidebar.js
+  Line 88:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+src/pages/PantryPage.js
+  Line 25:8:  'EditIcon' is defined but never used                                                                                 no-unused-vars
+  Line 28:8:  'CheckCircleIcon' is defined but never used                                                                          no-unused-vars
+  Line 46:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+webpack compiled with 1 warning
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/components/Navbar.js
+  Line 3:18:  'RouterLink' is defined but never used  no-unused-vars
+
+src/components/Sidebar.js
+  Line 88:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+src/pages/PantryPage.js
+  Line 25:8:  'EditIcon' is defined but never used                                                                                 no-unused-vars
+  Line 28:8:  'CheckCircleIcon' is defined but never used                                                                          no-unused-vars
+  Line 46:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/Navbar.js
+  Line 3:18:  'RouterLink' is defined but never used  no-unused-vars
+
+src/components/Sidebar.js
+  Line 88:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+src/pages/PantryPage.js
+  Line 25:8:  'EditIcon' is defined but never used                                                                                 no-unused-vars
+  Line 28:8:  'CheckCircleIcon' is defined but never used                                                                          no-unused-vars
+  Line 46:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+webpack compiled with 1 warning
+Failed to compile.
+
+Module not found: Error: Can't resolve './components/Sidebar' in '/Users/SG4111/Desktop/me/leftovr-app/frontend/src'
+WARNING in [eslint] 
+src/components/Navbar.js
+  Line 3:18:  'RouterLink' is defined but never used  no-unused-vars
+
+src/components/Sidebar.js
+  Line 88:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+src/pages/PantryPage.js
+  Line 25:8:  'EditIcon' is defined but never used                                                                                 no-unused-vars
+  Line 28:8:  'CheckCircleIcon' is defined but never used                                                                          no-unused-vars
+  Line 46:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+ERROR in ./src/App.js 10:0-43
+Module not found: Error: Can't resolve './components/Sidebar' in '/Users/SG4111/Desktop/me/leftovr-app/frontend/src'
+
+webpack compiled with 1 error and 1 warning
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/components/Navbar.js
+  Line 3:18:  'RouterLink' is defined but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+src/pages/PantryPage.js
+  Line 25:8:  'EditIcon' is defined but never used                                                                                 no-unused-vars
+  Line 28:8:  'CheckCircleIcon' is defined but never used                                                                          no-unused-vars
+  Line 46:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/Navbar.js
+  Line 3:18:  'RouterLink' is defined but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+src/pages/PantryPage.js
+  Line 25:8:  'EditIcon' is defined but never used                                                                                 no-unused-vars
+  Line 28:8:  'CheckCircleIcon' is defined but never used                                                                          no-unused-vars
+  Line 46:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+webpack compiled with 1 warning
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/components/Navbar.js
+  Line 3:18:  'RouterLink' is defined but never used  no-unused-vars
+
+src/components/Sidebar.js
+  Line 1:27:  'useEffect' is defined but never used              no-unused-vars
+  Line 14:3:  'Tooltip' is defined but never used                no-unused-vars
+  Line 17:8:  'RestaurantIcon' is defined but never used         no-unused-vars
+  Line 19:8:  'axios' is defined but never used                  no-unused-vars
+  Line 21:7:  'API_BASE_URL' is assigned a value but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+src/pages/PantryPage.js
+  Line 25:8:  'EditIcon' is defined but never used                                                                                 no-unused-vars
+  Line 28:8:  'CheckCircleIcon' is defined but never used                                                                          no-unused-vars
+  Line 46:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/Navbar.js
+  Line 3:18:  'RouterLink' is defined but never used  no-unused-vars
+
+src/components/Sidebar.js
+  Line 1:27:  'useEffect' is defined but never used              no-unused-vars
+  Line 14:3:  'Tooltip' is defined but never used                no-unused-vars
+  Line 17:8:  'RestaurantIcon' is defined but never used         no-unused-vars
+  Line 19:8:  'axios' is defined but never used                  no-unused-vars
+  Line 21:7:  'API_BASE_URL' is assigned a value but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+src/pages/PantryPage.js
+  Line 25:8:  'EditIcon' is defined but never used                                                                                 no-unused-vars
+  Line 28:8:  'CheckCircleIcon' is defined but never used                                                                          no-unused-vars
+  Line 46:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+webpack compiled with 1 warning
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/components/Navbar.js
+  Line 3:18:  'RouterLink' is defined but never used  no-unused-vars
+
+src/components/Sidebar.js
+  Line 1:27:  'useEffect' is defined but never used              no-unused-vars
+  Line 14:3:  'Tooltip' is defined but never used                no-unused-vars
+  Line 17:8:  'RestaurantIcon' is defined but never used         no-unused-vars
+  Line 19:8:  'axios' is defined but never used                  no-unused-vars
+  Line 21:7:  'API_BASE_URL' is assigned a value but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+src/pages/PantryPage.js
+  Line 25:8:  'EditIcon' is defined but never used                                                                                 no-unused-vars
+  Line 28:8:  'CheckCircleIcon' is defined but never used                                                                          no-unused-vars
+  Line 46:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/Navbar.js
+  Line 3:18:  'RouterLink' is defined but never used  no-unused-vars
+
+src/components/Sidebar.js
+  Line 1:27:  'useEffect' is defined but never used              no-unused-vars
+  Line 14:3:  'Tooltip' is defined but never used                no-unused-vars
+  Line 17:8:  'RestaurantIcon' is defined but never used         no-unused-vars
+  Line 19:8:  'axios' is defined but never used                  no-unused-vars
+  Line 21:7:  'API_BASE_URL' is assigned a value but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+src/pages/PantryPage.js
+  Line 25:8:  'EditIcon' is defined but never used                                                                                 no-unused-vars
+  Line 28:8:  'CheckCircleIcon' is defined but never used                                                                          no-unused-vars
+  Line 46:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+webpack compiled with 1 warning
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/components/Navbar.js
+  Line 3:18:  'RouterLink' is defined but never used  no-unused-vars
+
+src/components/Sidebar.js
+  Line 1:27:  'useEffect' is defined but never used                               no-unused-vars
+  Line 14:3:  'Tooltip' is defined but never used                                 no-unused-vars
+  Line 17:8:  'RestaurantIcon' is defined but never used                          no-unused-vars
+  Line 19:8:  'axios' is defined but never used                                   no-unused-vars
+  Line 21:7:  'API_BASE_URL' is assigned a value but never used                   no-unused-vars
+  Line 63:9:  'handleAddCustomRestriction' is assigned a value but never used     no-unused-vars
+  Line 77:9:  'handleRemoveCustomRestriction' is assigned a value but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+src/pages/PantryPage.js
+  Line 25:8:  'EditIcon' is defined but never used                                                                                 no-unused-vars
+  Line 28:8:  'CheckCircleIcon' is defined but never used                                                                          no-unused-vars
+  Line 46:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/Navbar.js
+  Line 3:18:  'RouterLink' is defined but never used  no-unused-vars
+
+src/components/Sidebar.js
+  Line 1:27:  'useEffect' is defined but never used                               no-unused-vars
+  Line 14:3:  'Tooltip' is defined but never used                                 no-unused-vars
+  Line 17:8:  'RestaurantIcon' is defined but never used                          no-unused-vars
+  Line 19:8:  'axios' is defined but never used                                   no-unused-vars
+  Line 21:7:  'API_BASE_URL' is assigned a value but never used                   no-unused-vars
+  Line 63:9:  'handleAddCustomRestriction' is assigned a value but never used     no-unused-vars
+  Line 77:9:  'handleRemoveCustomRestriction' is assigned a value but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+src/pages/PantryPage.js
+  Line 25:8:  'EditIcon' is defined but never used                                                                                 no-unused-vars
+  Line 28:8:  'CheckCircleIcon' is defined but never used                                                                          no-unused-vars
+  Line 46:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+webpack compiled with 1 warning
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/components/Navbar.js
+  Line 3:18:  'RouterLink' is defined but never used  no-unused-vars
+
+src/components/Sidebar.js
+  Line 1:27:  'useEffect' is defined but never used              no-unused-vars
+  Line 14:3:  'Tooltip' is defined but never used                no-unused-vars
+  Line 17:8:  'RestaurantIcon' is defined but never used         no-unused-vars
+  Line 19:8:  'axios' is defined but never used                  no-unused-vars
+  Line 21:7:  'API_BASE_URL' is assigned a value but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+src/pages/PantryPage.js
+  Line 25:8:  'EditIcon' is defined but never used                                                                                 no-unused-vars
+  Line 28:8:  'CheckCircleIcon' is defined but never used                                                                          no-unused-vars
+  Line 46:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/Navbar.js
+  Line 3:18:  'RouterLink' is defined but never used  no-unused-vars
+
+src/components/Sidebar.js
+  Line 1:27:  'useEffect' is defined but never used              no-unused-vars
+  Line 14:3:  'Tooltip' is defined but never used                no-unused-vars
+  Line 17:8:  'RestaurantIcon' is defined but never used         no-unused-vars
+  Line 19:8:  'axios' is defined but never used                  no-unused-vars
+  Line 21:7:  'API_BASE_URL' is assigned a value but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+src/pages/PantryPage.js
+  Line 25:8:  'EditIcon' is defined but never used                                                                                 no-unused-vars
+  Line 28:8:  'CheckCircleIcon' is defined but never used                                                                          no-unused-vars
+  Line 46:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+webpack compiled with 1 warning
+Compiling...
+Failed to compile.
+
+[eslint] 
+src/App.js
+Syntax error: Expected corresponding JSX closing tag for <Box>. (174:6) (174:6)
+WARNING in [eslint] 
+src/components/Navbar.js
+  Line 3:18:  'RouterLink' is defined but never used  no-unused-vars
+
+src/components/Sidebar.js
+  Line 1:27:  'useEffect' is defined but never used              no-unused-vars
+  Line 14:3:  'Tooltip' is defined but never used                no-unused-vars
+  Line 17:8:  'RestaurantIcon' is defined but never used         no-unused-vars
+  Line 19:8:  'axios' is defined but never used                  no-unused-vars
+  Line 21:7:  'API_BASE_URL' is assigned a value but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+src/pages/PantryPage.js
+  Line 25:8:  'EditIcon' is defined but never used                                                                                 no-unused-vars
+  Line 28:8:  'CheckCircleIcon' is defined but never used                                                                          no-unused-vars
+  Line 46:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+ERROR in ./src/App.js
+Module build failed (from ./node_modules/babel-loader/lib/index.js):
+SyntaxError: /Users/SG4111/Desktop/me/leftovr-app/frontend/src/App.js: Expected corresponding JSX closing tag for <Box>. (174:6)
+
+  172 |         </Box>
+  173 |       </Box>
+> 174 |       </Router>
+      |       ^
+  175 |     </ThemeProvider>
+  176 |   );
+  177 | }
+    at constructor (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:367:19)
+    at FlowParserMixin.raise (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:6624:19)
+    at FlowParserMixin.jsxParseElementAt (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:4756:16)
+    at FlowParserMixin.jsxParseElementAt (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:4727:32)
+    at FlowParserMixin.jsxParseElementAt (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:4727:32)
+    at FlowParserMixin.jsxParseElement (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:4778:17)
+    at FlowParserMixin.parseExprAtom (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:4788:19)
+    at FlowParserMixin.parseExprSubscripts (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:11145:23)
+    at FlowParserMixin.parseUpdate (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:11130:21)
+    at FlowParserMixin.parseMaybeUnary (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:11110:23)
+    at FlowParserMixin.parseMaybeUnaryOrPrivate (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:10963:61)
+    at FlowParserMixin.parseExprOps (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:10968:23)
+    at FlowParserMixin.parseMaybeConditional (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:10945:23)
+    at FlowParserMixin.parseMaybeAssign (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:10895:21)
+    at /Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:3527:39
+    at FlowParserMixin.tryParse (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:6932:20)
+    at FlowParserMixin.parseMaybeAssign (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:3527:18)
+    at /Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:10864:39
+    at FlowParserMixin.allowInAnd (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:12500:12)
+    at FlowParserMixin.parseMaybeAssignAllowIn (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:10864:17)
+    at FlowParserMixin.parseMaybeAssignAllowInOrVoidPattern (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:12567:17)
+    at FlowParserMixin.parseParenAndDistinguishExpression (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:11747:28)
+    at FlowParserMixin.parseParenAndDistinguishExpression (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:3620:18)
+    at FlowParserMixin.parseExprAtom (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:11395:23)
+    at FlowParserMixin.parseExprAtom (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:4793:20)
+    at FlowParserMixin.parseExprSubscripts (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:11145:23)
+    at FlowParserMixin.parseUpdate (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:11130:21)
+    at FlowParserMixin.parseMaybeUnary (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:11110:23)
+    at FlowParserMixin.parseMaybeUnaryOrPrivate (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:10963:61)
+    at FlowParserMixin.parseExprOps (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:10968:23)
+    at FlowParserMixin.parseMaybeConditional (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:10945:23)
+    at FlowParserMixin.parseMaybeAssign (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:10895:21)
+    at FlowParserMixin.parseMaybeAssign (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:3578:18)
+    at FlowParserMixin.parseExpressionBase (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:10848:23)
+    at /Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:10844:39
+    at FlowParserMixin.allowInAnd (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:12495:16)
+    at FlowParserMixin.parseExpression (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:10844:17)
+    at FlowParserMixin.parseReturnStatement (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:13218:28)
+    at FlowParserMixin.parseStatementContent (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:12874:21)
+    at FlowParserMixin.parseStatementLike (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:12843:17)
+    at FlowParserMixin.parseStatementLike (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:2945:24)
+    at FlowParserMixin.parseStatementListItem (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:12823:17)
+    at FlowParserMixin.parseBlockOrModuleBlockBody (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:13392:61)
+    at FlowParserMixin.parseBlockBody (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:13385:10)
+    at FlowParserMixin.parseBlock (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:13373:10)
+    at FlowParserMixin.parseFunctionBody (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:12174:24)
+    at FlowParserMixin.parseFunctionBody (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:2922:11)
+    at FlowParserMixin.parseFunctionBodyAndFinish (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:12160:10)
+    at FlowParserMixin.parseFunctionBodyAndFinish (/Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:2930:18)
+    at /Users/SG4111/Desktop/me/leftovr-app/frontend/node_modules/@babel/parser/lib/index.js:13521:12
+
+ERROR in [eslint] 
+src/App.js
+  Line 174:6:  Parsing error: Expected corresponding JSX closing tag for <Box>. (174:6)
+
+webpack compiled with 2 errors and 1 warning
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/components/Navbar.js
+  Line 3:18:  'RouterLink' is defined but never used  no-unused-vars
+
+src/components/Sidebar.js
+  Line 1:27:  'useEffect' is defined but never used              no-unused-vars
+  Line 14:3:  'Tooltip' is defined but never used                no-unused-vars
+  Line 17:8:  'RestaurantIcon' is defined but never used         no-unused-vars
+  Line 19:8:  'axios' is defined but never used                  no-unused-vars
+  Line 21:7:  'API_BASE_URL' is assigned a value but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+src/pages/PantryPage.js
+  Line 25:8:  'EditIcon' is defined but never used                                                                                 no-unused-vars
+  Line 28:8:  'CheckCircleIcon' is defined but never used                                                                          no-unused-vars
+  Line 46:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/Navbar.js
+  Line 3:18:  'RouterLink' is defined but never used  no-unused-vars
+
+src/components/Sidebar.js
+  Line 1:27:  'useEffect' is defined but never used              no-unused-vars
+  Line 14:3:  'Tooltip' is defined but never used                no-unused-vars
+  Line 17:8:  'RestaurantIcon' is defined but never used         no-unused-vars
+  Line 19:8:  'axios' is defined but never used                  no-unused-vars
+  Line 21:7:  'API_BASE_URL' is assigned a value but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+src/pages/PantryPage.js
+  Line 25:8:  'EditIcon' is defined but never used                                                                                 no-unused-vars
+  Line 28:8:  'CheckCircleIcon' is defined but never used                                                                          no-unused-vars
+  Line 46:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+webpack compiled with 1 warning
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/components/Navbar.js
+  Line 3:18:  'RouterLink' is defined but never used  no-unused-vars
+
+src/components/Sidebar.js
+  Line 1:27:  'useEffect' is defined but never used              no-unused-vars
+  Line 14:3:  'TextField' is defined but never used              no-unused-vars
+  Line 15:3:  'Tooltip' is defined but never used                no-unused-vars
+  Line 18:8:  'RestaurantIcon' is defined but never used         no-unused-vars
+  Line 20:8:  'axios' is defined but never used                  no-unused-vars
+  Line 22:7:  'API_BASE_URL' is assigned a value but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+src/pages/PantryPage.js
+  Line 25:8:  'EditIcon' is defined but never used                                                                                 no-unused-vars
+  Line 28:8:  'CheckCircleIcon' is defined but never used                                                                          no-unused-vars
+  Line 46:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/Navbar.js
+  Line 3:18:  'RouterLink' is defined but never used  no-unused-vars
+
+src/components/Sidebar.js
+  Line 1:27:  'useEffect' is defined but never used              no-unused-vars
+  Line 14:3:  'TextField' is defined but never used              no-unused-vars
+  Line 15:3:  'Tooltip' is defined but never used                no-unused-vars
+  Line 18:8:  'RestaurantIcon' is defined but never used         no-unused-vars
+  Line 20:8:  'axios' is defined but never used                  no-unused-vars
+  Line 22:7:  'API_BASE_URL' is assigned a value but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+src/pages/PantryPage.js
+  Line 25:8:  'EditIcon' is defined but never used                                                                                 no-unused-vars
+  Line 28:8:  'CheckCircleIcon' is defined but never used                                                                          no-unused-vars
+  Line 46:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+webpack compiled with 1 warning
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/components/Navbar.js
+  Line 3:18:  'RouterLink' is defined but never used  no-unused-vars
+
+src/components/Sidebar.js
+  Line 1:27:  'useEffect' is defined but never used              no-unused-vars
+  Line 14:3:  'TextField' is defined but never used              no-unused-vars
+  Line 15:3:  'Tooltip' is defined but never used                no-unused-vars
+  Line 18:8:  'RestaurantIcon' is defined but never used         no-unused-vars
+  Line 20:8:  'axios' is defined but never used                  no-unused-vars
+  Line 22:7:  'API_BASE_URL' is assigned a value but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+src/pages/PantryPage.js
+  Line 25:8:  'EditIcon' is defined but never used                                                                                 no-unused-vars
+  Line 28:8:  'CheckCircleIcon' is defined but never used                                                                          no-unused-vars
+  Line 46:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/Navbar.js
+  Line 3:18:  'RouterLink' is defined but never used  no-unused-vars
+
+src/components/Sidebar.js
+  Line 1:27:  'useEffect' is defined but never used              no-unused-vars
+  Line 14:3:  'TextField' is defined but never used              no-unused-vars
+  Line 15:3:  'Tooltip' is defined but never used                no-unused-vars
+  Line 18:8:  'RestaurantIcon' is defined but never used         no-unused-vars
+  Line 20:8:  'axios' is defined but never used                  no-unused-vars
+  Line 22:7:  'API_BASE_URL' is assigned a value but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+src/pages/PantryPage.js
+  Line 25:8:  'EditIcon' is defined but never used                                                                                 no-unused-vars
+  Line 28:8:  'CheckCircleIcon' is defined but never used                                                                          no-unused-vars
+  Line 46:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+webpack compiled with 1 warning
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/components/Navbar.js
+  Line 3:18:  'RouterLink' is defined but never used  no-unused-vars
+
+src/components/Sidebar.js
+  Line 1:27:  'useEffect' is defined but never used                           no-unused-vars
+  Line 14:3:  'TextField' is defined but never used                           no-unused-vars
+  Line 15:3:  'Tooltip' is defined but never used                             no-unused-vars
+  Line 18:8:  'RestaurantIcon' is defined but never used                      no-unused-vars
+  Line 20:8:  'axios' is defined but never used                               no-unused-vars
+  Line 22:7:  'API_BASE_URL' is assigned a value but never used               no-unused-vars
+  Line 85:9:  'handleAddCustomAllergy' is assigned a value but never used     no-unused-vars
+  Line 99:9:  'handleRemoveCustomAllergy' is assigned a value but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+src/pages/PantryPage.js
+  Line 25:8:  'EditIcon' is defined but never used                                                                                 no-unused-vars
+  Line 28:8:  'CheckCircleIcon' is defined but never used                                                                          no-unused-vars
+  Line 46:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/Navbar.js
+  Line 3:18:  'RouterLink' is defined but never used  no-unused-vars
+
+src/components/Sidebar.js
+  Line 1:27:  'useEffect' is defined but never used                           no-unused-vars
+  Line 14:3:  'TextField' is defined but never used                           no-unused-vars
+  Line 15:3:  'Tooltip' is defined but never used                             no-unused-vars
+  Line 18:8:  'RestaurantIcon' is defined but never used                      no-unused-vars
+  Line 20:8:  'axios' is defined but never used                               no-unused-vars
+  Line 22:7:  'API_BASE_URL' is assigned a value but never used               no-unused-vars
+  Line 85:9:  'handleAddCustomAllergy' is assigned a value but never used     no-unused-vars
+  Line 99:9:  'handleRemoveCustomAllergy' is assigned a value but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+src/pages/PantryPage.js
+  Line 25:8:  'EditIcon' is defined but never used                                                                                 no-unused-vars
+  Line 28:8:  'CheckCircleIcon' is defined but never used                                                                          no-unused-vars
+  Line 46:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+webpack compiled with 1 warning
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/components/Navbar.js
+  Line 3:18:  'RouterLink' is defined but never used  no-unused-vars
+
+src/components/Sidebar.js
+  Line 1:27:  'useEffect' is defined but never used              no-unused-vars
+  Line 14:3:  'TextField' is defined but never used              no-unused-vars
+  Line 15:3:  'Tooltip' is defined but never used                no-unused-vars
+  Line 18:8:  'RestaurantIcon' is defined but never used         no-unused-vars
+  Line 20:8:  'axios' is defined but never used                  no-unused-vars
+  Line 22:7:  'API_BASE_URL' is assigned a value but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+src/pages/PantryPage.js
+  Line 25:8:  'EditIcon' is defined but never used                                                                                 no-unused-vars
+  Line 28:8:  'CheckCircleIcon' is defined but never used                                                                          no-unused-vars
+  Line 46:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/Navbar.js
+  Line 3:18:  'RouterLink' is defined but never used  no-unused-vars
+
+src/components/Sidebar.js
+  Line 1:27:  'useEffect' is defined but never used              no-unused-vars
+  Line 14:3:  'TextField' is defined but never used              no-unused-vars
+  Line 15:3:  'Tooltip' is defined but never used                no-unused-vars
+  Line 18:8:  'RestaurantIcon' is defined but never used         no-unused-vars
+  Line 20:8:  'axios' is defined but never used                  no-unused-vars
+  Line 22:7:  'API_BASE_URL' is assigned a value but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+src/pages/PantryPage.js
+  Line 25:8:  'EditIcon' is defined but never used                                                                                 no-unused-vars
+  Line 28:8:  'CheckCircleIcon' is defined but never used                                                                          no-unused-vars
+  Line 46:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+webpack compiled with 1 warning
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/components/Navbar.js
+  Line 3:18:  'RouterLink' is defined but never used  no-unused-vars
+
+src/components/Sidebar.js
+  Line 1:27:  'useEffect' is defined but never used              no-unused-vars
+  Line 14:3:  'TextField' is defined but never used              no-unused-vars
+  Line 15:3:  'Tooltip' is defined but never used                no-unused-vars
+  Line 18:8:  'RestaurantIcon' is defined but never used         no-unused-vars
+  Line 20:8:  'axios' is defined but never used                  no-unused-vars
+  Line 22:7:  'API_BASE_URL' is assigned a value but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+src/pages/PantryPage.js
+  Line 25:8:  'EditIcon' is defined but never used                                                                                 no-unused-vars
+  Line 28:8:  'CheckCircleIcon' is defined but never used                                                                          no-unused-vars
+  Line 46:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/Navbar.js
+  Line 3:18:  'RouterLink' is defined but never used  no-unused-vars
+
+src/components/Sidebar.js
+  Line 1:27:  'useEffect' is defined but never used              no-unused-vars
+  Line 14:3:  'TextField' is defined but never used              no-unused-vars
+  Line 15:3:  'Tooltip' is defined but never used                no-unused-vars
+  Line 18:8:  'RestaurantIcon' is defined but never used         no-unused-vars
+  Line 20:8:  'axios' is defined but never used                  no-unused-vars
+  Line 22:7:  'API_BASE_URL' is assigned a value but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+src/pages/PantryPage.js
+  Line 25:8:  'EditIcon' is defined but never used                                                                                 no-unused-vars
+  Line 28:8:  'CheckCircleIcon' is defined but never used                                                                          no-unused-vars
+  Line 46:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+webpack compiled with 1 warning
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/components/Sidebar.js
+  Line 1:27:  'useEffect' is defined but never used              no-unused-vars
+  Line 14:3:  'TextField' is defined but never used              no-unused-vars
+  Line 15:3:  'Tooltip' is defined but never used                no-unused-vars
+  Line 18:8:  'RestaurantIcon' is defined but never used         no-unused-vars
+  Line 20:8:  'axios' is defined but never used                  no-unused-vars
+  Line 22:7:  'API_BASE_URL' is assigned a value but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+src/pages/PantryPage.js
+  Line 25:8:  'EditIcon' is defined but never used                                                                                 no-unused-vars
+  Line 28:8:  'CheckCircleIcon' is defined but never used                                                                          no-unused-vars
+  Line 46:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/Sidebar.js
+  Line 1:27:  'useEffect' is defined but never used              no-unused-vars
+  Line 14:3:  'TextField' is defined but never used              no-unused-vars
+  Line 15:3:  'Tooltip' is defined but never used                no-unused-vars
+  Line 18:8:  'RestaurantIcon' is defined but never used         no-unused-vars
+  Line 20:8:  'axios' is defined but never used                  no-unused-vars
+  Line 22:7:  'API_BASE_URL' is assigned a value but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+src/pages/PantryPage.js
+  Line 25:8:  'EditIcon' is defined but never used                                                                                 no-unused-vars
+  Line 28:8:  'CheckCircleIcon' is defined but never used                                                                          no-unused-vars
+  Line 46:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+webpack compiled with 1 warning
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/components/Sidebar.js
+  Line 1:27:  'useEffect' is defined but never used              no-unused-vars
+  Line 14:3:  'TextField' is defined but never used              no-unused-vars
+  Line 15:3:  'Tooltip' is defined but never used                no-unused-vars
+  Line 17:8:  'TuneIcon' is defined but never used               no-unused-vars
+  Line 20:8:  'axios' is defined but never used                  no-unused-vars
+  Line 22:7:  'API_BASE_URL' is assigned a value but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+src/pages/PantryPage.js
+  Line 25:8:  'EditIcon' is defined but never used                                                                                 no-unused-vars
+  Line 28:8:  'CheckCircleIcon' is defined but never used                                                                          no-unused-vars
+  Line 46:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/Sidebar.js
+  Line 1:27:  'useEffect' is defined but never used              no-unused-vars
+  Line 14:3:  'TextField' is defined but never used              no-unused-vars
+  Line 15:3:  'Tooltip' is defined but never used                no-unused-vars
+  Line 17:8:  'TuneIcon' is defined but never used               no-unused-vars
+  Line 20:8:  'axios' is defined but never used                  no-unused-vars
+  Line 22:7:  'API_BASE_URL' is assigned a value but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+src/pages/PantryPage.js
+  Line 25:8:  'EditIcon' is defined but never used                                                                                 no-unused-vars
+  Line 28:8:  'CheckCircleIcon' is defined but never used                                                                          no-unused-vars
+  Line 46:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+webpack compiled with 1 warning
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/components/Sidebar.js
+  Line 1:27:  'useEffect' is defined but never used              no-unused-vars
+  Line 14:3:  'TextField' is defined but never used              no-unused-vars
+  Line 15:3:  'Tooltip' is defined but never used                no-unused-vars
+  Line 17:8:  'TuneIcon' is defined but never used               no-unused-vars
+  Line 20:8:  'axios' is defined but never used                  no-unused-vars
+  Line 22:7:  'API_BASE_URL' is assigned a value but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+src/pages/PantryPage.js
+  Line 25:8:  'EditIcon' is defined but never used                                                                                 no-unused-vars
+  Line 28:8:  'CheckCircleIcon' is defined but never used                                                                          no-unused-vars
+  Line 46:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/Sidebar.js
+  Line 1:27:  'useEffect' is defined but never used              no-unused-vars
+  Line 14:3:  'TextField' is defined but never used              no-unused-vars
+  Line 15:3:  'Tooltip' is defined but never used                no-unused-vars
+  Line 17:8:  'TuneIcon' is defined but never used               no-unused-vars
+  Line 20:8:  'axios' is defined but never used                  no-unused-vars
+  Line 22:7:  'API_BASE_URL' is assigned a value but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+src/pages/PantryPage.js
+  Line 25:8:  'EditIcon' is defined but never used                                                                                 no-unused-vars
+  Line 28:8:  'CheckCircleIcon' is defined but never used                                                                          no-unused-vars
+  Line 46:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+webpack compiled with 1 warning
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/components/Sidebar.js
+  Line 1:27:  'useEffect' is defined but never used              no-unused-vars
+  Line 14:3:  'TextField' is defined but never used              no-unused-vars
+  Line 15:3:  'Tooltip' is defined but never used                no-unused-vars
+  Line 17:8:  'TuneIcon' is defined but never used               no-unused-vars
+  Line 20:8:  'axios' is defined but never used                  no-unused-vars
+  Line 22:7:  'API_BASE_URL' is assigned a value but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+src/pages/PantryPage.js
+  Line 25:8:  'EditIcon' is defined but never used                                                                                 no-unused-vars
+  Line 28:8:  'CheckCircleIcon' is defined but never used                                                                          no-unused-vars
+  Line 46:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/Sidebar.js
+  Line 1:27:  'useEffect' is defined but never used              no-unused-vars
+  Line 14:3:  'TextField' is defined but never used              no-unused-vars
+  Line 15:3:  'Tooltip' is defined but never used                no-unused-vars
+  Line 17:8:  'TuneIcon' is defined but never used               no-unused-vars
+  Line 20:8:  'axios' is defined but never used                  no-unused-vars
+  Line 22:7:  'API_BASE_URL' is assigned a value but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+src/pages/PantryPage.js
+  Line 25:8:  'EditIcon' is defined but never used                                                                                 no-unused-vars
+  Line 28:8:  'CheckCircleIcon' is defined but never used                                                                          no-unused-vars
+  Line 46:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+webpack compiled with 1 warning
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/components/Sidebar.js
+  Line 1:27:  'useEffect' is defined but never used              no-unused-vars
+  Line 14:3:  'TextField' is defined but never used              no-unused-vars
+  Line 15:3:  'Tooltip' is defined but never used                no-unused-vars
+  Line 17:8:  'TuneIcon' is defined but never used               no-unused-vars
+  Line 20:8:  'axios' is defined but never used                  no-unused-vars
+  Line 22:7:  'API_BASE_URL' is assigned a value but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+src/pages/PantryPage.js
+  Line 25:8:  'EditIcon' is defined but never used                                                                                 no-unused-vars
+  Line 28:8:  'CheckCircleIcon' is defined but never used                                                                          no-unused-vars
+  Line 46:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/Sidebar.js
+  Line 1:27:  'useEffect' is defined but never used              no-unused-vars
+  Line 14:3:  'TextField' is defined but never used              no-unused-vars
+  Line 15:3:  'Tooltip' is defined but never used                no-unused-vars
+  Line 17:8:  'TuneIcon' is defined but never used               no-unused-vars
+  Line 20:8:  'axios' is defined but never used                  no-unused-vars
+  Line 22:7:  'API_BASE_URL' is assigned a value but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+src/pages/PantryPage.js
+  Line 25:8:  'EditIcon' is defined but never used                                                                                 no-unused-vars
+  Line 28:8:  'CheckCircleIcon' is defined but never used                                                                          no-unused-vars
+  Line 46:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+webpack compiled with 1 warning
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/components/Sidebar.js
+  Line 1:27:  'useEffect' is defined but never used              no-unused-vars
+  Line 14:3:  'TextField' is defined but never used              no-unused-vars
+  Line 15:3:  'Tooltip' is defined but never used                no-unused-vars
+  Line 17:8:  'TuneIcon' is defined but never used               no-unused-vars
+  Line 20:8:  'axios' is defined but never used                  no-unused-vars
+  Line 22:7:  'API_BASE_URL' is assigned a value but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+src/pages/PantryPage.js
+  Line 25:8:  'EditIcon' is defined but never used                                                                                 no-unused-vars
+  Line 28:8:  'CheckCircleIcon' is defined but never used                                                                          no-unused-vars
+  Line 46:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/Sidebar.js
+  Line 1:27:  'useEffect' is defined but never used              no-unused-vars
+  Line 14:3:  'TextField' is defined but never used              no-unused-vars
+  Line 15:3:  'Tooltip' is defined but never used                no-unused-vars
+  Line 17:8:  'TuneIcon' is defined but never used               no-unused-vars
+  Line 20:8:  'axios' is defined but never used                  no-unused-vars
+  Line 22:7:  'API_BASE_URL' is assigned a value but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+src/pages/PantryPage.js
+  Line 25:8:  'EditIcon' is defined but never used                                                                                 no-unused-vars
+  Line 28:8:  'CheckCircleIcon' is defined but never used                                                                          no-unused-vars
+  Line 46:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+webpack compiled with 1 warning
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/components/Sidebar.js
+  Line 1:27:  'useEffect' is defined but never used              no-unused-vars
+  Line 14:3:  'TextField' is defined but never used              no-unused-vars
+  Line 15:3:  'Tooltip' is defined but never used                no-unused-vars
+  Line 17:8:  'TuneIcon' is defined but never used               no-unused-vars
+  Line 20:8:  'axios' is defined but never used                  no-unused-vars
+  Line 22:7:  'API_BASE_URL' is assigned a value but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+src/pages/PantryPage.js
+  Line 25:8:  'EditIcon' is defined but never used                                                                                 no-unused-vars
+  Line 28:8:  'CheckCircleIcon' is defined but never used                                                                          no-unused-vars
+  Line 46:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/Sidebar.js
+  Line 1:27:  'useEffect' is defined but never used              no-unused-vars
+  Line 14:3:  'TextField' is defined but never used              no-unused-vars
+  Line 15:3:  'Tooltip' is defined but never used                no-unused-vars
+  Line 17:8:  'TuneIcon' is defined but never used               no-unused-vars
+  Line 20:8:  'axios' is defined but never used                  no-unused-vars
+  Line 22:7:  'API_BASE_URL' is assigned a value but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+src/pages/PantryPage.js
+  Line 25:8:  'EditIcon' is defined but never used                                                                                 no-unused-vars
+  Line 28:8:  'CheckCircleIcon' is defined but never used                                                                          no-unused-vars
+  Line 46:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+webpack compiled with 1 warning
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/components/Sidebar.js
+  Line 1:27:  'useEffect' is defined but never used              no-unused-vars
+  Line 14:3:  'TextField' is defined but never used              no-unused-vars
+  Line 15:3:  'Tooltip' is defined but never used                no-unused-vars
+  Line 17:8:  'TuneIcon' is defined but never used               no-unused-vars
+  Line 20:8:  'axios' is defined but never used                  no-unused-vars
+  Line 22:7:  'API_BASE_URL' is assigned a value but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+src/pages/PantryPage.js
+  Line 25:8:  'EditIcon' is defined but never used                                                                                 no-unused-vars
+  Line 28:8:  'CheckCircleIcon' is defined but never used                                                                          no-unused-vars
+  Line 46:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/Sidebar.js
+  Line 1:27:  'useEffect' is defined but never used              no-unused-vars
+  Line 14:3:  'TextField' is defined but never used              no-unused-vars
+  Line 15:3:  'Tooltip' is defined but never used                no-unused-vars
+  Line 17:8:  'TuneIcon' is defined but never used               no-unused-vars
+  Line 20:8:  'axios' is defined but never used                  no-unused-vars
+  Line 22:7:  'API_BASE_URL' is assigned a value but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+src/pages/PantryPage.js
+  Line 25:8:  'EditIcon' is defined but never used                                                                                 no-unused-vars
+  Line 28:8:  'CheckCircleIcon' is defined but never used                                                                          no-unused-vars
+  Line 46:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+webpack compiled with 1 warning
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/components/Sidebar.js
+  Line 1:27:  'useEffect' is defined but never used              no-unused-vars
+  Line 14:3:  'TextField' is defined but never used              no-unused-vars
+  Line 15:3:  'Tooltip' is defined but never used                no-unused-vars
+  Line 17:8:  'TuneIcon' is defined but never used               no-unused-vars
+  Line 20:8:  'axios' is defined but never used                  no-unused-vars
+  Line 22:7:  'API_BASE_URL' is assigned a value but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+src/pages/PantryPage.js
+  Line 25:8:  'EditIcon' is defined but never used                                                                                 no-unused-vars
+  Line 28:8:  'CheckCircleIcon' is defined but never used                                                                          no-unused-vars
+  Line 46:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/Sidebar.js
+  Line 1:27:  'useEffect' is defined but never used              no-unused-vars
+  Line 14:3:  'TextField' is defined but never used              no-unused-vars
+  Line 15:3:  'Tooltip' is defined but never used                no-unused-vars
+  Line 17:8:  'TuneIcon' is defined but never used               no-unused-vars
+  Line 20:8:  'axios' is defined but never used                  no-unused-vars
+  Line 22:7:  'API_BASE_URL' is assigned a value but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+src/pages/PantryPage.js
+  Line 25:8:  'EditIcon' is defined but never used                                                                                 no-unused-vars
+  Line 28:8:  'CheckCircleIcon' is defined but never used                                                                          no-unused-vars
+  Line 46:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+webpack compiled with 1 warning
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/components/Sidebar.js
+  Line 1:27:  'useEffect' is defined but never used              no-unused-vars
+  Line 14:3:  'TextField' is defined but never used              no-unused-vars
+  Line 15:3:  'Tooltip' is defined but never used                no-unused-vars
+  Line 17:8:  'TuneIcon' is defined but never used               no-unused-vars
+  Line 20:8:  'axios' is defined but never used                  no-unused-vars
+  Line 22:7:  'API_BASE_URL' is assigned a value but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+src/pages/PantryPage.js
+  Line 25:8:  'EditIcon' is defined but never used                                                                                 no-unused-vars
+  Line 28:8:  'CheckCircleIcon' is defined but never used                                                                          no-unused-vars
+  Line 46:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/Sidebar.js
+  Line 1:27:  'useEffect' is defined but never used              no-unused-vars
+  Line 14:3:  'TextField' is defined but never used              no-unused-vars
+  Line 15:3:  'Tooltip' is defined but never used                no-unused-vars
+  Line 17:8:  'TuneIcon' is defined but never used               no-unused-vars
+  Line 20:8:  'axios' is defined but never used                  no-unused-vars
+  Line 22:7:  'API_BASE_URL' is assigned a value but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+src/pages/PantryPage.js
+  Line 25:8:  'EditIcon' is defined but never used                                                                                 no-unused-vars
+  Line 28:8:  'CheckCircleIcon' is defined but never used                                                                          no-unused-vars
+  Line 46:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+webpack compiled with 1 warning
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/components/Sidebar.js
+  Line 1:27:  'useEffect' is defined but never used              no-unused-vars
+  Line 14:3:  'TextField' is defined but never used              no-unused-vars
+  Line 15:3:  'Tooltip' is defined but never used                no-unused-vars
+  Line 17:8:  'TuneIcon' is defined but never used               no-unused-vars
+  Line 20:8:  'axios' is defined but never used                  no-unused-vars
+  Line 22:7:  'API_BASE_URL' is assigned a value but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+src/pages/PantryPage.js
+  Line 25:8:  'EditIcon' is defined but never used                                                                                 no-unused-vars
+  Line 28:8:  'CheckCircleIcon' is defined but never used                                                                          no-unused-vars
+  Line 46:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/Sidebar.js
+  Line 1:27:  'useEffect' is defined but never used              no-unused-vars
+  Line 14:3:  'TextField' is defined but never used              no-unused-vars
+  Line 15:3:  'Tooltip' is defined but never used                no-unused-vars
+  Line 17:8:  'TuneIcon' is defined but never used               no-unused-vars
+  Line 20:8:  'axios' is defined but never used                  no-unused-vars
+  Line 22:7:  'API_BASE_URL' is assigned a value but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+src/pages/PantryPage.js
+  Line 25:8:  'EditIcon' is defined but never used                                                                                 no-unused-vars
+  Line 28:8:  'CheckCircleIcon' is defined but never used                                                                          no-unused-vars
+  Line 46:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+webpack compiled with 1 warning
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/components/Sidebar.js
+  Line 1:27:  'useEffect' is defined but never used              no-unused-vars
+  Line 14:3:  'TextField' is defined but never used              no-unused-vars
+  Line 15:3:  'Tooltip' is defined but never used                no-unused-vars
+  Line 17:8:  'TuneIcon' is defined but never used               no-unused-vars
+  Line 20:8:  'axios' is defined but never used                  no-unused-vars
+  Line 22:7:  'API_BASE_URL' is assigned a value but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+src/pages/PantryPage.js
+  Line 25:8:  'EditIcon' is defined but never used                                                                                 no-unused-vars
+  Line 28:8:  'CheckCircleIcon' is defined but never used                                                                          no-unused-vars
+  Line 46:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/Sidebar.js
+  Line 1:27:  'useEffect' is defined but never used              no-unused-vars
+  Line 14:3:  'TextField' is defined but never used              no-unused-vars
+  Line 15:3:  'Tooltip' is defined but never used                no-unused-vars
+  Line 17:8:  'TuneIcon' is defined but never used               no-unused-vars
+  Line 20:8:  'axios' is defined but never used                  no-unused-vars
+  Line 22:7:  'API_BASE_URL' is assigned a value but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+src/pages/PantryPage.js
+  Line 25:8:  'EditIcon' is defined but never used                                                                                 no-unused-vars
+  Line 28:8:  'CheckCircleIcon' is defined but never used                                                                          no-unused-vars
+  Line 46:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+webpack compiled with 1 warning
+Compiling...
+Failed to compile.
+
+[eslint] 
+src/components/Sidebar.js
+  Line 438:41:  'handleRemoveCustomRestriction' is not defined  no-undef
+  Line 592:41:  'handleRemoveCustomAllergy' is not defined      no-undef
+  Line 693:17:  'setHasUnsavedChanges' is not defined           no-undef
+  Line 818:10:  'hasUnsavedChanges' is not defined              no-undef
+  Line 830:24:  'handleSavePreferences' is not defined          no-undef
+
+Search for the keywords to learn more about each error.
+WARNING in [eslint] 
+src/components/Sidebar.js
+  Line 1:27:  'useEffect' is defined but never used                        no-unused-vars
+  Line 14:3:  'TextField' is defined but never used                        no-unused-vars
+  Line 15:3:  'Tooltip' is defined but never used                          no-unused-vars
+  Line 17:8:  'TuneIcon' is defined but never used                         no-unused-vars
+  Line 20:8:  'axios' is defined but never used                            no-unused-vars
+  Line 22:7:  'API_BASE_URL' is assigned a value but never used            no-unused-vars
+  Line 87:9:  'handleAddCustomCuisine' is assigned a value but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+src/pages/PantryPage.js
+  Line 25:8:  'EditIcon' is defined but never used                                                                                 no-unused-vars
+  Line 28:8:  'CheckCircleIcon' is defined but never used                                                                          no-unused-vars
+  Line 46:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+ERROR in [eslint] 
+src/components/Sidebar.js
+  Line 438:41:  'handleRemoveCustomRestriction' is not defined  no-undef
+  Line 592:41:  'handleRemoveCustomAllergy' is not defined      no-undef
+  Line 693:17:  'setHasUnsavedChanges' is not defined           no-undef
+  Line 818:10:  'hasUnsavedChanges' is not defined              no-undef
+  Line 830:24:  'handleSavePreferences' is not defined          no-undef
+
+Search for the keywords to learn more about each error.
+
+webpack compiled with 1 error and 1 warning
+Compiling...
+Failed to compile.
+
+[eslint] 
+src/components/Sidebar.js
+  Line 575:41:  'handleRemoveCustomAllergy' is not defined  no-undef
+  Line 676:17:  'setHasUnsavedChanges' is not defined       no-undef
+  Line 801:10:  'hasUnsavedChanges' is not defined          no-undef
+  Line 813:24:  'handleSavePreferences' is not defined      no-undef
+
+Search for the keywords to learn more about each error.
+WARNING in [eslint] 
+src/components/Sidebar.js
+  Line 1:27:  'useEffect' is defined but never used                        no-unused-vars
+  Line 14:3:  'TextField' is defined but never used                        no-unused-vars
+  Line 15:3:  'Tooltip' is defined but never used                          no-unused-vars
+  Line 17:8:  'TuneIcon' is defined but never used                         no-unused-vars
+  Line 20:8:  'axios' is defined but never used                            no-unused-vars
+  Line 22:7:  'API_BASE_URL' is assigned a value but never used            no-unused-vars
+  Line 87:9:  'handleAddCustomCuisine' is assigned a value but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+src/pages/PantryPage.js
+  Line 25:8:  'EditIcon' is defined but never used                                                                                 no-unused-vars
+  Line 28:8:  'CheckCircleIcon' is defined but never used                                                                          no-unused-vars
+  Line 46:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+ERROR in [eslint] 
+src/components/Sidebar.js
+  Line 575:41:  'handleRemoveCustomAllergy' is not defined  no-undef
+  Line 676:17:  'setHasUnsavedChanges' is not defined       no-undef
+  Line 801:10:  'hasUnsavedChanges' is not defined          no-undef
+  Line 813:24:  'handleSavePreferences' is not defined      no-undef
+
+Search for the keywords to learn more about each error.
+
+webpack compiled with 1 error and 1 warning
+Compiling...
+Failed to compile.
+
+[eslint] 
+src/components/Sidebar.js
+  Line 659:17:  'setHasUnsavedChanges' is not defined   no-undef
+  Line 784:10:  'hasUnsavedChanges' is not defined      no-undef
+  Line 796:24:  'handleSavePreferences' is not defined  no-undef
+
+Search for the keywords to learn more about each error.
+WARNING in [eslint] 
+src/components/Sidebar.js
+  Line 1:27:  'useEffect' is defined but never used                        no-unused-vars
+  Line 8:3:   'FormGroup' is defined but never used                        no-unused-vars
+  Line 10:3:  'Checkbox' is defined but never used                         no-unused-vars
+  Line 14:3:  'TextField' is defined but never used                        no-unused-vars
+  Line 15:3:  'Tooltip' is defined but never used                          no-unused-vars
+  Line 17:8:  'TuneIcon' is defined but never used                         no-unused-vars
+  Line 20:8:  'axios' is defined but never used                            no-unused-vars
+  Line 22:7:  'API_BASE_URL' is assigned a value but never used            no-unused-vars
+  Line 87:9:  'handleAddCustomCuisine' is assigned a value but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+src/pages/PantryPage.js
+  Line 25:8:  'EditIcon' is defined but never used                                                                                 no-unused-vars
+  Line 28:8:  'CheckCircleIcon' is defined but never used                                                                          no-unused-vars
+  Line 46:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+ERROR in [eslint] 
+src/components/Sidebar.js
+  Line 659:17:  'setHasUnsavedChanges' is not defined   no-undef
+  Line 784:10:  'hasUnsavedChanges' is not defined      no-undef
+  Line 796:24:  'handleSavePreferences' is not defined  no-undef
+
+Search for the keywords to learn more about each error.
+
+webpack compiled with 1 error and 1 warning
+Compiling...
+Failed to compile.
+
+[eslint] 
+src/components/Sidebar.js
+  Line 742:17:  'setHasUnsavedChanges' is not defined   no-undef
+  Line 867:10:  'hasUnsavedChanges' is not defined      no-undef
+  Line 879:24:  'handleSavePreferences' is not defined  no-undef
+
+Search for the keywords to learn more about each error.
+WARNING in [eslint] 
+src/components/Sidebar.js
+  Line 1:27:  'useEffect' is defined but never used              no-unused-vars
+  Line 8:3:   'FormGroup' is defined but never used              no-unused-vars
+  Line 10:3:  'Checkbox' is defined but never used               no-unused-vars
+  Line 14:3:  'TextField' is defined but never used              no-unused-vars
+  Line 15:3:  'Tooltip' is defined but never used                no-unused-vars
+  Line 17:8:  'TuneIcon' is defined but never used               no-unused-vars
+  Line 20:8:  'axios' is defined but never used                  no-unused-vars
+  Line 22:7:  'API_BASE_URL' is assigned a value but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+src/pages/PantryPage.js
+  Line 25:8:  'EditIcon' is defined but never used                                                                                 no-unused-vars
+  Line 28:8:  'CheckCircleIcon' is defined but never used                                                                          no-unused-vars
+  Line 46:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+ERROR in [eslint] 
+src/components/Sidebar.js
+  Line 742:17:  'setHasUnsavedChanges' is not defined   no-undef
+  Line 867:10:  'hasUnsavedChanges' is not defined      no-undef
+  Line 879:24:  'handleSavePreferences' is not defined  no-undef
+
+Search for the keywords to learn more about each error.
+
+webpack compiled with 1 error and 1 warning
+Compiling...
+Failed to compile.
+
+[eslint] 
+src/components/Sidebar.js
+  Line 866:10:  'hasUnsavedChanges' is not defined      no-undef
+  Line 878:24:  'handleSavePreferences' is not defined  no-undef
+
+Search for the keywords to learn more about each error.
+WARNING in [eslint] 
+src/components/Sidebar.js
+  Line 1:27:  'useEffect' is defined but never used              no-unused-vars
+  Line 8:3:   'FormGroup' is defined but never used              no-unused-vars
+  Line 10:3:  'Checkbox' is defined but never used               no-unused-vars
+  Line 14:3:  'TextField' is defined but never used              no-unused-vars
+  Line 15:3:  'Tooltip' is defined but never used                no-unused-vars
+  Line 17:8:  'TuneIcon' is defined but never used               no-unused-vars
+  Line 20:8:  'axios' is defined but never used                  no-unused-vars
+  Line 22:7:  'API_BASE_URL' is assigned a value but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+src/pages/PantryPage.js
+  Line 25:8:  'EditIcon' is defined but never used                                                                                 no-unused-vars
+  Line 28:8:  'CheckCircleIcon' is defined but never used                                                                          no-unused-vars
+  Line 46:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+ERROR in [eslint] 
+src/components/Sidebar.js
+  Line 866:10:  'hasUnsavedChanges' is not defined      no-undef
+  Line 878:24:  'handleSavePreferences' is not defined  no-undef
+
+Search for the keywords to learn more about each error.
+
+webpack compiled with 1 error and 1 warning
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/components/Sidebar.js
+  Line 1:27:  'useEffect' is defined but never used              no-unused-vars
+  Line 8:3:   'FormGroup' is defined but never used              no-unused-vars
+  Line 10:3:  'Checkbox' is defined but never used               no-unused-vars
+  Line 14:3:  'TextField' is defined but never used              no-unused-vars
+  Line 15:3:  'Tooltip' is defined but never used                no-unused-vars
+  Line 17:8:  'TuneIcon' is defined but never used               no-unused-vars
+  Line 20:8:  'axios' is defined but never used                  no-unused-vars
+  Line 22:7:  'API_BASE_URL' is assigned a value but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+src/pages/PantryPage.js
+  Line 25:8:  'EditIcon' is defined but never used                                                                                 no-unused-vars
+  Line 28:8:  'CheckCircleIcon' is defined but never used                                                                          no-unused-vars
+  Line 46:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/Sidebar.js
+  Line 1:27:  'useEffect' is defined but never used              no-unused-vars
+  Line 8:3:   'FormGroup' is defined but never used              no-unused-vars
+  Line 10:3:  'Checkbox' is defined but never used               no-unused-vars
+  Line 14:3:  'TextField' is defined but never used              no-unused-vars
+  Line 15:3:  'Tooltip' is defined but never used                no-unused-vars
+  Line 17:8:  'TuneIcon' is defined but never used               no-unused-vars
+  Line 20:8:  'axios' is defined but never used                  no-unused-vars
+  Line 22:7:  'API_BASE_URL' is assigned a value but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+src/pages/PantryPage.js
+  Line 25:8:  'EditIcon' is defined but never used                                                                                 no-unused-vars
+  Line 28:8:  'CheckCircleIcon' is defined but never used                                                                          no-unused-vars
+  Line 46:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+webpack compiled with 1 warning
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/components/Navbar.js
+  Line 4:8:  'RestaurantIcon' is defined but never used  no-unused-vars
+
+src/components/Sidebar.js
+  Line 1:27:  'useEffect' is defined but never used              no-unused-vars
+  Line 8:3:   'FormGroup' is defined but never used              no-unused-vars
+  Line 10:3:  'Checkbox' is defined but never used               no-unused-vars
+  Line 14:3:  'TextField' is defined but never used              no-unused-vars
+  Line 15:3:  'Tooltip' is defined but never used                no-unused-vars
+  Line 17:8:  'TuneIcon' is defined but never used               no-unused-vars
+  Line 20:8:  'axios' is defined but never used                  no-unused-vars
+  Line 22:7:  'API_BASE_URL' is assigned a value but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+src/pages/PantryPage.js
+  Line 25:8:  'EditIcon' is defined but never used                                                                                 no-unused-vars
+  Line 28:8:  'CheckCircleIcon' is defined but never used                                                                          no-unused-vars
+  Line 46:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/Navbar.js
+  Line 4:8:  'RestaurantIcon' is defined but never used  no-unused-vars
+
+src/components/Sidebar.js
+  Line 1:27:  'useEffect' is defined but never used              no-unused-vars
+  Line 8:3:   'FormGroup' is defined but never used              no-unused-vars
+  Line 10:3:  'Checkbox' is defined but never used               no-unused-vars
+  Line 14:3:  'TextField' is defined but never used              no-unused-vars
+  Line 15:3:  'Tooltip' is defined but never used                no-unused-vars
+  Line 17:8:  'TuneIcon' is defined but never used               no-unused-vars
+  Line 20:8:  'axios' is defined but never used                  no-unused-vars
+  Line 22:7:  'API_BASE_URL' is assigned a value but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+src/pages/PantryPage.js
+  Line 25:8:  'EditIcon' is defined but never used                                                                                 no-unused-vars
+  Line 28:8:  'CheckCircleIcon' is defined but never used                                                                          no-unused-vars
+  Line 46:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+webpack compiled with 1 warning
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/components/Navbar.js
+  Line 4:8:  'RestaurantIcon' is defined but never used  no-unused-vars
+
+src/components/Sidebar.js
+  Line 1:27:  'useEffect' is defined but never used              no-unused-vars
+  Line 8:3:   'FormGroup' is defined but never used              no-unused-vars
+  Line 10:3:  'Checkbox' is defined but never used               no-unused-vars
+  Line 14:3:  'TextField' is defined but never used              no-unused-vars
+  Line 15:3:  'Tooltip' is defined but never used                no-unused-vars
+  Line 17:8:  'TuneIcon' is defined but never used               no-unused-vars
+  Line 20:8:  'axios' is defined but never used                  no-unused-vars
+  Line 22:7:  'API_BASE_URL' is assigned a value but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+src/pages/PantryPage.js
+  Line 25:8:  'EditIcon' is defined but never used                                                                                 no-unused-vars
+  Line 28:8:  'CheckCircleIcon' is defined but never used                                                                          no-unused-vars
+  Line 46:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/Navbar.js
+  Line 4:8:  'RestaurantIcon' is defined but never used  no-unused-vars
+
+src/components/Sidebar.js
+  Line 1:27:  'useEffect' is defined but never used              no-unused-vars
+  Line 8:3:   'FormGroup' is defined but never used              no-unused-vars
+  Line 10:3:  'Checkbox' is defined but never used               no-unused-vars
+  Line 14:3:  'TextField' is defined but never used              no-unused-vars
+  Line 15:3:  'Tooltip' is defined but never used                no-unused-vars
+  Line 17:8:  'TuneIcon' is defined but never used               no-unused-vars
+  Line 20:8:  'axios' is defined but never used                  no-unused-vars
+  Line 22:7:  'API_BASE_URL' is assigned a value but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+src/pages/PantryPage.js
+  Line 25:8:  'EditIcon' is defined but never used                                                                                 no-unused-vars
+  Line 28:8:  'CheckCircleIcon' is defined but never used                                                                          no-unused-vars
+  Line 46:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+webpack compiled with 1 warning
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/components/Navbar.js
+  Line 4:8:  'RestaurantIcon' is defined but never used  no-unused-vars
+
+src/components/Sidebar.js
+  Line 1:27:  'useEffect' is defined but never used              no-unused-vars
+  Line 8:3:   'FormGroup' is defined but never used              no-unused-vars
+  Line 10:3:  'Checkbox' is defined but never used               no-unused-vars
+  Line 14:3:  'TextField' is defined but never used              no-unused-vars
+  Line 15:3:  'Tooltip' is defined but never used                no-unused-vars
+  Line 17:8:  'TuneIcon' is defined but never used               no-unused-vars
+  Line 20:8:  'axios' is defined but never used                  no-unused-vars
+  Line 22:7:  'API_BASE_URL' is assigned a value but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+src/pages/PantryPage.js
+  Line 25:8:  'EditIcon' is defined but never used                                                                                 no-unused-vars
+  Line 28:8:  'CheckCircleIcon' is defined but never used                                                                          no-unused-vars
+  Line 46:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/Navbar.js
+  Line 4:8:  'RestaurantIcon' is defined but never used  no-unused-vars
+
+src/components/Sidebar.js
+  Line 1:27:  'useEffect' is defined but never used              no-unused-vars
+  Line 8:3:   'FormGroup' is defined but never used              no-unused-vars
+  Line 10:3:  'Checkbox' is defined but never used               no-unused-vars
+  Line 14:3:  'TextField' is defined but never used              no-unused-vars
+  Line 15:3:  'Tooltip' is defined but never used                no-unused-vars
+  Line 17:8:  'TuneIcon' is defined but never used               no-unused-vars
+  Line 20:8:  'axios' is defined but never used                  no-unused-vars
+  Line 22:7:  'API_BASE_URL' is assigned a value but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+src/pages/PantryPage.js
+  Line 25:8:  'EditIcon' is defined but never used                                                                                 no-unused-vars
+  Line 28:8:  'CheckCircleIcon' is defined but never used                                                                          no-unused-vars
+  Line 46:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+webpack compiled with 1 warning
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/components/Navbar.js
+  Line 4:8:  'RestaurantIcon' is defined but never used  no-unused-vars
+
+src/components/Sidebar.js
+  Line 1:27:  'useEffect' is defined but never used              no-unused-vars
+  Line 8:3:   'FormGroup' is defined but never used              no-unused-vars
+  Line 10:3:  'Checkbox' is defined but never used               no-unused-vars
+  Line 14:3:  'TextField' is defined but never used              no-unused-vars
+  Line 15:3:  'Tooltip' is defined but never used                no-unused-vars
+  Line 17:8:  'TuneIcon' is defined but never used               no-unused-vars
+  Line 20:8:  'axios' is defined but never used                  no-unused-vars
+  Line 22:7:  'API_BASE_URL' is assigned a value but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+src/pages/PantryPage.js
+  Line 25:8:  'EditIcon' is defined but never used                                                                                 no-unused-vars
+  Line 28:8:  'CheckCircleIcon' is defined but never used                                                                          no-unused-vars
+  Line 46:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/Navbar.js
+  Line 4:8:  'RestaurantIcon' is defined but never used  no-unused-vars
+
+src/components/Sidebar.js
+  Line 1:27:  'useEffect' is defined but never used              no-unused-vars
+  Line 8:3:   'FormGroup' is defined but never used              no-unused-vars
+  Line 10:3:  'Checkbox' is defined but never used               no-unused-vars
+  Line 14:3:  'TextField' is defined but never used              no-unused-vars
+  Line 15:3:  'Tooltip' is defined but never used                no-unused-vars
+  Line 17:8:  'TuneIcon' is defined but never used               no-unused-vars
+  Line 20:8:  'axios' is defined but never used                  no-unused-vars
+  Line 22:7:  'API_BASE_URL' is assigned a value but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+src/pages/PantryPage.js
+  Line 25:8:  'EditIcon' is defined but never used                                                                                 no-unused-vars
+  Line 28:8:  'CheckCircleIcon' is defined but never used                                                                          no-unused-vars
+  Line 46:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+webpack compiled with 1 warning
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/components/Navbar.js
+  Line 4:8:  'RestaurantIcon' is defined but never used  no-unused-vars
+
+src/components/Sidebar.js
+  Line 1:27:  'useEffect' is defined but never used              no-unused-vars
+  Line 8:3:   'FormGroup' is defined but never used              no-unused-vars
+  Line 10:3:  'Checkbox' is defined but never used               no-unused-vars
+  Line 14:3:  'TextField' is defined but never used              no-unused-vars
+  Line 15:3:  'Tooltip' is defined but never used                no-unused-vars
+  Line 17:8:  'TuneIcon' is defined but never used               no-unused-vars
+  Line 20:8:  'axios' is defined but never used                  no-unused-vars
+  Line 22:7:  'API_BASE_URL' is assigned a value but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+src/pages/PantryPage.js
+  Line 25:8:  'EditIcon' is defined but never used                                                                                 no-unused-vars
+  Line 28:8:  'CheckCircleIcon' is defined but never used                                                                          no-unused-vars
+  Line 46:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/Navbar.js
+  Line 4:8:  'RestaurantIcon' is defined but never used  no-unused-vars
+
+src/components/Sidebar.js
+  Line 1:27:  'useEffect' is defined but never used              no-unused-vars
+  Line 8:3:   'FormGroup' is defined but never used              no-unused-vars
+  Line 10:3:  'Checkbox' is defined but never used               no-unused-vars
+  Line 14:3:  'TextField' is defined but never used              no-unused-vars
+  Line 15:3:  'Tooltip' is defined but never used                no-unused-vars
+  Line 17:8:  'TuneIcon' is defined but never used               no-unused-vars
+  Line 20:8:  'axios' is defined but never used                  no-unused-vars
+  Line 22:7:  'API_BASE_URL' is assigned a value but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+src/pages/PantryPage.js
+  Line 25:8:  'EditIcon' is defined but never used                                                                                 no-unused-vars
+  Line 28:8:  'CheckCircleIcon' is defined but never used                                                                          no-unused-vars
+  Line 46:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+webpack compiled with 1 warning
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/components/Navbar.js
+  Line 4:8:  'RestaurantIcon' is defined but never used  no-unused-vars
+
+src/components/Sidebar.js
+  Line 1:27:  'useEffect' is defined but never used              no-unused-vars
+  Line 8:3:   'FormGroup' is defined but never used              no-unused-vars
+  Line 10:3:  'Checkbox' is defined but never used               no-unused-vars
+  Line 14:3:  'TextField' is defined but never used              no-unused-vars
+  Line 15:3:  'Tooltip' is defined but never used                no-unused-vars
+  Line 17:8:  'TuneIcon' is defined but never used               no-unused-vars
+  Line 20:8:  'axios' is defined but never used                  no-unused-vars
+  Line 22:7:  'API_BASE_URL' is assigned a value but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+src/pages/PantryPage.js
+  Line 25:8:  'EditIcon' is defined but never used                                                                                 no-unused-vars
+  Line 28:8:  'CheckCircleIcon' is defined but never used                                                                          no-unused-vars
+  Line 46:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/Navbar.js
+  Line 4:8:  'RestaurantIcon' is defined but never used  no-unused-vars
+
+src/components/Sidebar.js
+  Line 1:27:  'useEffect' is defined but never used              no-unused-vars
+  Line 8:3:   'FormGroup' is defined but never used              no-unused-vars
+  Line 10:3:  'Checkbox' is defined but never used               no-unused-vars
+  Line 14:3:  'TextField' is defined but never used              no-unused-vars
+  Line 15:3:  'Tooltip' is defined but never used                no-unused-vars
+  Line 17:8:  'TuneIcon' is defined but never used               no-unused-vars
+  Line 20:8:  'axios' is defined but never used                  no-unused-vars
+  Line 22:7:  'API_BASE_URL' is assigned a value but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+src/pages/PantryPage.js
+  Line 25:8:  'EditIcon' is defined but never used                                                                                 no-unused-vars
+  Line 28:8:  'CheckCircleIcon' is defined but never used                                                                          no-unused-vars
+  Line 46:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+webpack compiled with 1 warning
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/components/Navbar.js
+  Line 4:8:  'RestaurantIcon' is defined but never used  no-unused-vars
+
+src/components/Sidebar.js
+  Line 1:27:  'useEffect' is defined but never used              no-unused-vars
+  Line 8:3:   'FormGroup' is defined but never used              no-unused-vars
+  Line 10:3:  'Checkbox' is defined but never used               no-unused-vars
+  Line 14:3:  'TextField' is defined but never used              no-unused-vars
+  Line 15:3:  'Tooltip' is defined but never used                no-unused-vars
+  Line 17:8:  'TuneIcon' is defined but never used               no-unused-vars
+  Line 20:8:  'axios' is defined but never used                  no-unused-vars
+  Line 22:7:  'API_BASE_URL' is assigned a value but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+src/pages/PantryPage.js
+  Line 25:8:  'EditIcon' is defined but never used                                                                                 no-unused-vars
+  Line 28:8:  'CheckCircleIcon' is defined but never used                                                                          no-unused-vars
+  Line 46:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/Navbar.js
+  Line 4:8:  'RestaurantIcon' is defined but never used  no-unused-vars
+
+src/components/Sidebar.js
+  Line 1:27:  'useEffect' is defined but never used              no-unused-vars
+  Line 8:3:   'FormGroup' is defined but never used              no-unused-vars
+  Line 10:3:  'Checkbox' is defined but never used               no-unused-vars
+  Line 14:3:  'TextField' is defined but never used              no-unused-vars
+  Line 15:3:  'Tooltip' is defined but never used                no-unused-vars
+  Line 17:8:  'TuneIcon' is defined but never used               no-unused-vars
+  Line 20:8:  'axios' is defined but never used                  no-unused-vars
+  Line 22:7:  'API_BASE_URL' is assigned a value but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+src/pages/PantryPage.js
+  Line 25:8:  'EditIcon' is defined but never used                                                                                 no-unused-vars
+  Line 28:8:  'CheckCircleIcon' is defined but never used                                                                          no-unused-vars
+  Line 46:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+webpack compiled with 1 warning
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/components/Navbar.js
+  Line 4:8:  'RestaurantIcon' is defined but never used  no-unused-vars
+
+src/components/Sidebar.js
+  Line 1:27:  'useEffect' is defined but never used              no-unused-vars
+  Line 8:3:   'FormGroup' is defined but never used              no-unused-vars
+  Line 10:3:  'Checkbox' is defined but never used               no-unused-vars
+  Line 14:3:  'TextField' is defined but never used              no-unused-vars
+  Line 15:3:  'Tooltip' is defined but never used                no-unused-vars
+  Line 17:8:  'TuneIcon' is defined but never used               no-unused-vars
+  Line 20:8:  'axios' is defined but never used                  no-unused-vars
+  Line 22:7:  'API_BASE_URL' is assigned a value but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+src/pages/PantryPage.js
+  Line 25:8:  'EditIcon' is defined but never used                                                                                 no-unused-vars
+  Line 28:8:  'CheckCircleIcon' is defined but never used                                                                          no-unused-vars
+  Line 46:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/Navbar.js
+  Line 4:8:  'RestaurantIcon' is defined but never used  no-unused-vars
+
+src/components/Sidebar.js
+  Line 1:27:  'useEffect' is defined but never used              no-unused-vars
+  Line 8:3:   'FormGroup' is defined but never used              no-unused-vars
+  Line 10:3:  'Checkbox' is defined but never used               no-unused-vars
+  Line 14:3:  'TextField' is defined but never used              no-unused-vars
+  Line 15:3:  'Tooltip' is defined but never used                no-unused-vars
+  Line 17:8:  'TuneIcon' is defined but never used               no-unused-vars
+  Line 20:8:  'axios' is defined but never used                  no-unused-vars
+  Line 22:7:  'API_BASE_URL' is assigned a value but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+src/pages/PantryPage.js
+  Line 25:8:  'EditIcon' is defined but never used                                                                                 no-unused-vars
+  Line 28:8:  'CheckCircleIcon' is defined but never used                                                                          no-unused-vars
+  Line 46:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+webpack compiled with 1 warning
+Compiling...
+Compiled with warnings.
+
+[eslint] 
+src/components/Navbar.js
+  Line 4:8:  'RestaurantIcon' is defined but never used  no-unused-vars
+
+src/components/Sidebar.js
+  Line 1:27:  'useEffect' is defined but never used              no-unused-vars
+  Line 8:3:   'FormGroup' is defined but never used              no-unused-vars
+  Line 10:3:  'Checkbox' is defined but never used               no-unused-vars
+  Line 14:3:  'TextField' is defined but never used              no-unused-vars
+  Line 15:3:  'Tooltip' is defined but never used                no-unused-vars
+  Line 17:8:  'TuneIcon' is defined but never used               no-unused-vars
+  Line 20:8:  'axios' is defined but never used                  no-unused-vars
+  Line 22:7:  'API_BASE_URL' is assigned a value but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+src/pages/PantryPage.js
+  Line 25:8:  'EditIcon' is defined but never used                                                                                 no-unused-vars
+  Line 28:8:  'CheckCircleIcon' is defined but never used                                                                          no-unused-vars
+  Line 46:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+WARNING in [eslint] 
+src/components/Navbar.js
+  Line 4:8:  'RestaurantIcon' is defined but never used  no-unused-vars
+
+src/components/Sidebar.js
+  Line 1:27:  'useEffect' is defined but never used              no-unused-vars
+  Line 8:3:   'FormGroup' is defined but never used              no-unused-vars
+  Line 10:3:  'Checkbox' is defined but never used               no-unused-vars
+  Line 14:3:  'TextField' is defined but never used              no-unused-vars
+  Line 15:3:  'Tooltip' is defined but never used                no-unused-vars
+  Line 17:8:  'TuneIcon' is defined but never used               no-unused-vars
+  Line 20:8:  'axios' is defined but never used                  no-unused-vars
+  Line 22:7:  'API_BASE_URL' is assigned a value but never used  no-unused-vars
+
+src/pages/PantryManagement.js
+  Line 36:6:   React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  Line 63:13:  'response' is assigned a value but never used                                                                        no-unused-vars
+
+src/pages/PantryPage.js
+  Line 25:8:  'EditIcon' is defined but never used                                                                                 no-unused-vars
+  Line 28:8:  'CheckCircleIcon' is defined but never used                                                                          no-unused-vars
+  Line 46:6:  React Hook useEffect has a missing dependency: 'fetchPantryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+webpack compiled with 1 warning

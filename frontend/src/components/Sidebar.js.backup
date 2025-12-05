@@ -1,0 +1,443 @@
+import React, { useState, useEffect } from 'react';
+import {
+  Box,
+  Drawer,
+  Typography,
+  TextField,
+  Button,
+  List,
+  ListItem,
+  ListItemText,
+  IconButton,
+  Divider,
+  Chip,
+  Collapse,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  InputAdornment,
+  Alert,
+  Snackbar,
+} from '@mui/material';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import DeleteIcon from '@mui/icons-material/Delete';
+import AddIcon from '@mui/icons-material/Add';
+import KitchenIcon from '@mui/icons-material/Kitchen';
+import TuneIcon from '@mui/icons-material/Tune';
+import RestaurantIcon from '@mui/icons-material/Restaurant';
+import axios from 'axios';
+
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+
+function Sidebar({ open, width, pantryItems, setPantryItems, preferences, setPreferences }) {
+  const [newItem, setNewItem] = useState({
+    ingredient_name: '',
+    quantity: '',
+    expire_date: '',
+  });
+  const [newRestriction, setNewRestriction] = useState('');
+  const [newFavorite, setNewFavorite] = useState('');
+  const [newDislike, setNewDislike] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+
+  // Fetch pantry items on mount
+  useEffect(() => {
+    fetchPantryItems();
+  }, []);
+
+  const fetchPantryItems = async () => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/pantry/inventory`);
+      setPantryItems(response.data.items || []);
+    } catch (err) {
+      console.error('Error fetching pantry:', err);
+    }
+  };
+
+  const handleAddItem = async () => {
+    if (!newItem.ingredient_name || !newItem.quantity) {
+      showSnackbar('Please fill in ingredient name and quantity', 'error');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await axios.post(`${API_BASE_URL}/pantry/add`, {
+        ingredient_name: newItem.ingredient_name,
+        quantity: parseInt(newItem.quantity),
+        expire_date: newItem.expire_date || undefined,
+      });
+
+      showSnackbar(`Added ${newItem.ingredient_name}!`, 'success');
+      setNewItem({ ingredient_name: '', quantity: '', expire_date: '' });
+      await fetchPantryItems();
+    } catch (err) {
+      showSnackbar('Failed to add item', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteItem = async (itemId) => {
+    try {
+      await axios.delete(`${API_BASE_URL}/pantry/remove/${itemId}`);
+      showSnackbar('Item removed', 'success');
+      await fetchPantryItems();
+    } catch (err) {
+      showSnackbar('Failed to remove item', 'error');
+    }
+  };
+
+  const handleAddRestriction = () => {
+    if (newRestriction.trim()) {
+      setPreferences({
+        ...preferences,
+        dietaryRestrictions: [...preferences.dietaryRestrictions, newRestriction.trim()],
+      });
+      setNewRestriction('');
+    }
+  };
+
+  const handleAddFavorite = () => {
+    if (newFavorite.trim()) {
+      setPreferences({
+        ...preferences,
+        favoriteIngredients: [...preferences.favoriteIngredients, newFavorite.trim()],
+      });
+      setNewFavorite('');
+    }
+  };
+
+  const handleAddDislike = () => {
+    if (newDislike.trim()) {
+      setPreferences({
+        ...preferences,
+        dislikedIngredients: [...preferences.dislikedIngredients, newDislike.trim()],
+      });
+      setNewDislike('');
+    }
+  };
+
+  const showSnackbar = (message, severity) => {
+    setSnackbar({ open: true, message, severity });
+  };
+
+  const getExpiryStatus = (expireDate) => {
+    if (!expireDate) return null;
+    const today = new Date();
+    const expiry = new Date(expireDate);
+    const daysUntilExpiry = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24));
+
+    if (daysUntilExpiry < 0) return { color: '#eb5757', text: 'Expired' };
+    if (daysUntilExpiry <= 3) return { color: '#f2994a', text: `${daysUntilExpiry}d left` };
+    return { color: '#27ae60', text: `${daysUntilExpiry}d left` };
+  };
+
+  return (
+    <>
+      <Drawer
+        variant="persistent"
+        anchor="left"
+        open={open}
+        sx={{
+          width: open ? width : 0,
+          flexShrink: 0,
+          '& .MuiDrawer-paper': {
+            width: width,
+            boxSizing: 'border-box',
+            backgroundColor: '#fbfbfa',
+            borderRight: '1px solid #e9e9e7',
+            overflow: 'hidden',
+          },
+        }}
+      >
+        <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
+          {/* Header */}
+          <Box sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+            <RestaurantIcon sx={{ color: '#2eaadc', fontSize: 28 }} />
+            <Typography variant="h6" sx={{ fontWeight: 700, color: '#37352f' }}>
+              Leftovr
+            </Typography>
+          </Box>
+
+          <Divider />
+
+          {/* Scrollable Content */}
+          <Box sx={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
+            {/* Pantry Section */}
+            <Accordion defaultExpanded disableGutters elevation={0} sx={{ backgroundColor: 'transparent' }}>
+              <AccordionSummary
+                expandIcon={<ExpandMoreIcon />}
+                sx={{
+                  px: 2,
+                  py: 1,
+                  '&:hover': { backgroundColor: '#f1f1ef' },
+                  minHeight: 48,
+                  '&.Mui-expanded': { minHeight: 48 },
+                }}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <KitchenIcon sx={{ fontSize: 20, color: '#787774' }} />
+                  <Typography variant="body1" sx={{ fontWeight: 600, color: '#37352f' }}>
+                    My Pantry
+                  </Typography>
+                  <Chip label={pantryItems.length} size="small" sx={{ height: 20, fontSize: '0.75rem' }} />
+                </Box>
+              </AccordionSummary>
+              <AccordionDetails sx={{ px: 2, pt: 0, pb: 2 }}>
+                {/* Add Item Form */}
+                <Box sx={{ mb: 2 }}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    placeholder="Ingredient name"
+                    value={newItem.ingredient_name}
+                    onChange={(e) => setNewItem({ ...newItem, ingredient_name: e.target.value })}
+                    sx={{ mb: 1 }}
+                  />
+                  <Box sx={{ display: 'flex', gap: 1, mb: 1 }}>
+                    <TextField
+                      size="small"
+                      placeholder="Qty"
+                      type="number"
+                      value={newItem.quantity}
+                      onChange={(e) => setNewItem({ ...newItem, quantity: e.target.value })}
+                      sx={{ flex: 1 }}
+                    />
+                    <TextField
+                      size="small"
+                      type="date"
+                      value={newItem.expire_date}
+                      onChange={(e) => setNewItem({ ...newItem, expire_date: e.target.value })}
+                      sx={{ flex: 1 }}
+                    />
+                  </Box>
+                  <Button
+                    fullWidth
+                    size="small"
+                    variant="contained"
+                    startIcon={<AddIcon />}
+                    onClick={handleAddItem}
+                    disabled={loading}
+                    sx={{ textTransform: 'none' }}
+                  >
+                    Add to Pantry
+                  </Button>
+                </Box>
+
+                {/* Pantry Items List */}
+                <List dense sx={{ pt: 0 }}>
+                  {pantryItems.length === 0 ? (
+                    <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 2 }}>
+                      Your pantry is empty
+                    </Typography>
+                  ) : (
+                    pantryItems.map((item) => {
+                      const expiryStatus = getExpiryStatus(item.expire_date);
+                      return (
+                        <ListItem
+                          key={item.id}
+                          sx={{
+                            px: 1.5,
+                            py: 0.5,
+                            borderRadius: 1,
+                            mb: 0.5,
+                            '&:hover': {
+                              backgroundColor: '#f1f1ef',
+                              '& .delete-icon': { opacity: 1 },
+                            },
+                          }}
+                        >
+                          <ListItemText
+                            primary={item.name || item.ingredient_name}
+                            secondary={
+                              <Box component="span" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                <Typography component="span" variant="caption">
+                                  Qty: {item.quantity}
+                                </Typography>
+                                {expiryStatus && (
+                                  <Chip
+                                    label={expiryStatus.text}
+                                    size="small"
+                                    sx={{
+                                      height: 16,
+                                      fontSize: '0.65rem',
+                                      backgroundColor: expiryStatus.color,
+                                      color: 'white',
+                                    }}
+                                  />
+                                )}
+                              </Box>
+                            }
+                            primaryTypographyProps={{ variant: 'body2', fontWeight: 500 }}
+                            secondaryTypographyProps={{ variant: 'caption' }}
+                          />
+                          <IconButton
+                            className="delete-icon"
+                            size="small"
+                            onClick={() => handleDeleteItem(item.id)}
+                            sx={{ opacity: 0, transition: 'opacity 0.2s' }}
+                          >
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                        </ListItem>
+                      );
+                    })
+                  )}
+                </List>
+              </AccordionDetails>
+            </Accordion>
+
+            <Divider />
+
+            {/* Preferences Section */}
+            <Accordion disableGutters elevation={0} sx={{ backgroundColor: 'transparent' }}>
+              <AccordionSummary
+                expandIcon={<ExpandMoreIcon />}
+                sx={{
+                  px: 2,
+                  py: 1,
+                  '&:hover': { backgroundColor: '#f1f1ef' },
+                  minHeight: 48,
+                  '&.Mui-expanded': { minHeight: 48 },
+                }}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <TuneIcon sx={{ fontSize: 20, color: '#787774' }} />
+                  <Typography variant="body1" sx={{ fontWeight: 600, color: '#37352f' }}>
+                    Preferences
+                  </Typography>
+                </Box>
+              </AccordionSummary>
+              <AccordionDetails sx={{ px: 2, pt: 0, pb: 2 }}>
+                {/* Dietary Restrictions */}
+                <Box sx={{ mb: 2 }}>
+                  <Typography variant="caption" sx={{ fontWeight: 600, color: '#787774', mb: 0.5, display: 'block' }}>
+                    Dietary Restrictions
+                  </Typography>
+                  <Box sx={{ display: 'flex', gap: 1, mb: 1 }}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      placeholder="e.g., vegetarian, gluten-free"
+                      value={newRestriction}
+                      onChange={(e) => setNewRestriction(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && handleAddRestriction()}
+                    />
+                    <IconButton size="small" onClick={handleAddRestriction} color="primary">
+                      <AddIcon />
+                    </IconButton>
+                  </Box>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                    {preferences.dietaryRestrictions.map((item, idx) => (
+                      <Chip
+                        key={idx}
+                        label={item}
+                        size="small"
+                        onDelete={() =>
+                          setPreferences({
+                            ...preferences,
+                            dietaryRestrictions: preferences.dietaryRestrictions.filter((_, i) => i !== idx),
+                          })
+                        }
+                      />
+                    ))}
+                  </Box>
+                </Box>
+
+                {/* Favorite Ingredients */}
+                <Box sx={{ mb: 2 }}>
+                  <Typography variant="caption" sx={{ fontWeight: 600, color: '#787774', mb: 0.5, display: 'block' }}>
+                    Favorite Ingredients
+                  </Typography>
+                  <Box sx={{ display: 'flex', gap: 1, mb: 1 }}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      placeholder="e.g., chicken, basil"
+                      value={newFavorite}
+                      onChange={(e) => setNewFavorite(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && handleAddFavorite()}
+                    />
+                    <IconButton size="small" onClick={handleAddFavorite} color="primary">
+                      <AddIcon />
+                    </IconButton>
+                  </Box>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                    {preferences.favoriteIngredients.map((item, idx) => (
+                      <Chip
+                        key={idx}
+                        label={item}
+                        size="small"
+                        color="primary"
+                        variant="outlined"
+                        onDelete={() =>
+                          setPreferences({
+                            ...preferences,
+                            favoriteIngredients: preferences.favoriteIngredients.filter((_, i) => i !== idx),
+                          })
+                        }
+                      />
+                    ))}
+                  </Box>
+                </Box>
+
+                {/* Disliked Ingredients */}
+                <Box>
+                  <Typography variant="caption" sx={{ fontWeight: 600, color: '#787774', mb: 0.5, display: 'block' }}>
+                    Disliked Ingredients
+                  </Typography>
+                  <Box sx={{ display: 'flex', gap: 1, mb: 1 }}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      placeholder="e.g., mushrooms, olives"
+                      value={newDislike}
+                      onChange={(e) => setNewDislike(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && handleAddDislike()}
+                    />
+                    <IconButton size="small" onClick={handleAddDislike} color="secondary">
+                      <AddIcon />
+                    </IconButton>
+                  </Box>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                    {preferences.dislikedIngredients.map((item, idx) => (
+                      <Chip
+                        key={idx}
+                        label={item}
+                        size="small"
+                        color="secondary"
+                        variant="outlined"
+                        onDelete={() =>
+                          setPreferences({
+                            ...preferences,
+                            dislikedIngredients: preferences.dislikedIngredients.filter((_, i) => i !== idx),
+                          })
+                        }
+                      />
+                    ))}
+                  </Box>
+                </Box>
+              </AccordionDetails>
+            </Accordion>
+          </Box>
+        </Box>
+      </Drawer>
+
+      {/* Snackbar for notifications */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={3000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+      >
+        <Alert severity={snackbar.severity} onClose={() => setSnackbar({ ...snackbar, open: false })}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
+    </>
+  );
+}
+
+export default Sidebar;
