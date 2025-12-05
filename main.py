@@ -20,7 +20,7 @@ from langgraph.types import Command
 load_dotenv()
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-
+print(f"Using OpenAI API Key: {'set' if OPENAI_API_KEY else 'not set'}")
 # LangSmith tracing configuration
 LANGCHAIN_TRACING_V2 = os.getenv("LANGCHAIN_TRACING_V2", "true")
 LANGCHAIN_API_KEY = os.getenv("LANGCHAIN_API_KEY")
@@ -38,7 +38,7 @@ else:
 # Initialize OpenAI client with GPT-4o for optimal performance
 # NOTE: JSON mode only used for llm_classifier (structured data extraction)
 llm = ChatOpenAI(
-    model="gpt-4o",
+    model="gpt-5-pro",
     temperature=0.7,  # Default for general use
     api_key=OPENAI_API_KEY
 )
