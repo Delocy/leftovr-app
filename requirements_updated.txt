@@ -1,0 +1,35 @@
+# Core Framework - FastAPI Backend
+fastapi==0.115.0
+uvicorn[standard]==0.32.0
+pydantic==2.12.3
+pydantic_core==2.41.4
+python-dotenv==1.1.1
+
+# LangChain & LangGraph (Agent Workflow)
+langchain-core==0.3.79
+langchain-openai==0.3.35
+langgraph==0.6.10
+langgraph-checkpoint==2.1.2
+langgraph-prebuilt==0.6.4
+langgraph-sdk==0.2.9
+langsmith==0.4.37
+
+# OpenAI
+openai==2.5.0
+
+# Vector Database & Embeddings
+pinecone==8.0.0
+sentence-transformers==5.1.2
+# Note: torch will be installed as dependency of sentence-transformers
+
+# Data Processing
+pandas==2.3.3
+numpy==2.0.2
+
+# NLP & Text Processing
+inflect==7.0.0
+tiktoken==0.12.0
+
+# Utilities
+python-dateutil==2.9.0.post0
+requests==2.32.5

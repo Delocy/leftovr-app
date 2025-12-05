@@ -110,5 +110,11 @@ class PantryDatabase:
         with self.get_connection() as conn:
             conn.execute("DELETE FROM food_items WHERE id = ?", (id,))
             conn.commit()
+    
+    def clear_all_food_items(self):
+        """Clear all food items from the database (for testing)."""
+        with self.get_connection() as conn:
+            conn.execute("DELETE FROM food_items")
+            conn.commit()
 
 

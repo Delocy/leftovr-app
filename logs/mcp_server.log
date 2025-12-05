@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "/Users/SG4111/Desktop/me/leftovr-app/mcp/server.py", line 35, in <module>
+    import inflect
+ModuleNotFoundError: No module named 'inflect'
