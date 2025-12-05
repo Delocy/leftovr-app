@@ -1,6 +1,6 @@
 """
-Leftovr - Refactored LangGraph Workflow
-Clean separation: Streamlit = Frontend | LangGraph = Backend Logic
+Leftovr - LangGraph Workflow Backend
+Multi-agent orchestration for recipe recommendations and pantry management
 """
 
 import os
@@ -60,7 +60,9 @@ llm_creative = ChatOpenAI(
 
 from agents.recipe_knowledge_agent import RecipeKnowledgeAgent
 from agents.executive_chef_agent import ExecutiveChefAgent
-from agents.pantry_agent import PantryAgent
+# TEMPORARILY USING SIMPLIFIED PANTRY AGENT (no MCP)
+from agents.pantry_agent_simple import SimplePantryAgent as PantryAgent
+# from agents.pantry_agent import PantryAgent  # Re-enable for MCP
 from agents.sous_chef_agent import SousChefAgent
 
 
@@ -107,8 +109,8 @@ class RecipeWorkflowState(MessagesState):
 
 class LeftovrWorkflow:
     """
-    Clean LangGraph workflow with specialized nodes.
-    Streamlit handles UI, this handles all logic.
+    LangGraph workflow orchestrating multi-agent collaboration.
+    FastAPI/React handle UI, this handles business logic and agent coordination.
     """
 
     def __init__(self):
@@ -116,24 +118,27 @@ class LeftovrWorkflow:
         self.exec_chef = ExecutiveChefAgent(name="Maison D'Être")
         self.pantry = PantryAgent(name="Pantry Manager")
 
+        # TEMPORARILY DISABLED: MCP server connection
+        # TODO: Re-enable MCP for production deployment
+        print("ℹ️  MCP server temporarily disabled - using direct database access")
         # Connect pantry agent to MCP server
-        import asyncio
-        try:
-            # Try to connect synchronously
-            try:
-                loop = asyncio.get_running_loop()
-            except RuntimeError:
-                # No running loop - safe to use asyncio.run()
-                asyncio.run(self.pantry.ensure_connected())
-            else:
-                # Already in a loop - use run_in_executor with a new thread
-                import concurrent.futures
-                with concurrent.futures.ThreadPoolExecutor() as executor:
-                    future = executor.submit(asyncio.run, self.pantry.ensure_connected())
-                    future.result()
-        except Exception as e:
-            print(f"⚠️  Warning: Could not connect to MCP server: {e}")
-            print("   Make sure mcp/server.py is available")
+        # import asyncio
+        # try:
+        #     # Try to connect synchronously
+        #     try:
+        #         loop = asyncio.get_running_loop()
+        #     except RuntimeError:
+        #         # No running loop - safe to use asyncio.run()
+        #         asyncio.run(self.pantry.ensure_connected())
+        #     else:
+        #         # Already in a loop - use run_in_executor with a new thread
+        #         import concurrent.futures
+        #         with concurrent.futures.ThreadPoolExecutor() as executor:
+        #             future = executor.submit(asyncio.run, self.pantry.ensure_connected())
+        #             future.result()
+        # except Exception as e:
+        #     print(f"⚠️  Warning: Could not connect to MCP server: {e}")
+        #     print("   Make sure mcp/server.py is available")
 
         # Initialize Recipe Knowledge Agent (Pinecone as primary data source)
         self.recipe_agent = RecipeKnowledgeAgent(data_dir='data')
@@ -148,14 +153,14 @@ class LeftovrWorkflow:
                 print(f"   ℹ️  Directions not loaded (optional): {e}")
 
             if self.recipe_agent.pinecone_index:
-                print("✅ Recipe Knowledge Agent initialized with Milvus cloud search")
+                print("✅ Recipe Knowledge Agent initialized with Pinecone vector search")
             else:
-                print("⚠️  Recipe Knowledge Agent: Milvus connection failed")
-                print("   Run the ingestion script: python scripts/ingest_recipes_milvus.py --input assets/full_dataset.csv --outdir data --build-milvus")
+                print("⚠️  Recipe Knowledge Agent: Pinecone connection failed")
+                print("   Run the ingestion script: python scripts/ingest_recipes_pinecone.py")
                 self.recipe_agent = None
         except Exception as e:
             print(f"⚠️  Warning: {e}")
-            print("   Make sure Milvus is set up and ZILLIZ_CLUSTER_ENDPOINT and ZILLIZ_TOKEN are set")
+            print("   Make sure Pinecone is set up and PINECONE_API_KEY is set in .env")
             self.recipe_agent = None
 
         # Wire pantry to recipe agent
@@ -169,20 +174,22 @@ class LeftovrWorkflow:
 
     def __del__(self):
         """Cleanup: disconnect from MCP server when workflow is destroyed"""
-        try:
-            if hasattr(self, 'pantry') and self.pantry._connected:
-                import asyncio
-                try:
-                    loop = asyncio.get_running_loop()
-                except RuntimeError:
-                    asyncio.run(self.pantry.disconnect())
-                else:
-                    import concurrent.futures
-                    with concurrent.futures.ThreadPoolExecutor() as executor:
-                        future = executor.submit(asyncio.run, self.pantry.disconnect())
-                        future.result()
-        except Exception as e:
-            print(f"Warning during cleanup: {e}")
+        # TEMPORARILY DISABLED: MCP cleanup
+        pass
+        # try:
+        #     if hasattr(self, 'pantry') and self.pantry._connected:
+        #         import asyncio
+        #         try:
+        #             loop = asyncio.get_running_loop()
+        #         except RuntimeError:
+        #             asyncio.run(self.pantry.disconnect())
+        #         else:
+        #             import concurrent.futures
+        #             with concurrent.futures.ThreadPoolExecutor() as executor:
+        #                 future = executor.submit(asyncio.run, self.pantry.disconnect())
+        #                 future.result()
+        # except Exception as e:
+        #     print(f"Warning during cleanup: {e}")
 
     def _build_graph(self) -> StateGraph:
         """Build the simplified LangGraph workflow"""
@@ -777,7 +784,7 @@ class LeftovrWorkflow:
     async def ainvoke(self, input_state: Dict[str, Any]) -> Dict[str, Any]:
         """
         Async invoke the workflow.
-        Called by Streamlit frontend.
+        Called by FastAPI backend endpoints.
         """
         # Ensure required fields
         if "user_message" not in input_state:

@@ -1,0 +1,24 @@
+# Core Backend
+fastapi==0.123.7
+uvicorn==0.38.0
+python-dotenv==1.1.1
+python-multipart
+
+# AI/ML Core
+numpy<2.0
+torch>=2.0.0
+sentence-transformers>=5.0.0
+pinecone>=8.0.0
+
+# LangChain/LangGraph
+langchain-core>=0.3.0
+langchain-openai>=0.3.0
+langgraph>=0.6.0
+openai>=2.0.0
+
+# MCP Server
+inflect>=7.0.0
+
+# Utilities
+requests>=2.32.0
+pydantic>=2.0.0

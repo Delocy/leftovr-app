@@ -35,17 +35,17 @@ fi
 echo -e "${GREEN}✓${NC} Python 3.11 found"
 
 # Check if virtual environment exists
-if [ ! -d "api/venv" ]; then
+if [ ! -d ".venv" ]; then
     echo -e "${YELLOW}⚠ Virtual environment not found. Creating...${NC}"
-    python3.11 -m venv api/venv
+    python3.11 -m venv .venv
     echo -e "${GREEN}✓${NC} Virtual environment created"
 fi
 
 # Check if dependencies are installed
 echo -e "${YELLOW}Checking dependencies...${NC}"
-if ! api/venv/bin/pip list | grep -q fastapi; then
+if ! .venv/bin/pip list | grep -q fastapi; then
     echo -e "${YELLOW}⚠ Installing dependencies...${NC}"
-    api/venv/bin/pip install -q -r requirements.txt
+    .venv/bin/pip install -q -r requirements.txt
     echo -e "${GREEN}✓${NC} Dependencies installed"
 else
     echo -e "${GREEN}✓${NC} Dependencies already installed"
@@ -68,10 +68,10 @@ echo ""
 cleanup() {
     echo ""
     echo -e "${YELLOW}Shutting down servers...${NC}"
-    if [ ! -z "$MCP_PID" ]; then
-        kill $MCP_PID 2>/dev/null || true
-        echo -e "${GREEN}✓${NC} MCP Server stopped"
-    fi
+    # if [ ! -z "$MCP_PID" ]; then
+    #     kill $MCP_PID 2>/dev/null || true
+    #     echo -e "${GREEN}✓${NC} MCP Server stopped"
+    # fi
     if [ ! -z "$API_PID" ]; then
         kill $API_PID 2>/dev/null || true
         echo -e "${GREEN}✓${NC} FastAPI Server stopped"
@@ -82,23 +82,13 @@ cleanup() {
 # Set up trap for cleanup on script exit
 trap cleanup SIGINT SIGTERM EXIT
 
-# Start MCP Server
-echo -e "${BLUE}Starting MCP Server...${NC}"
-python3.11 mcp/server.py > logs/mcp_server.log 2>&1 &
-MCP_PID=$!
-sleep 2
-
-if ps -p $MCP_PID > /dev/null; then
-    echo -e "${GREEN}✓${NC} MCP Server running (PID: $MCP_PID)"
-else
-    echo -e "${RED}❌ MCP Server failed to start${NC}"
-    echo "Check logs/mcp_server.log for details"
-    exit 1
-fi
+# MCP Server temporarily disabled
+echo -e "${YELLOW}ℹ️  MCP Server temporarily disabled (using direct DB access)${NC}"
+echo ""
 
 # Start FastAPI Server
 echo -e "${BLUE}Starting FastAPI Server...${NC}"
-api/venv/bin/python3.11 api/server.py > logs/api_server.log 2>&1 &
+.venv/bin/python api/server.py > logs/api_server.log 2>&1 &
 API_PID=$!
 sleep 3
 
@@ -107,7 +97,7 @@ if ps -p $API_PID > /dev/null; then
 else
     echo -e "${RED}❌ FastAPI Server failed to start${NC}"
     echo "Check logs/api_server.log for details"
-    kill $MCP_PID 2>/dev/null || true
+    # kill $MCP_PID 2>/dev/null || true
     exit 1
 fi
 
@@ -132,7 +122,6 @@ echo -e "   FastAPI: ${BLUE}http://localhost:8000${NC}"
 echo -e "   Docs:    ${BLUE}http://localhost:8000/docs${NC}"
 echo ""
 echo -e "📝 Logs:"
-echo -e "   MCP:     tail -f logs/mcp_server.log"
 echo -e "   API:     tail -f logs/api_server.log"
 echo ""
 echo -e "Press ${RED}Ctrl+C${NC} to stop all servers"
