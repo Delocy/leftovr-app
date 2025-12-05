@@ -1,14 +1,14 @@
-"""Recipe Knowledge Agent with Pinecone Vector Database
+"""Recipe Knowledge Agent with Zilliz Cloud (Milvus) Vector Database
 
-Uses Pinecone as the primary data source for all recipe data.
+Uses Zilliz Cloud (managed Milvus) as the primary data source for all recipe data.
 All metadata (id, title, ingredients, source, link) and embeddings are stored in the cloud.
 
 Installation:
-    pip install pinecone-client sentence-transformers
+    pip install pymilvus sentence-transformers
 
 Usage:
     agent = RecipeKnowledgeAgent()
-    agent.setup_pinecone()
+    agent.setup_milvus()
 """
 from __future__ import annotations
 
@@ -16,7 +16,7 @@ import json
 import os
 import re
 from typing import List, Dict, Tuple, Optional, Iterable, Set, Any
-from pinecone import Pinecone, ServerlessSpec
+from pymilvus import MilvusClient, DataType
 
 try:
     from sentence_transformers import SentenceTransformer
@@ -43,11 +43,10 @@ class RecipeKnowledgeAgent:
     def __init__(self, data_dir: str = 'data') -> None:
         self.data_dir = data_dir
         self.directions_cache: Dict[int, List[str]] = {}
-        self.pinecone_client = None
-        self.pinecone_index = None
+        self.milvus_client = None
         self.embed_model = None
         self.embed_dim = None
-        self.index_name = "leftovr-recipes"
+        self.collection_name = "recipes"
         self.pantry_agent = None  # Injected PantryAgent for inventory access
 
     def load_directions(self, path: Optional[str] = None) -> None:
@@ -76,9 +75,9 @@ class RecipeKnowledgeAgent:
 
         print(f"✅ Loaded directions for {len(self.directions_cache):,} recipes")
 
-    def setup_pinecone(self, embed_model_name: str = 'all-MiniLM-L6-v2') -> None:
+    def setup_milvus(self, embed_model_name: str = 'all-MiniLM-L6-v2') -> None:
         """
-        Initialize Pinecone client and connect to existing index.
+        Initialize Zilliz Cloud (Milvus) client and connect to existing collection.
 
         Args:
             embed_model_name: SentenceTransformer model name
@@ -88,44 +87,44 @@ class RecipeKnowledgeAgent:
             return
 
         try:
-            PINECONE_API_KEY = os.environ.get('PINECONE_API_KEY')
+            ZILLIZ_CLUSTER_ENDPOINT = os.environ.get('ZILLIZ_CLUSTER_ENDPOINT')
+            ZILLIZ_TOKEN = os.environ.get('ZILLIZ_TOKEN')
 
-            if not PINECONE_API_KEY:
-                print("❌ Error: PINECONE_API_KEY env variable not set.")
-                print("   Please set it before running with Pinecone enabled")
+            if not ZILLIZ_CLUSTER_ENDPOINT or not ZILLIZ_TOKEN:
+                print("❌ Error: ZILLIZ_CLUSTER_ENDPOINT and ZILLIZ_TOKEN env variables not set.")
+                print("   Please set them before running with Milvus enabled")
                 return
 
-            # Initialize Pinecone client
-            print(f"🔧 Connecting to Pinecone...")
-            self.pinecone_client = Pinecone(api_key=PINECONE_API_KEY)
+            # Initialize Zilliz Cloud client
+            print(f"🔧 Connecting to Zilliz Cloud...")
+            self.milvus_client = MilvusClient(uri=ZILLIZ_CLUSTER_ENDPOINT, token=ZILLIZ_TOKEN)
 
             # Load embedding model
             print(f"📦 Loading embedding model: {embed_model_name}...")
             self.embed_model = SentenceTransformer(embed_model_name)
             self.embed_dim = self.embed_model.get_sentence_embedding_dimension()
 
-            # Check if index exists
-            indexes = self.pinecone_client.list_indexes()
-            index_names = [idx['name'] for idx in indexes]
-            
-            if self.index_name in index_names:
-                self.pinecone_index = self.pinecone_client.Index(self.index_name)
-                stats = self.pinecone_index.describe_index_stats()
-                print(f"✅ Connected to Pinecone index '{self.index_name}'")
-                print(f"   📊 Total recipes in cloud: {stats.get('total_vector_count', 'unknown')}")
+            # Check if collection exists
+            collections = self.milvus_client.list_collections()
+            collection_exists = self.collection_name in collections
+
+            if collection_exists:
+                print(f"✅ Connected to Milvus collection '{self.collection_name}'")
+                # Get collection info
+                stats = self.milvus_client.get_collection_stats(self.collection_name)
+                print(f"   📊 Total recipes in cloud: {stats.get('row_count', 'unknown')}")
             else:
-                print(f"❌ Index '{self.index_name}' not found!")
-                print(f"   Please run: python scripts/ingest_recipes_pinecone.py --input assets/full_dataset.csv --outdir data")
-                self.pinecone_client = None
+                print(f"❌ Collection '{self.collection_name}' not found!")
+                print(f"   Please run: python scripts/ingest_recipes_milvus.py --input assets/full_dataset.csv --outdir data --build-milvus")
+                self.milvus_client = None
 
         except Exception as e:
-            print(f"❌ Pinecone setup failed: {e}")
-            self.pinecone_client = None
-            self.pinecone_index = None
+            print(f"❌ Zilliz Cloud setup failed: {e}")
+            self.milvus_client = None
 
     def get_recipe_by_id(self, recipe_id: int) -> Optional[Dict[str, Any]]:
         """
-        Fetch a single recipe from Pinecone by ID.
+        Fetch a single recipe from Milvus by ID.
 
         Args:
             recipe_id: Recipe ID
@@ -134,25 +133,19 @@ class RecipeKnowledgeAgent:
             Recipe dict with {id, title, ingredients, source, link, directions (if cached)}
             or None if not found
         """
-        if not self.pinecone_index:
-            print("⚠️  Pinecone not connected")
+        if not self.milvus_client:
+            print("⚠️  Milvus not connected")
             return None
 
         try:
-            result = self.pinecone_index.fetch(ids=[str(recipe_id)])
-            
-            if result and 'vectors' in result and str(recipe_id) in result['vectors']:
-                vector_data = result['vectors'][str(recipe_id)]
-                metadata = vector_data.get('metadata', {})
-                
-                recipe = {
-                    'id': recipe_id,
-                    'title': metadata.get('title', ''),
-                    'ingredients': metadata.get('ingredients', []),
-                    'source': metadata.get('source', ''),
-                    'link': metadata.get('link', '')
-                }
-                
+            results = self.milvus_client.query(
+                collection_name=self.collection_name,
+                filter=f"id == {recipe_id}",
+                output_fields=["id", "title", "ingredients", "source", "link"]
+            )
+
+            if results and len(results) > 0:
+                recipe = results[0]
                 if recipe_id in self.directions_cache:
                     recipe['directions'] = self.directions_cache[recipe_id]
                 # Use 'ingredients' field (already normalized) as 'ner' for compatibility
@@ -166,7 +159,7 @@ class RecipeKnowledgeAgent:
 
     def get_recipes_by_ids(self, recipe_ids: List[int]) -> Dict[int, Dict[str, Any]]:
         """
-        Batch fetch multiple recipes from Pinecone.
+        Batch fetch multiple recipes from Milvus.
 
         Args:
             recipe_ids: List of recipe IDs
@@ -174,38 +167,33 @@ class RecipeKnowledgeAgent:
         Returns:
             Dict mapping recipe_id -> recipe_dict
         """
-        if not self.pinecone_index:
+        if not self.milvus_client:
             return {}
 
         if not recipe_ids:
             return {}
 
         try:
-            # Fetch recipes from Pinecone (IDs must be strings)
-            str_ids = [str(rid) for rid in recipe_ids]
-            result = self.pinecone_index.fetch(ids=str_ids)
+            # Build filter expression for multiple IDs
+            id_filter = " or ".join([f"id == {rid}" for rid in recipe_ids])
+
+            results = self.milvus_client.query(
+                collection_name=self.collection_name,
+                filter=id_filter,
+                output_fields=["id", "title", "ingredients", "source", "link"],
+                limit=len(recipe_ids)
+            )
 
             # Build result map
             recipe_map = {}
-            if result and 'vectors' in result:
-                for str_id, vector_data in result['vectors'].items():
-                    rid = int(str_id)
-                    metadata = vector_data.get('metadata', {})
-                    
-                    recipe = {
-                        'id': rid,
-                        'title': metadata.get('title', ''),
-                        'ingredients': metadata.get('ingredients', []),
-                        'source': metadata.get('source', ''),
-                        'link': metadata.get('link', '')
-                    }
-                    
-                    # Add directions from cache if available
-                    if rid in self.directions_cache:
-                        recipe['directions'] = self.directions_cache[rid]
-                    # Use 'ingredients' field as 'ner' for compatibility
-                    recipe['ner'] = recipe.get('ingredients', [])
-                    recipe_map[rid] = recipe
+            for recipe in results:
+                rid = recipe['id']
+                # Add directions from cache if available
+                if rid in self.directions_cache:
+                    recipe['directions'] = self.directions_cache[rid]
+                # Use 'ingredients' field as 'ner' for compatibility
+                recipe['ner'] = recipe.get('ingredients', [])
+                recipe_map[rid] = recipe
 
             return recipe_map
         except Exception as e:
@@ -284,9 +272,9 @@ class RecipeKnowledgeAgent:
 
     def pantry_candidates(self, pantry_items: Iterable[str], allow_missing: int = 0, top_k: int = 200) -> List[Tuple[int, float, int, List[str]]]:
         """
-        LEFTOVR MODE: Find recipes using Pinecone metadata filtering (cloud-based search)
+        LEFTOVR MODE: Find recipes using Milvus array filtering (cloud-based search)
 
-        Uses metadata filters to find recipes with matching ingredients.
+        Uses 'array_contains_any' to find recipes with matching ingredients.
         Philosophy: Using MORE leftovers = BETTER (not just coverage %)
 
         Args:
@@ -297,8 +285,8 @@ class RecipeKnowledgeAgent:
         Returns:
             List of (recipe_id, score, num_pantry_used, missing_ingredients)
         """
-        if not self.pinecone_index:
-            print("⚠️  Pinecone not connected, cannot search recipes")
+        if not self.milvus_client:
+            print("⚠️  Milvus not connected, cannot search recipes")
             return []
 
         pantry = set(self.normalize_ingredients(pantry_items))
@@ -306,28 +294,26 @@ class RecipeKnowledgeAgent:
             return []
 
         try:
-            # Query all recipes (we'll filter client-side due to Pinecone metadata filter limitations)
-            # Note: Pinecone doesn't support complex array filtering, so we do a vector search
-            # with a dummy vector and fetch more results, then filter locally
-            
-            # Create a query based on pantry ingredients
+            # Query Milvus for recipes containing ANY of the pantry ingredients
+            # Use array_contains_any to find matching recipes
             pantry_list = list(pantry)
-            query_text = f"Ingredients: {', '.join(pantry_list)}"
-            query_vector = self.embed_model.encode(query_text, normalize_embeddings=True).tolist()
-            
-            # Query Pinecone for similar recipes (get more candidates for local filtering)
-            results = self.pinecone_index.query(
-                vector=query_vector,
-                top_k=1000,  # Get more candidates for scoring
-                include_metadata=True
+
+            # Build filter: ingredients array contains any pantry item
+            filter_expr = " or ".join([f'array_contains(ingredients, "{ing}")' for ing in pantry_list[:50]])  # Limit to prevent huge query
+
+            # Fetch candidates from Milvus
+            results = self.milvus_client.query(
+                collection_name=self.collection_name,
+                filter=filter_expr,
+                output_fields=["id", "title", "ingredients", "source", "link"],
+                limit=1000  # Get more candidates for scoring
             )
 
             # Score and filter results
             scored_results = []
-            for match in results.get('matches', []):
-                rid = int(match['id'])
-                metadata = match.get('metadata', {})
-                recipe_ingredients = set(metadata.get('ingredients', []))
+            for recipe in results:
+                rid = recipe['id']
+                recipe_ingredients = set(recipe.get('ingredients', []))
 
                 if not recipe_ingredients:
                     continue
@@ -364,7 +350,7 @@ class RecipeKnowledgeAgent:
         filter_ingredients: Optional[List[str]] = None
     ) -> List[Tuple[int, float]]:
         """
-        Semantic search using Pinecone with all-MiniLM-L6-v2 embeddings
+        Semantic search using Zilliz Cloud (Milvus) with all-MiniLM-L6-v2 embeddings
 
         Model: all-MiniLM-L6-v2 (384 dimensions)
         - Understands semantic meaning of text
@@ -383,7 +369,7 @@ class RecipeKnowledgeAgent:
 
         Returns list of (recipe_id, similarity_score)
         """
-        if self.pinecone_index is None or self.embed_model is None:
+        if self.milvus_client is None or self.embed_model is None:
             return []
 
         # Build query text from provided inputs
@@ -403,16 +389,17 @@ class RecipeKnowledgeAgent:
         # Encode query using the same model (all-MiniLM-L6-v2)
         query_vector = self.embed_model.encode(query_text, normalize_embeddings=True).tolist()
 
-        # Search using Pinecone
-        results = self.pinecone_index.query(
-            vector=query_vector,
-            top_k=k,
-            include_metadata=False
+        # Search using MilvusClient
+        results = self.milvus_client.search(
+            collection_name=self.collection_name,
+            data=[query_vector],
+            limit=k,
+            output_fields=["id"]
         )
 
-        # Extract results
-        if results and 'matches' in results:
-            return [(int(match['id']), match['score']) for match in results['matches']]
+        # Extract results (MilvusClient returns list of lists)
+        if results and len(results) > 0:
+            return [(hit['id'], hit['distance']) for hit in results[0]]
         return []
 
     def hybrid_query(
@@ -424,11 +411,11 @@ class RecipeKnowledgeAgent:
         use_semantic: bool = True
     ) -> List[Tuple[dict, float, int, List[str]]]:
         """
-        LEFTOVR HYBRID: Cloud-based recipe search using Pinecone
+        LEFTOVR HYBRID: Cloud-based recipe search using Milvus
 
         Combines:
-        1. Exact ingredient matching (via Pinecone metadata)
-        2. Semantic similarity (via Pinecone vector search)
+        1. Exact ingredient matching (via Milvus array filtering)
+        2. Semantic similarity (via Milvus vector search)
 
         Args:
             pantry_items: Your available ingredients. If None, auto-pulls from PantryAgent
@@ -464,7 +451,7 @@ class RecipeKnowledgeAgent:
 
         pantry_list = list(pantry_items)
 
-        # Get leftover-optimized candidates from Pinecone
+        # Get leftover-optimized candidates from Milvus
         pantry_cands = self.pantry_candidates(
             pantry_list,
             allow_missing=allow_missing,
@@ -473,7 +460,7 @@ class RecipeKnowledgeAgent:
 
         # Get semantic matches if enabled
         sem_cands = []
-        if use_semantic and self.pinecone_index and self.embed_model:
+        if use_semantic and self.milvus_client and self.embed_model:
             # Pass BOTH query text AND pantry items to semantic search
             sem_cands = self.semantic_search(
                 query=query_text,
@@ -497,7 +484,7 @@ class RecipeKnowledgeAgent:
                     boosted_score = current_score + (sem_score * 50)
                     score_map[rid] = (boosted_score, num_used, missing)
 
-        # Fetch recipe metadata from Pinecone for top results
+        # Fetch recipe metadata from Milvus for top results
         ranked = sorted(score_map.items(), key=lambda x: x[1][0], reverse=True)[:top_k]
         recipe_ids = [rid for rid, _ in ranked]
         recipe_map = self.get_recipes_by_ids(recipe_ids)
@@ -510,13 +497,13 @@ class RecipeKnowledgeAgent:
 
 
 if __name__ == '__main__':
-    print('RecipeKnowledgeAgent - Pinecone based recipe retrieval')
+    print('RecipeKnowledgeAgent - Zilliz Cloud (Milvus) based recipe retrieval')
     print('\nQuick start:')
     print('  # 1. First, ingest recipes using the dedicated script:')
-    print('  #    python scripts/ingest_recipes_pinecone.py --input assets/full_dataset.csv --outdir data')
+    print('  #    python scripts/ingest_recipes_milvus.py --input assets/full_dataset.csv --outdir data --build-milvus')
     print('')
     print('  # 2. Then use the agent for search:')
     print('  agent = RecipeKnowledgeAgent()')
-    print('  agent.setup_pinecone()  # This is all you need!')
+    print('  agent.setup_milvus()  # This is all you need!')
     print('  # Optional: agent.load_directions()  # Only if you need cooking steps')
     print('  # Now you can use semantic_search() and hybrid_query()')

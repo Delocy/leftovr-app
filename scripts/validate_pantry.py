@@ -66,7 +66,7 @@ def validate_via_mcp():
     else:
         print("\n📦 INVENTORY: Empty")
         print()
-        print("💡 Try adding items via the web interface or by saying:")
+        print("💡 Try adding items by running the Streamlit app and saying:")
         print("   'I have garlic and tomatoes'")
 
     # Check for expiring items via MCP
